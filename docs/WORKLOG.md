@@ -321,3 +321,17 @@
 - **Acceptance Criteria:** 4/4 — log CR ✅ setuju → versi baru ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-14 tetap TODO sampai backend.
 - **Langkah berikutnya:** Sweep verifikasi akhir EPIC C (build + browser semua route)
+
+---
+
+## 2026-10-04 14:00 — EPIC C — Sweep verifikasi akhir (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** develop
+- **Yang dilakukan:**
+  - `next build` bersih: 11 route (9 static + `/handover/[id]` dinamis + `/_not-found`)
+  - `next start` + fetch: `/klien`, `/handover`, `/handover/HDV-001`, `/handover/HDV-002`, CRM routes → 200 semua; halaman detail me-render state loading guard (konten setelah hidrasi — pola sama seperti `/login`)
+  - EPIC C lengkap: US-014–US-018 DONE (masing-masing lint ✅ typecheck ✅ test ✅; total 112/112)
+- **Verifikasi:** build ✅ browser ✅
+- **Catatan/Masalah:** FR-9/FR-11/FR-12/FR-13/FR-14 tetap TODO sampai backend Fase 2. Q-012 (SOP panel) masih OPEN.
+- **Langkah berikutnya:** EPIC D / US-019 (Pembuatan proyek dari handover)
