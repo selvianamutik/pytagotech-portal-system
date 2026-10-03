@@ -38,6 +38,9 @@ interface LeadTableProps {
   sortBy?: LeadSortKey;
   sortDir?: SortDirection;
   onSort?: (key: LeadSortKey) => void;
+  selectedIds?: string[];
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: () => void;
 }
 
 function SortButton({
@@ -70,13 +73,32 @@ function SortButton({
 }
 
 /** Tabel database lead dengan badge status berwarna (US-007, US-008). */
-export function LeadTable({ leads, onEdit, sortBy, sortDir, onSort }: LeadTableProps) {
+export function LeadTable({
+  leads,
+  onEdit,
+  sortBy,
+  sortDir,
+  onSort,
+  selectedIds = [],
+  onToggleSelect,
+  onToggleSelectAll,
+}: LeadTableProps) {
+  const allSelected = leads.length > 0 && leads.every((lead) => selectedIds.includes(lead.id));
   return (
     <Card>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
+              <TableHead className="w-10 px-4">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-primary"
+                  aria-label="Pilih semua lead di halaman ini"
+                  checked={allSelected}
+                  onChange={() => onToggleSelectAll?.()}
+                />
+              </TableHead>
               <TableHead className="px-4">ID</TableHead>
               <TableHead>
                 <SortButton label="Perusahaan / Brand" sortKey="companyName" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
@@ -97,6 +119,15 @@ export function LeadTable({ leads, onEdit, sortBy, sortDir, onSort }: LeadTableP
           <TableBody>
             {leads.map((lead) => (
               <TableRow key={lead.id}>
+                <TableCell className="px-4">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-primary"
+                    aria-label={`Pilih ${lead.id}`}
+                    checked={selectedIds.includes(lead.id)}
+                    onChange={() => onToggleSelect?.(lead.id)}
+                  />
+                </TableCell>
                 <TableCell className="px-4 font-mono text-xs text-muted-foreground">
                   {lead.id}
                 </TableCell>
