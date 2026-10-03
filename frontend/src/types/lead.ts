@@ -50,6 +50,8 @@ export interface Lead {
   /** Nama PIC sales. */
   picName: string;
   status: LeadStatus;
+  /** Tanggal follow-up berikutnya (YYYY-MM-DD, opsional, US-012). */
+  nextFollowUp?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -63,6 +65,7 @@ export interface CreateLeadInput {
   email: string;
   picName: string;
   status: LeadStatus;
+  nextFollowUp?: string;
 }
 
 export type UpdateLeadInput = Partial<CreateLeadInput>;

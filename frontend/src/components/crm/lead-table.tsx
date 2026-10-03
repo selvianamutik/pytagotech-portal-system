@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDate } from "@/lib/utils";
+import { isFollowUpOverdue } from "@/services/lead-activities";
 import type { Lead, LeadStatus } from "@/types/lead";
 import type { LeadSortKey, SortDirection } from "@/services/leads";
 
@@ -35,6 +36,7 @@ const STATUS_STYLES: Record<LeadStatus, string> = {
 interface LeadTableProps {
   leads: Lead[];
   onEdit: (lead: Lead) => void;
+  onActivity: (lead: Lead) => void;
   sortBy?: LeadSortKey;
   sortDir?: SortDirection;
   onSort?: (key: LeadSortKey) => void;
@@ -76,6 +78,7 @@ function SortButton({
 export function LeadTable({
   leads,
   onEdit,
+  onActivity,
   sortBy,
   sortDir,
   onSort,
@@ -148,16 +151,31 @@ export function LeadTable({
                   <Badge variant="outline" className={STATUS_STYLES[lead.status]}>
                     {lead.status}
                   </Badge>
+                  {isFollowUpOverdue(lead.nextFollowUp, lead.status) ? (
+                    <Badge variant="destructive" className="ml-1">
+                      Overdue
+                    </Badge>
+                  ) : null}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(lead)}
-                  >
-                    Ubah
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onActivity(lead)}
+                    >
+                      Aktivitas
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit(lead)}
+                    >
+                      Ubah
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

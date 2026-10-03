@@ -33,6 +33,7 @@ interface LeadFormProps {
   /** Null = mode tambah; Lead = mode ubah. */
   initial: Lead | null;
   picNames: string[];
+  actor?: { id: string; name: string };
   onSaved: (warning: string | null) => void;
 }
 
@@ -40,7 +41,7 @@ interface LeadFormProps {
  * Form tambah/ubah lead (US-007): validasi format + peringatan duplikat
  * ditampilkan dari hasil service (non-blokir).
  */
-export function LeadForm({ open, onOpenChange, initial, picNames, onSaved }: LeadFormProps) {
+export function LeadForm({ open, onOpenChange, initial, picNames, actor, onSaved }: LeadFormProps) {
   const [companyName, setCompanyName] = useState(initial?.companyName ?? "");
   const [industry, setIndustry] = useState(initial?.industry ?? "");
   const [whatsapp, setWhatsapp] = useState(initial?.whatsapp ?? "");
@@ -49,6 +50,7 @@ export function LeadForm({ open, onOpenChange, initial, picNames, onSaved }: Lea
   const [picName, setPicName] = useState(initial?.picName ?? "");
   const [status, setStatus] = useState<string>(initial?.status ?? "New");
   const [contactDate, setContactDate] = useState(initial?.contactDate ?? todayWib());
+  const [nextFollowUp, setNextFollowUp] = useState(initial?.nextFollowUp ?? "");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,9 +70,10 @@ export function LeadForm({ open, onOpenChange, initial, picNames, onSaved }: Lea
       email,
       picName,
       status: status as Lead["status"],
+      nextFollowUp: nextFollowUp || undefined,
     };
     const result = initial
-      ? await updateLead(initial.id, input)
+      ? await updateLead(initial.id, input, actor)
       : await createLead(input);
     setPending(false);
     if (result.error || !result.data) {
@@ -149,7 +152,7 @@ export function LeadForm({ open, onOpenChange, initial, picNames, onSaved }: Lea
               onChange={(event) => setInstagram(event.target.value)}
             />
           </div>
-          <div className="space-y-2 sm:col-span-2">
+          <div className="space-y-2">
             <label htmlFor="lead-email" className="text-sm font-medium">
               Email
             </label>
@@ -160,6 +163,17 @@ export function LeadForm({ open, onOpenChange, initial, picNames, onSaved }: Lea
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="lead-followup" className="text-sm font-medium">
+              Follow-up berikutnya (opsional)
+            </label>
+            <Input
+              id="lead-followup"
+              type="date"
+              value={nextFollowUp}
+              onChange={(event) => setNextFollowUp(event.target.value)}
             />
           </div>
           <FormSelect

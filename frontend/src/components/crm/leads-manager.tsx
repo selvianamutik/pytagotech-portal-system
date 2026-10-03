@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LeadFilters, EMPTY_LEAD_FILTERS, type LeadFilterState } from "@/components/crm/lead-filters";
 import { ImportLeadsDialog } from "@/components/crm/import-leads-dialog";
+import { LeadActivityDialog } from "@/components/crm/lead-activity-dialog";
 import { LeadForm } from "@/components/crm/lead-form";
 import { LeadTable } from "@/components/crm/lead-table";
 import { FormSelect } from "@/components/crm/lead-table";
@@ -43,6 +44,7 @@ export function LeadsManager() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Lead | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [activityTarget, setActivityTarget] = useState<Lead | null>(null);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkPic, setBulkPic] = useState("");
@@ -295,6 +297,7 @@ export function LeadsManager() {
           <LeadTable
             leads={leads}
             onEdit={openEdit}
+            onActivity={(lead) => setActivityTarget(lead)}
             sortBy={sortBy}
             sortDir={sortDir}
             onSort={handleSort}
@@ -338,6 +341,20 @@ export function LeadsManager() {
         />
       ) : null}
 
+      {activityTarget ? (
+        <LeadActivityDialog
+          key={`activity-${activityTarget.id}`}
+          lead={activityTarget}
+          open={activityTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setActivityTarget(null);
+            }
+          }}
+          onChanged={() => void refresh()}
+        />
+      ) : null}
+
       {dialogOpen ? (
         <LeadForm
           key={editTarget ? `edit-${editTarget.id}` : "create"}
@@ -345,6 +362,9 @@ export function LeadsManager() {
           onOpenChange={setDialogOpen}
           initial={editTarget}
           picNames={picNames}
+          actor={
+            currentUser ? { id: currentUser.id, name: currentUser.name } : undefined
+          }
           onSaved={(saveWarning) => {
             setWarning(saveWarning);
             void refresh();

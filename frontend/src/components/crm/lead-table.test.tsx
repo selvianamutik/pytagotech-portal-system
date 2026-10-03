@@ -6,7 +6,7 @@ import { mockLeads } from "@/mocks/leads";
 
 describe("LeadTable", () => {
   it("menampilkan baris lead dengan badge status", () => {
-    render(<LeadTable leads={mockLeads.slice(0, 2)} onEdit={vi.fn()} />);
+    render(<LeadTable leads={mockLeads.slice(0, 2)} onEdit={vi.fn()} onActivity={vi.fn()} />);
 
     expect(screen.getByText("PT Aruna Digital")).toBeDefined();
     expect(screen.getByText("CV Mandala Kreasi")).toBeDefined();
