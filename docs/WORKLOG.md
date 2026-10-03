@@ -403,3 +403,20 @@
 - **Acceptance Criteria:** 6/6 — field ✅ Kanban + List ✅ sub-task + rollup ✅ komentar/lampiran ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-17 tetap TODO sampai backend.
 - **Langkah berikutnya:** US-023 (Backlog fitur)
+
+---
+
+## 2026-10-04 16:30 — US-023 — Backlog fitur (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-023-backlog-fitur
+- **Commit:** 0e761ff — feat(frontend): backlog fitur US-023
+- **Yang dilakukan:**
+  - Kontrak `types/feature.ts` (prioritas 3 tingkat, estimasi, sumber, tautan task)
+  - `services/features.ts`: CRUD + impor handover idempoten (otomatis saat proyek dibuat) + konversi ke task
+  - `FeatureBacklog` di detail proyek (tabel + dialog + impor + jadi-task)
+- **File berubah:** types/feature, services/features(.test), services/projects (hook impor), components/proyek (feature-backlog, detail), docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (133/133) · browser menyusul di sweep akhir EPIC D
+- **Acceptance Criteria:** 4/4 — field ✅ impor otomatis ✅ jadi task ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** estimasi impor default 1 hari (PM menyesuaikan di US-024).
+- **Langkah berikutnya:** US-024 (Penjadwalan otomatis)

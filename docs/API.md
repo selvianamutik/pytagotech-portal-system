@@ -302,7 +302,14 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Fitur (Backlog)
 
-> _Akan didokumentasikan saat US-023 dimulai_
+> **Status:** Draft Fase 1 (US-023) — `services/features.ts`, tipe `types/feature.ts`.
+> Backlog di halaman detail proyek. Penjadwalan menyusul US-024.
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listFeatures()` / `createFeature()` / `updateFeature()` / `deleteFeature()` | Nama, kategori, prioritas High/Medium/Low, developer, estimasi ≥1 hari |
+| `ensureBacklogFromHandover(projectId, handoverId)` | Impor otomatis + idempoten (estimasi default 1 hari, PM menyesuaikan) |
+| `convertFeatureToTask(featureId)` | Task mewarisi nama/developer/estimasi; anti konversi ganda |
 
 ---
 
