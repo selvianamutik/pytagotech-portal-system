@@ -241,6 +241,17 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Konfirmasi Handover
+
+> **Status:** Draft Fase 1 (US-017) — `services/deal-workflow.ts`.
+> Aksi di halaman detail `/handover/[id]`. Fase 2: RLS putusan PM (US-003).
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `transitionDealStatus({dealId, to, actor, comment?})` (FR-13) | Alur Draft → Menunggu → Dikonfirmasi/Perlu Revisi (↩ ajukan ulang); putusan hanya PM/Super Admin; komentar wajib saat Perlu Revisi; pengajuan mensyaratkan termin seimbang; tiap perubahan → notifikasi + audit |
+
+---
+
 ## Modul: Proyek
 
 > _Akan didokumentasikan saat US-019 dimulai_

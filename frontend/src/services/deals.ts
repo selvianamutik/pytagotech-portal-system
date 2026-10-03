@@ -3,9 +3,10 @@ import { listClients } from "@/services/clients";
 import type {
   CreateDealInput,
   DealHandover,
+  HandoverStatus,
   UpdateDealInput,
 } from "@/types/deal";
-import { formatDealName } from "@/types/deal";
+import { formatDealName, isHandoverStatus } from "@/types/deal";
 import type { ServiceResult } from "@/services/result";
 
 /**
@@ -193,5 +194,25 @@ export async function updateDeal(
     notes: merged.notes.trim(),
     updatedAt: new Date().toISOString(),
   });
+  return { data: structuredClone(deal), error: null };
+}
+
+/**
+ * Tulis status handover langsung (dipakai workflow US-017 yang memiliki
+ * validasi alurnya sendiri). Tidak untuk form — form memakai updateDeal.
+ */
+export async function setDealStatus(
+  dealId: string,
+  status: HandoverStatus
+): Promise<ServiceResult<DealHandover>> {
+  if (!isHandoverStatus(status)) {
+    return { data: null, error: "Status handover tidak dikenal." };
+  }
+  const deal = dealStore.find((item) => item.id === dealId);
+  if (!deal) {
+    return { data: null, error: "Deal handover tidak ditemukan." };
+  }
+  deal.status = status;
+  deal.updatedAt = new Date().toISOString();
   return { data: structuredClone(deal), error: null };
 }

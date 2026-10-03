@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-014: master klien (otomatis dari lead Closing, halaman `/klien`)
 - US-015: form deal handover (nama otomatis, kode unik, panel panduan, halaman `/handover`)
 - US-016: termin pembayaran (banyak termin %/nominal, total wajib = deal, halaman detail)
+- US-017: alur konfirmasi handover (putusan PM, komentar revisi, notifikasi + audit)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal

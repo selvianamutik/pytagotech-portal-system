@@ -6,7 +6,7 @@
  */
 
 /** Entitas yang bisa ditempeli komentar & lampiran. */
-export type CollaborableEntityType = "lead" | "task" | "fitur" | "konten";
+export type CollaborableEntityType = "lead" | "task" | "fitur" | "konten" | "deal";
 
 export interface CommentItem {
   id: string;
@@ -71,6 +71,7 @@ export const ENTITY_TYPE_LABELS: Record<CollaborableEntityType, string> = {
   task: "Task",
   fitur: "Fitur",
   konten: "Konten",
+  deal: "Deal",
 };
 
 export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
