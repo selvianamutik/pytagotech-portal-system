@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlusIcon, TriangleAlertIcon } from "lucide-react";
+import { PlusIcon, TriangleAlertIcon, UploadIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LeadFilters, EMPTY_LEAD_FILTERS, type LeadFilterState } from "@/components/crm/lead-filters";
+import { ImportLeadsDialog } from "@/components/crm/import-leads-dialog";
 import { LeadForm } from "@/components/crm/lead-form";
 import { LeadTable } from "@/components/crm/lead-table";
 import { FormSelect } from "@/components/crm/lead-table";
@@ -41,6 +42,7 @@ export function LeadsManager() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Lead | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkPic, setBulkPic] = useState("");
@@ -209,9 +211,14 @@ export function LeadsManager() {
             perusahaan diperiksa duplikat otomatis.
           </p>
         </div>
-        <Button type="button" onClick={openCreate}>
-          <PlusIcon aria-hidden="true" /> Tambah lead
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={() => setImportOpen(true)}>
+            <UploadIcon aria-hidden="true" /> Impor CSV
+          </Button>
+          <Button type="button" onClick={openCreate}>
+            <PlusIcon aria-hidden="true" /> Tambah lead
+          </Button>
+        </div>
       </div>
 
       {warning ? (
@@ -322,6 +329,14 @@ export function LeadsManager() {
           </div>
         </>
       )}
+
+      {importOpen ? (
+        <ImportLeadsDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          onImported={() => void refresh()}
+        />
+      ) : null}
 
       {dialogOpen ? (
         <LeadForm
