@@ -205,3 +205,19 @@
 - **Acceptance Criteria:** 4/4 — timeline ✅ follow-up + Overdue ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-013 (Dashboard CRM)
+
+---
+
+## 2026-10-04 10:30 — US-013 — Dashboard CRM (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-013-dashboard-crm
+- **Commit:** b0bcd8b — feat(frontend): dashboard CRM dengan KPI otomatis US-013
+- **Yang dilakukan:**
+  - `services/crm-dashboard.ts`: periode harian/bulanan/kustom (WIB), KPI (database, outreach, 5 status, 2 rate), kinerja per PIC
+  - Komponen `crm/crm-dashboard.tsx`: kartu KPI + rumus di tooltip/keterangan, tabel PIC, filter periode; halaman `/crm/dashboard`; nav dashboard
+- **File berubah:** services/crm-dashboard(.test), components/crm/crm-dashboard.tsx, app/crm/dashboard, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (83/83) · browser menyusul di sweep akhir EPIC B
+- **Acceptance Criteria:** 5/5 — KPI ✅ rumus di tooltip ✅ tabel per PIC ✅ filter periode ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** definisi Outreach = tanggal hubungi dalam periode (terdokumentasi di API + tooltip).
+- **Langkah berikutnya:** Sweep verifikasi akhir EPIC B (build + browser semua route)

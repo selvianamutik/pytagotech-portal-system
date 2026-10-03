@@ -173,6 +173,22 @@ type InterestStage = "New Interest" | "Contacted" | "Demo" | "Price Sent" | "Neg
 
 ---
 
+## Modul: CRM — Dashboard
+
+> **Status:** Draft Fase 1 (US-013) — `services/crm-dashboard.ts`.
+> Halaman `/crm/dashboard` (KPI + kinerja per PIC + filter periode).
+> Fase 2: agregasi SQL; rumus tetap didokumentasikan di tooltip.
+
+| Fungsi | Definisi |
+|--------|----------|
+| Total Database Lead | Seluruh lead (semua waktu) |
+| Total Outreach | Lead dengan tanggal hubungi dalam periode |
+| Interest Rate | `Interested ÷ Outreach × 100%` (tertulis di tooltip) |
+| Closing Rate | `Closing ÷ Outreach × 100%` (tertulis di tooltip) |
+| Kinerja per PIC | Ditangani, contacted, follow up, interest, not interested, lost, closing |
+
+---
+
 ## Modul: Klien
 
 > _Akan didokumentasikan saat US-014 dimulai_
