@@ -210,7 +210,20 @@ interface Client { id: string; companyName: string; picName: string; phone: stri
 
 ## Modul: Deal Handover
 
-> _Akan didokumentasikan saat US-015 dimulai_
+> **Status:** Draft Fase 1 (US-015) — mock di `frontend/src/mocks/deals.ts`,
+> diakses via `frontend/src/services/deals.ts`, tipe di `frontend/src/types/deal.ts`.
+> Halaman `/handover` (tabel + form + panel panduan interim, Q-012 menunggu SOP resmi).
+> Fase 2: tabel `deals` + trigger nama/kode.
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listDeals()` / `getDeal(id)` | Mengembalikan `displayName` terformat FR-11 + nama klien |
+| `createDeal(input)` | Semua field wajib + minimal 1 fitur berpenjelasan; kode unik; status awal Draft + versi 1 |
+| `updateDeal(id, partial)` | Draft/Revisi bisa diubah; Dikonfirmasi terkunci (via change request, US-018) |
+
+```ts
+interface DealHandover { id: string; title: string; code: string; clientId: string; scope: string; features: { name: string; description: string }[]; objective: string; value: number; termScheme: string; deadline: string; notes: string; status: HandoverStatus; versions: DealVersion[]; createdAt: string; updatedAt: string; }
+```
 
 ---
 

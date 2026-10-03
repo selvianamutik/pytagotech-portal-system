@@ -251,3 +251,21 @@
 - **Acceptance Criteria:** 5/5 — field lengkap ✅ otomatis dari Closing ✅ 1-N siap relasi ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-9 tetap TODO sampai backend.
 - **Langkah berikutnya:** US-015 (Form Deal Handover)
+
+---
+
+## 2026-10-04 12:00 — US-015 — Form Deal Handover (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-015-handover
+- **Commit:** 753e989 — feat(frontend): form deal handover US-015
+- **Yang dilakukan:**
+  - Kontrak `types/deal.ts`: 9 field + fitur berpenjelasan + `formatDealName` FR-11 + status & versi (untuk US-017/018)
+  - `services/deals.ts`: list (+displayName) / get / create (Draft + versi 1) / update (Dikonfirmasi terkunci); validasi wajib isi + kode unik
+  - `HandoverForm` (fitur dinamis + panel panduan interim) + `HandoverManager` + halaman `/handover` + nav
+  - Q-012 baru: isi SOP resmi panel bantuan (panel interim dari PRD)
+- **File berubah:** types/deal, mocks/deals, services/deals(.test), components/handover/*, components/crm/lead-table (FormSelect label), app/handover, mocks/dashboard, docs/QUESTIONS, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (98/98) · browser menyusul di sweep akhir EPIC C
+- **Acceptance Criteria:** 6/6 — field lengkap ✅ nama otomatis ✅ kode unik + wajib isi ✅ panel panduan ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-11 tetap TODO sampai backend.
+- **Langkah berikutnya:** US-016 (Termin pembayaran)

@@ -187,6 +187,8 @@ export function LeadTable({
 }
 
 /** Select native se gaya Input shadcn (US-007). */
+export type FormSelectOption = string | { value: string; label: string };
+
 export function FormSelect({
   id,
   label,
@@ -199,7 +201,7 @@ export function FormSelect({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: readonly string[];
+  options: readonly FormSelectOption[];
   required?: boolean;
 }) {
   return (
@@ -217,11 +219,15 @@ export function FormSelect({
         <option value="" disabled>
           Pilih {label.toLowerCase()}...
         </option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
+        {options.map((option) => {
+          const optionValue = typeof option === "string" ? option : option.value;
+          const optionLabel = typeof option === "string" ? option : option.label;
+          return (
+            <option key={optionValue} value={optionValue}>
+              {optionLabel}
+            </option>
+          );
+        })}
       </select>
     </div>
   );

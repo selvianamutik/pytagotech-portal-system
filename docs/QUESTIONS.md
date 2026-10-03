@@ -135,3 +135,15 @@
   - B) Tambah role Finance — bisa melihat dan mengubah status termin (perlu CR jika disetujui)
 - **Dampak jika salah:** Jika Finance dibutuhkan, perlu tambah role, RLS policy, dan menu navigasi — ini di luar scope PRD saat ini.
 - **Jawaban:** B
+
+---
+
+## Q-012 — [OPEN]
+
+- **Terkait:** US-015 / FR-11
+- **Pertanyaan:** Apa isi panduan pengisian (SOP dari sheet "Read me") yang harus tampil sebagai panel bantuan di form Deal Handover?
+- **Opsi yang dipertimbangkan:**
+  - A) Salin isi sheet "Read me" apa adanya ke panel bantuan
+  - B) Ringkas menjadi panduan per field
+- **Dampak jika salah:** Panel saat ini memakai panduan interim yang diturunkan dari PRD; perlu diganti setelah jawaban tersedia.
+- **Jawaban:** _(diisi pemilik proyek)_
