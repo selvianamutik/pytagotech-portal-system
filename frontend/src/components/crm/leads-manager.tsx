@@ -5,49 +5,111 @@ import { PlusIcon, TriangleAlertIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LeadFilters, EMPTY_LEAD_FILTERS, type LeadFilterState } from "@/components/crm/lead-filters";
 import { LeadForm } from "@/components/crm/lead-form";
 import { LeadTable } from "@/components/crm/lead-table";
-import { listLeadPICs, listLeads } from "@/services/leads";
+import {
+  listLeadPICs,
+  queryLeads,
+  type LeadSortKey,
+  type SortDirection,
+} from "@/services/leads";
 import type { Lead } from "@/types/lead";
+import { isIndustryCategory, isLeadStatus } from "@/types/lead";
 
 /**
- * Halaman database lead (US-007): tabel + form tambah/ubah,
- * peringatan duplikat non-blokir, state loading/empty/error.
+ * Halaman database lead (US-007 + US-008): tabel + form tambah/ubah,
+ * filter multi-kriteria, sort per kolom, paginasi, peringatan duplikat.
  */
 export function LeadsManager() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageCount, setPageCount] = useState(1);
   const [picNames, setPicNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+
+  const [filters, setFilters] = useState<LeadFilterState>(EMPTY_LEAD_FILTERS);
+  const [sortBy, setSortBy] = useState<LeadSortKey>("contactDate");
+  const [sortDir, setSortDir] = useState<SortDirection>("desc");
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Lead | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([listLeads(), listLeadPICs()]).then(([leadsResult, picsResult]) => {
-      if (cancelled) {
-        return;
+    void listLeadPICs().then((picsResult) => {
+      if (!cancelled) {
+        setPicNames((picsResult.data ?? []).map((pic) => pic.name));
       }
-      if (leadsResult.error || !leadsResult.data) {
-        setLoadError(leadsResult.error ?? "Gagal memuat lead.");
-      } else {
-        setLeads(leadsResult.data);
-      }
-      setPicNames((picsResult.data ?? []).map((pic) => pic.name));
-      setLoading(false);
     });
     return () => {
       cancelled = true;
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    void queryLeads({
+      search: filters.search || undefined,
+      statuses: filters.status && isLeadStatus(filters.status) ? [filters.status] : undefined,
+      picNames: filters.picName ? [filters.picName] : undefined,
+      industries: filters.industry && isIndustryCategory(filters.industry) ? [filters.industry] : undefined,
+      dateFrom: filters.dateFrom || undefined,
+      dateTo: filters.dateTo || undefined,
+      sortBy,
+      sortDir,
+      page,
+    }).then((result) => {
+      if (cancelled) {
+        return;
+      }
+      if (result.error || !result.data) {
+        setLoadError(result.error ?? "Gagal memuat lead.");
+      } else {
+        setLeads(result.data.items);
+        setTotal(result.data.total);
+        setPage(result.data.page);
+        setPageCount(result.data.pageCount);
+      }
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [filters, sortBy, sortDir, page]);
+
+  /** Query ulang halaman aktif (dipakai setelah tambah/ubah). */
   async function refresh() {
-    const { data } = await listLeads();
+    const { data } = await queryLeads({
+      search: filters.search || undefined,
+      sortBy,
+      sortDir,
+      page,
+    });
     if (data) {
-      setLeads(data);
+      setLeads(data.items);
+      setTotal(data.total);
+      setPage(data.page);
+      setPageCount(data.pageCount);
     }
+  }
+
+  function handleFiltersChange(next: LeadFilterState) {
+    setFilters(next);
+    setPage(1);
+  }
+
+  function handleSort(key: LeadSortKey) {
+    if (key === sortBy) {
+      setSortDir((previous) => (previous === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(key);
+      setSortDir("asc");
+    }
+    setPage(1);
   }
 
   function openCreate() {
@@ -95,7 +157,7 @@ export function LeadsManager() {
           <p className="text-sm font-medium text-primary">CRM · Marketing</p>
           <h1 className="mt-1 text-2xl font-bold">Database Lead</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {leads.length} prospek tersimpan terpusat. Nomor WhatsApp dan nama
+            {total} prospek tersimpan terpusat. Nomor WhatsApp dan nama
             perusahaan diperiksa duplikat otomatis.
           </p>
         </div>
@@ -114,16 +176,57 @@ export function LeadsManager() {
         </p>
       ) : null}
 
+      <LeadFilters
+        filters={filters}
+        onChange={handleFiltersChange}
+        picNames={picNames}
+        resultCount={total}
+      />
+
       {leads.length === 0 ? (
         <Card>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Belum ada lead. Tambahkan prospek pertama lewat tombol di atas.
+              Tidak ada lead yang cocok dengan filter. Ubah filter atau tambahkan
+              lead baru.
             </p>
           </CardContent>
         </Card>
       ) : (
-        <LeadTable leads={leads} onEdit={openEdit} />
+        <>
+          <LeadTable
+            leads={leads}
+            onEdit={openEdit}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSort={handleSort}
+          />
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground" role="status">
+              Halaman {page} dari {pageCount} · {total} lead
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((previous) => previous - 1)}
+              >
+                Sebelumnya
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page >= pageCount}
+                onClick={() => setPage((previous) => previous + 1)}
+              >
+                Berikutnya
+              </Button>
+            </div>
+          </div>
+        </>
       )}
 
       {dialogOpen ? (

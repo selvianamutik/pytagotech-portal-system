@@ -195,3 +195,88 @@ export async function updateLead(
     warning: duplicates.length > 0 ? duplicateWarning(duplicates) : null,
   };
 }
+
+export type LeadSortKey = "companyName" | "contactDate" | "status" | "picName";
+export type SortDirection = "asc" | "desc";
+
+export interface LeadQuery {
+  /** Pencarian teks: perusahaan, email, WhatsApp, Instagram. */
+  search?: string;
+  statuses?: Lead["status"][];
+  picNames?: string[];
+  industries?: Lead["industry"][];
+  /** Rentang tanggal hubungi (inklusif, format YYYY-MM-DD). */
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: LeadSortKey;
+  sortDir?: SortDirection;
+  page?: number;
+  limit?: number;
+}
+
+export interface LeadQueryResult {
+  items: Lead[];
+  total: number;
+  page: number;
+  limit: number;
+  pageCount: number;
+}
+
+const DEFAULT_QUERY_LIMIT = 5;
+
+/**
+ * Pencarian, filter multi-kriteria, sort, dan paginasi (US-008).
+ * Fase 2: diganti query Supabase server-side dengan parameter sama.
+ */
+export async function queryLeads(
+  query: LeadQuery
+): Promise<ServiceResult<LeadQueryResult>> {
+  const search = (query.search ?? "").trim().toLowerCase();
+  const sortBy: LeadSortKey = query.sortBy ?? "contactDate";
+  const sortDir: SortDirection = query.sortDir ?? "desc";
+  const limit = query.limit && query.limit > 0 ? query.limit : DEFAULT_QUERY_LIMIT;
+  const page = query.page && query.page > 0 ? query.page : 1;
+
+  let filtered = leadStore.filter((lead) => {
+    if (search) {
+      const haystack =
+        `${lead.companyName} ${lead.email} ${lead.whatsapp} ${lead.instagram}`.toLowerCase();
+      if (!haystack.includes(search)) {
+        return false;
+      }
+    }
+    if (query.statuses && query.statuses.length > 0 && !query.statuses.includes(lead.status)) {
+      return false;
+    }
+    if (query.picNames && query.picNames.length > 0 && !query.picNames.includes(lead.picName)) {
+      return false;
+    }
+    if (query.industries && query.industries.length > 0 && !query.industries.includes(lead.industry)) {
+      return false;
+    }
+    if (query.dateFrom && lead.contactDate < query.dateFrom) {
+      return false;
+    }
+    if (query.dateTo && lead.contactDate > query.dateTo) {
+      return false;
+    }
+    return true;
+  });
+
+  const direction = sortDir === "asc" ? 1 : -1;
+  filtered = [...filtered].sort((a, b) => {
+    if (sortBy === "status") {
+      return a.status.localeCompare(b.status) * direction;
+    }
+    return String(a[sortBy]).localeCompare(String(b[sortBy])) * direction;
+  });
+
+  const total = filtered.length;
+  const pageCount = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, pageCount);
+  const items = filtered
+    .slice((safePage - 1) * limit, safePage * limit)
+    .map(cloneLead);
+
+  return { data: { items, total, page: safePage, limit, pageCount }, error: null };
+}
