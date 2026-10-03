@@ -25,6 +25,39 @@
 
 ---
 
+## Modul: Dashboard / Fondasi (US-001) — Kontrak Data
+
+> **Status:** Draft Fase 1 — diimplementasikan via mock di `frontend/src/mocks/dashboard.ts`,
+> diakses lewat `frontend/src/services/dashboard.ts`, tipe di `frontend/src/types/dashboard.ts`.
+> Saat Fase 2 (backend), mock diganti query Supabase tanpa mengubah komponen UI.
+
+### `getDashboardSnapshot(): Promise<ServiceResult<DashboardSnapshot>>`
+
+Mengembalikan ringkasan lintas modul untuk beranda dashboard.
+
+```ts
+type PortalModule = "Beranda" | "CRM" | "Klien & Handover" | "Proyek" | "Sosmed" | "Pengaturan";
+type StatusTone = "success" | "warning" | "critical" | "info" | "priority";
+
+interface NavigationItem { label: string; module: PortalModule; href: string; badge?: number; roles: string[]; }
+interface DashboardMetric { label: string; value: string; change: string; tone: StatusTone; }
+interface WorkQueueItem { id: string; title: string; module: PortalModule; owner: string; status: string; dueDate: string; tone: StatusTone; }
+interface ActivityItem { id: string; actor: string; action: string; subject: string; timestamp: string; module: PortalModule; }
+
+interface DashboardSnapshot {
+  currentUser: { name: string; email: string; roles: string[]; };
+  metrics: DashboardMetric[];
+  navigation: NavigationItem[];
+  workQueue: WorkQueueItem[];
+  activities: ActivityItem[];
+}
+```
+
+- **Timestamp:** string ISO 8601 UTC (contoh: `2026-10-04T08:30:00Z`); dikonversi ke WIB (`Asia/Jakarta`) di tampilan via `formatDateTime`.
+- **Error:** `{ data: null, error: string }` — halaman menampilkan kartu "Dashboard belum tersedia".
+
+---
+
 ## Modul: Auth (via Supabase Auth)
 
 | Method | Endpoint | Deskripsi | Role |
