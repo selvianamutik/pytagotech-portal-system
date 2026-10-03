@@ -10,7 +10,7 @@
 
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
-| US-001 | Setup proyek & desain sistem | Frontend | DONE | 6/6 ✅ | lihat WORKLOG 2026-10-04 |
+| US-001 | Setup proyek & desain sistem | Frontend | DONE | 6/6 ✅ | 2b04163 |
 | US-002 | Autentikasi & manajemen user | Frontend | TODO | 0/6 | - |
 | US-003 | Row Level Security per role | Backend | TODO | 0/4 | - |
 | US-004 | Audit trail | Backend | TODO | 0/5 | - |
