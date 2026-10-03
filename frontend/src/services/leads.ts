@@ -1,5 +1,6 @@
 import { mockUsers } from "@/mocks/auth";
 import { mockLeads } from "@/mocks/leads";
+import { logAudit } from "@/services/audit";
 import type {
   CreateLeadInput,
   Lead,
@@ -279,4 +280,59 @@ export async function queryLeads(
     .map(cloneLead);
 
   return { data: { items, total, page: safePage, limit, pageCount }, error: null };
+}
+
+export interface AssignPicActor {
+  id: string;
+  name: string;
+}
+
+/**
+ * Tetapkan/ubah PIC untuk satu atau banyak lead sekaligus (US-009).
+ * Setiap perubahan PIC dicatat di audit trail (pratinjau US-004).
+ */
+export async function assignLeadPIC(
+  leadIds: string[],
+  picName: string,
+  actor: AssignPicActor
+): Promise<ServiceResult<Lead[]>> {
+  if (leadIds.length === 0) {
+    return { data: null, error: "Pilih minimal satu lead." };
+  }
+  const pics = await listLeadPICs();
+  const picNames = (pics.data ?? []).map((pic) => pic.name);
+  if (!picNames.includes(picName)) {
+    return { data: null, error: "PIC tidak dikenal." };
+  }
+  const unknown = leadIds.filter(
+    (id) => !leadStore.some((lead) => lead.id === id)
+  );
+  if (unknown.length > 0) {
+    return { data: null, error: `Lead tidak ditemukan: ${unknown.join(", ")}.` };
+  }
+
+  const now = new Date().toISOString();
+  const updated: Lead[] = [];
+  for (const id of leadIds) {
+    const lead = leadStore.find((item) => item.id === id);
+    if (!lead) {
+      continue;
+    }
+    const oldPic = lead.picName;
+    lead.picName = picName;
+    lead.updatedAt = now;
+    updated.push(cloneLead(lead));
+    if (oldPic !== picName) {
+      await logAudit({
+        actorId: actor.id,
+        actorName: actor.name,
+        action: "lead.assign-pic",
+        entityType: "lead",
+        entityId: lead.id,
+        oldValue: oldPic,
+        newValue: picName,
+      });
+    }
+  }
+  return { data: updated, error: null };
 }

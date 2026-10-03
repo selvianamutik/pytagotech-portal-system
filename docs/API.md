@@ -132,6 +132,7 @@ Halaman tanpa izin menampilkan konten 403 (`/403`, komponen `RequireRole`), buka
 | `findDuplicates(whatsapp, companyName, excludeId?)` | Deteksi FR-7 |
 | `listLeadPICs()` | User aktif (dropdown PIC) |
 | `queryLeads(query)` (US-008) | Pencarian teks (perusahaan/email/WA/IG) + filter status/PIC/industri/rentang tanggal + sort (`companyName`/`contactDate`/`status`/`picName`) + paginasi (`page`, `limit` default 5) → `{items, total, page, limit, pageCount}` |
+| `assignLeadPIC(ids, picName, actor)` (US-009) | Assign/reassign satuan & massal; tiap perubahan PIC dicatat ke audit trail (`lead.assign-pic`, pratinjau US-004) |
 
 ```ts
 type LeadStatus = "New" | "Contacted" | "Follow Up" | "Interest" | "Not Interested" | "Lost" | "Closing";

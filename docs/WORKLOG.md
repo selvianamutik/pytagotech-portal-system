@@ -135,3 +135,20 @@
 - **Acceptance Criteria:** 5/5 — filter multi-kriteria ✅ badge/baris berwarna ✅ sort + paginasi ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-009 (Penugasan PIC & bulk action)
+
+---
+
+## 2026-10-04 08:30 — US-009 — Penugasan PIC & bulk action (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-009-assign-pic
+- **Commit:** ecac4e0 — feat(frontend): assign PIC satuan & massal + audit US-009
+- **Yang dilakukan:**
+  - `types/audit.ts` + `mocks/audit.ts` + `services/audit.ts` (append-only, pratinjau US-004)
+  - `assignLeadPIC` di `services/leads.ts`: validasi PIC + pencatatan `lead.assign-pic` per perubahan
+  - Checkbox seleksi di `LeadTable` + bilah bulk assign di `LeadsManager` (dengan aktor dari sesi)
+- **File berubah:** types/audit, mocks/audit, services/audit, services/leads, lead-assign.test, lead-table, leads-manager, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (61/61) · browser menyusul di sweep akhir EPIC B
+- **Acceptance Criteria:** 4/4 — assign satuan+massal ✅ audit PIC ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** halaman Audit Log penuh tetap di US-004 (Fase 2).
+- **Langkah berikutnya:** US-010 (Import lead dari CSV)

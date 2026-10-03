@@ -8,12 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LeadFilters, EMPTY_LEAD_FILTERS, type LeadFilterState } from "@/components/crm/lead-filters";
 import { LeadForm } from "@/components/crm/lead-form";
 import { LeadTable } from "@/components/crm/lead-table";
+import { FormSelect } from "@/components/crm/lead-table";
 import {
+  assignLeadPIC,
   listLeadPICs,
   queryLeads,
   type LeadSortKey,
   type SortDirection,
 } from "@/services/leads";
+import { useAuthStore } from "@/store/auth";
 import type { Lead } from "@/types/lead";
 import { isIndustryCategory, isLeadStatus } from "@/types/lead";
 
@@ -22,6 +25,7 @@ import { isIndustryCategory, isLeadStatus } from "@/types/lead";
  * filter multi-kriteria, sort per kolom, paginasi, peringatan duplikat.
  */
 export function LeadsManager() {
+  const currentUser = useAuthStore((state) => state.user);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -37,6 +41,11 @@ export function LeadsManager() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Lead | null>(null);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkPic, setBulkPic] = useState("");
+  const [bulkPending, setBulkPending] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -124,6 +133,45 @@ export function LeadsManager() {
     setDialogOpen(true);
   }
 
+  function toggleSelect(id: string) {
+    setSelectedIds((previous) =>
+      previous.includes(id)
+        ? previous.filter((selected) => selected !== id)
+        : [...previous, id]
+    );
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((previous) => {
+      const visibleIds = leads.map((lead) => lead.id);
+      const allSelected = visibleIds.every((id) => previous.includes(id));
+      if (allSelected) {
+        return previous.filter((id) => !visibleIds.includes(id));
+      }
+      return [...new Set([...previous, ...visibleIds])];
+    });
+  }
+
+  async function handleBulkAssign() {
+    if (selectedIds.length === 0 || !bulkPic) {
+      return;
+    }
+    setBulkPending(true);
+    setBulkError(null);
+    const { error } = await assignLeadPIC(selectedIds, bulkPic, {
+      id: currentUser?.id ?? "USR-001",
+      name: currentUser?.name ?? "Dinda Prameswari",
+    });
+    setBulkPending(false);
+    if (error) {
+      setBulkError(error);
+      return;
+    }
+    setSelectedIds([]);
+    setBulkPic("");
+    await refresh();
+  }
+
   if (loading) {
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
@@ -194,12 +242,58 @@ export function LeadsManager() {
         </Card>
       ) : (
         <>
+          {selectedIds.length > 0 ? (
+            <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-muted/50 p-3 sm:flex-row sm:items-end">
+              <p className="text-sm font-medium sm:pb-2" role="status">
+                {selectedIds.length} lead dipilih
+              </p>
+              <div className="w-full sm:max-w-64">
+                <FormSelect
+                  id="bulk-pic"
+                  label="PIC baru"
+                  value={bulkPic}
+                  onChange={setBulkPic}
+                  options={picNames}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!bulkPic || bulkPending}
+                  onClick={() => void handleBulkAssign()}
+                >
+                  {bulkPending ? "Menerapkan..." : "Terapkan"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedIds([]);
+                    setBulkPic("");
+                    setBulkError(null);
+                  }}
+                >
+                  Batal
+                </Button>
+              </div>
+              {bulkError ? (
+                <p role="alert" className="text-sm text-destructive sm:pb-2">
+                  {bulkError}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           <LeadTable
             leads={leads}
             onEdit={openEdit}
             sortBy={sortBy}
             sortDir={sortDir}
             onSort={handleSort}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
           />
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground" role="status">
