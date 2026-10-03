@@ -187,3 +187,21 @@
 - **Acceptance Criteria:** 5/5 — otomatis dari Interest ✅ 7 tahap ✅ Kanban + tabel ✅ kebutuhan ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-8 tetap TODO sampai backend (Closing → klien + handover di US-014).
 - **Langkah berikutnya:** US-012 (Activity log per lead)
+
+---
+
+## 2026-10-04 10:00 — US-012 — Activity log per lead (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-012-activity-log
+- **Commit:** da59d42 — feat(frontend): activity log dan follow-up lead US-012
+- **Yang dilakukan:**
+  - `Lead.nextFollowUp` opsional + input di form; validasi tanggal
+  - `services/lead-activities.ts`: catatan, timeline gabungan (catatan + audit), `isFollowUpOverdue`
+  - `updateLead` mencatat `lead.update-status` bila status berubah; `setNextFollowUp` + audit `lead.followup`
+  - `LeadActivityDialog`: timeline, tambah catatan, jadwalkan follow-up; badge Overdue di tabel
+- **File berubah:** types/lead, mocks/leads, services/leads, services/lead-activities(.test), components/crm (table, form, manager, activity-dialog), docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (77/77) · browser menyusul di sweep akhir EPIC B
+- **Acceptance Criteria:** 4/4 — timeline ✅ follow-up + Overdue ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** -
+- **Langkah berikutnya:** US-013 (Dashboard CRM)

@@ -92,6 +92,9 @@ export function validateLeadInput(
   if (Number.isNaN(Date.parse(input.contactDate))) {
     return "Tanggal hubungi tidak valid.";
   }
+  if (input.nextFollowUp && Number.isNaN(Date.parse(input.nextFollowUp))) {
+    return "Tanggal follow-up tidak valid.";
+  }
   return null;
 }
 
@@ -147,6 +150,7 @@ export async function createLead(
     email: input.email.trim().toLowerCase(),
     picName: input.picName,
     status: input.status,
+    nextFollowUp: input.nextFollowUp || undefined,
     createdAt: now,
     updatedAt: now,
   };
@@ -160,7 +164,8 @@ export async function createLead(
 
 export async function updateLead(
   leadId: string,
-  input: UpdateLeadInput
+  input: UpdateLeadInput,
+  actor?: AssignPicActor
 ): Promise<SaveLeadResult<Lead>> {
   const lead = leadStore.find((item) => item.id === leadId);
   if (!lead) {
@@ -175,6 +180,7 @@ export async function updateLead(
     email: input.email ?? lead.email,
     picName: input.picName ?? lead.picName,
     status: input.status ?? lead.status,
+    nextFollowUp: input.nextFollowUp ?? lead.nextFollowUp,
   };
   const pics = await listLeadPICs();
   const picNames = (pics.data ?? []).map((pic) => pic.name);
@@ -190,8 +196,23 @@ export async function updateLead(
   lead.instagram = merged.instagram.trim();
   lead.email = merged.email.trim().toLowerCase();
   lead.picName = merged.picName;
+  const oldStatus = lead.status;
   lead.status = merged.status;
+  lead.nextFollowUp = merged.nextFollowUp || undefined;
   lead.updatedAt = new Date().toISOString();
+
+  // Perubahan status tercatat untuk timeline US-012.
+  if (oldStatus !== merged.status) {
+    await logAudit({
+      actorId: actor?.id ?? "system",
+      actorName: actor?.name ?? "Sistem",
+      action: "lead.update-status",
+      entityType: "lead",
+      entityId: lead.id,
+      oldValue: oldStatus,
+      newValue: merged.status,
+    });
+  }
 
   const duplicates = findDuplicates(merged.whatsapp, merged.companyName, leadId);
   return {
@@ -339,4 +360,34 @@ export async function assignLeadPIC(
     }
   }
   return { data: updated, error: null };
+}
+
+/**
+ * Atur tanggal follow-up berikutnya (US-012). Dicatat audit `lead.followup`.
+ */
+export async function setNextFollowUp(
+  leadId: string,
+  nextFollowUp: string,
+  actor: AssignPicActor
+): Promise<ServiceResult<Lead>> {
+  const lead = leadStore.find((item) => item.id === leadId);
+  if (!lead) {
+    return { data: null, error: "Lead tidak ditemukan." };
+  }
+  if (!nextFollowUp || Number.isNaN(Date.parse(nextFollowUp))) {
+    return { data: null, error: "Tanggal follow-up tidak valid." };
+  }
+  const oldValue = lead.nextFollowUp ?? null;
+  lead.nextFollowUp = nextFollowUp;
+  lead.updatedAt = new Date().toISOString();
+  await logAudit({
+    actorId: actor.id,
+    actorName: actor.name,
+    action: "lead.followup",
+    entityType: "lead",
+    entityId: lead.id,
+    oldValue,
+    newValue: nextFollowUp,
+  });
+  return { data: cloneLead(lead), error: null };
 }

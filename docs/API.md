@@ -158,6 +158,21 @@ type InterestStage = "New Interest" | "Contacted" | "Demo" | "Price Sent" | "Neg
 
 ---
 
+## Modul: CRM — Activity Log
+
+> **Status:** Draft Fase 1 (US-012) — catatan di `services/lead-activities.ts`;
+> perubahan otomatis (status/tahap/PIC/follow-up) dibaca dari audit trail.
+> Dialog aktivitas per baris lead di `/crm/leads`.
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listLeadNotes(leadId)` / `addLeadNote(leadId, authorId, body)` | Catatan maks 2000 karakter |
+| `getLeadTimeline(leadId)` | Gabungan catatan + perubahan, terbaru dulu, dengan penulis & waktu |
+| `setNextFollowUp(leadId, date, actor)` (di `services/leads`) | Audit `lead.followup` |
+| `isFollowUpOverdue(nextFollowUp, status)` | Overdue bila lewat hari ini dan status belum final (Closing/Lost/Not Interested dikecualikan) |
+
+---
+
 ## Modul: Klien
 
 > _Akan didokumentasikan saat US-014 dimulai_

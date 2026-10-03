@@ -28,7 +28,7 @@
 | US-009 | Penugasan PIC & bulk action | Frontend | DONE | 4/4 ✅ | ecac4e0 |
 | US-010 | Import lead dari CSV | Frontend | DONE | 5/5 ✅ | 046168d |
 | US-011 | Pipeline Interested Leads | Frontend | DONE | 5/5 ✅ | 069d400 |
-| US-012 | Activity log per lead | Frontend | TODO | 0/4 | - |
+| US-012 | Activity log per lead | Frontend | DONE | 4/4 ✅ | da59d42 |
 | US-013 | Dashboard CRM | Frontend | TODO | 0/5 | - |
 
 ---

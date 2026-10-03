@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-009: assign/reassign PIC satuan & massal dengan pencatatan audit trail
 - US-010: impor lead dari CSV (template, preview, lewati duplikat)
 - US-011: pipeline Interested Leads (Kanban drag-and-drop + tabel, tahap + kebutuhan)
+- US-012: activity log per lead (timeline catatan + perubahan, follow-up + badge Overdue)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal
