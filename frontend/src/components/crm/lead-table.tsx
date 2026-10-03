@@ -1,5 +1,7 @@
 "use client";
 
+import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { formatDate } from "@/lib/utils";
 import type { Lead, LeadStatus } from "@/types/lead";
+import type { LeadSortKey, SortDirection } from "@/services/leads";
 
 const STATUS_STYLES: Record<LeadStatus, string> = {
   New: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-300",
@@ -32,10 +35,42 @@ const STATUS_STYLES: Record<LeadStatus, string> = {
 interface LeadTableProps {
   leads: Lead[];
   onEdit: (lead: Lead) => void;
+  sortBy?: LeadSortKey;
+  sortDir?: SortDirection;
+  onSort?: (key: LeadSortKey) => void;
+}
+
+function SortButton({
+  label,
+  sortKey,
+  sortBy,
+  sortDir,
+  onSort,
+}: {
+  label: string;
+  sortKey: LeadSortKey;
+  sortBy?: LeadSortKey;
+  sortDir?: SortDirection;
+  onSort?: (key: LeadSortKey) => void;
+}) {
+  const active = sortBy === sortKey;
+  const Icon = !active ? ArrowUpDownIcon : sortDir === "asc" ? ArrowUpIcon : ArrowDownIcon;
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1 hover:text-foreground"
+      aria-label={`Urutkan ${label}`}
+      aria-pressed={active}
+      onClick={() => onSort?.(sortKey)}
+    >
+      {label}
+      <Icon className="size-3.5" aria-hidden="true" />
+    </button>
+  );
 }
 
 /** Tabel database lead dengan badge status berwarna (US-007, US-008). */
-export function LeadTable({ leads, onEdit }: LeadTableProps) {
+export function LeadTable({ leads, onEdit, sortBy, sortDir, onSort }: LeadTableProps) {
   return (
     <Card>
       <CardContent className="p-0">
@@ -43,11 +78,19 @@ export function LeadTable({ leads, onEdit }: LeadTableProps) {
           <TableHeader>
             <TableRow className="bg-muted/40">
               <TableHead className="px-4">ID</TableHead>
-              <TableHead>Perusahaan / Brand</TableHead>
+              <TableHead>
+                <SortButton label="Perusahaan / Brand" sortKey="companyName" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
+              </TableHead>
               <TableHead>Kontak</TableHead>
-              <TableHead>PIC</TableHead>
-              <TableHead>Tgl Hubungi</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>
+                <SortButton label="PIC" sortKey="picName" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
+              </TableHead>
+              <TableHead>
+                <SortButton label="Tgl Hubungi" sortKey="contactDate" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
+              </TableHead>
+              <TableHead>
+                <SortButton label="Status" sortKey="status" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
+              </TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>

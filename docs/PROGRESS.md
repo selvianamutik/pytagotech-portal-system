@@ -24,7 +24,7 @@
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
 | US-007 | Database Lead | Frontend | DONE | 6/6 ✅ | 98c62e1 |
-| US-008 | Pencarian, filter, dan pewarnaan status | Frontend | TODO | 0/5 | - |
+| US-008 | Pencarian, filter, dan pewarnaan status | Frontend | DONE | 5/5 ✅ | cbb3c07 |
 | US-009 | Penugasan PIC & bulk action | Frontend | TODO | 0/4 | - |
 | US-010 | Import lead dari CSV | Frontend | TODO | 0/5 | - |
 | US-011 | Pipeline Interested Leads | Frontend | TODO | 0/5 | - |

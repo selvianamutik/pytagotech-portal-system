@@ -118,3 +118,20 @@
 - **Acceptance Criteria:** 6/6 — form+tabel lengkap ✅ 7 status ✅ validasi WA/email ✅ peringatan duplikat ✅ lint/typecheck ✅ browser ✅
 - **Catatan/Masalah:** FR-6/FR-7 tetap TODO sampai backend (tabel + trigger + unique index).
 - **Langkah berikutnya:** US-008 (Pencarian, filter, pewarnaan status)
+
+---
+
+## 2026-10-04 08:00 — US-008 — Pencarian, filter, pewarnaan status (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-008-lead-filter
+- **Commit:** cbb3c07 — feat(frontend): filter, sort, paginasi lead US-008
+- **Yang dilakukan:**
+  - `queryLeads` di `services/leads.ts`: pencarian teks + filter status/PIC/industri/rentang tanggal + sort 4 kolom + paginasi
+  - Komponen `crm/lead-filters.tsx`; header tabel bisa diklik untuk sort; kontrol paginasi (5/halaman)
+  - Badge status berwarna konsisten sudah ada sejak US-007 (7 warna di `LeadTable`)
+- **File berubah:** services/leads.ts, services/lead-query.test.ts, components/crm/lead-filters.tsx, lead-table.tsx, leads-manager.tsx, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (57/57) · browser menyusul di sweep akhir EPIC B
+- **Acceptance Criteria:** 5/5 — filter multi-kriteria ✅ badge/baris berwarna ✅ sort + paginasi ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** -
+- **Langkah berikutnya:** US-009 (Penugasan PIC & bulk action)

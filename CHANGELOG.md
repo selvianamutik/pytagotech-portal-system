@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs/API.md: draft kontrak komentar/lampiran/notifikasi; docs/DECISIONS.md: DEC-008 (mention + demo)
 - US-007: database lead (mock) — form + tabel 7 status, validasi WA/email, peringatan duplikat, halaman `/crm/leads`
 - docs/API.md: draft kontrak CRM leads
+- US-008: pencarian, filter multi-kriteria, sort per kolom, paginasi di database lead
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal
