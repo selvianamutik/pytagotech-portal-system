@@ -1,10 +1,6 @@
 import { dashboardSnapshot } from "@/mocks/dashboard";
 import type { DashboardSnapshot } from "@/types/dashboard";
-
-export interface ServiceResult<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { ServiceResult } from "@/services/result";
 
 export async function getDashboardSnapshot(): Promise<ServiceResult<DashboardSnapshot>> {
   return {
