@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-019: proyek dari handover Dikonfirmasi (relasi dua arah, halaman detail)
 - US-020: daftar proyek (filter, progress otomatis, gerbang PM/Admin)
 - US-021: template task + generate otomatis (seed menunggu Q-005)
+- US-022: task board Kanban + List (sub-task, rollup %, komentar/lampiran)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal

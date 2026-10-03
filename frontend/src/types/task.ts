@@ -2,6 +2,18 @@
  * Kontrak Task (dibangun bertahap: US-020 membawa store minimal +
  * rollup progress; field penuh di US-022).
  */
+
+/** Status task sesuai PRD US-022. */
+export const TASK_STATUSES = [
+  "To Do",
+  "In Progress",
+  "Blocked",
+  "Review",
+  "Done",
+] as const;
+
+export type TaskStatus = (typeof TASK_STATUSES)[number];
+
 export interface TaskSummary {
   id: string;
   projectId: string;
@@ -17,6 +29,27 @@ export interface TaskSummary {
   assignee?: string;
   /** Task nonaktif disembunyikan dari board (US-021). */
   isActive?: boolean;
+  status: TaskStatus;
+  /** Catatan task. */
+  notes?: string;
+  /** Lampiran/link pendukung (URL atau teks). */
+  link?: string;
+}
+
+export interface TaskInput {
+  title?: string;
+  assignee?: string;
+  status?: TaskStatus;
+  startDate?: string;
+  targetDate?: string;
+  percent?: number;
+  notes?: string;
+  link?: string;
+  parentId?: string;
+}
+
+export function isTaskStatus(value: string): value is TaskStatus {
+  return (TASK_STATUSES as readonly string[]).includes(value);
 }
 
 /**

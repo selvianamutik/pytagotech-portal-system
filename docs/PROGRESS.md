@@ -52,7 +52,7 @@
 | US-019 | Pembuatan proyek dari handover | Frontend | DONE | 5/5 ✅ | 3a81d7e |
 | US-020 | Daftar proyek | Frontend | DONE | 4/4 ✅ | 7f2d81f |
 | US-021 | Template task otomatis | Frontend | DONE | 4/4 ✅ | 1aba6f4 |
-| US-022 | Task board (Kanban dan List) | Frontend | TODO | 0/6 | - |
+| US-022 | Task board (Kanban dan List) | Frontend | DONE | 6/6 ✅ | 965b175 |
 | US-023 | Backlog fitur | Frontend | TODO | 0/4 | - |
 | US-024 | Penjadwalan fitur otomatis | Frontend | TODO | 0/5 | - |
 | US-025 | Gantt chart interaktif | Frontend | TODO | 0/5 | - |

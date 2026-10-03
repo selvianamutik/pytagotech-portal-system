@@ -296,6 +296,7 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 | `generateTasksForProject(projectId, startDate)` (FR-16) | Task berurutan dari tanggal mulai; dipanggil otomatis saat proyek dibuat |
 | `getProjectProgress(projectId)` | Rata-rata task atas yang aktif |
 | `setTaskSummaryActive()` / `deleteTaskSummary()` | PM nonaktifkan/hapus hasil generate |
+| Task penuh (US-022, FR-17) | `addTaskSummary` (semua field) / `updateTaskSummary` / `moveTaskSummaryStatus` (Kanban) / `effectiveTaskPercent` (induk dari sub-task); komentar + lampiran via US-006 (`entityType: "task"`) |
 
 ---
 
