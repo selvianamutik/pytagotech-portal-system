@@ -55,6 +55,8 @@ describe("queryProjects", () => {
 describe("progress", () => {
   it("rata-rata task level atas; 0 bila tanpa task", async () => {
     const projectId = await seedProject();
+    // Bersihkan task hasil generate agar skenario terkendali.
+    resetMockTasks();
     expect((await queryProjects({})).data?.[0]?.progress).toBe(0);
 
     await addTaskSummary({ projectId, title: "A", percent: 100 });

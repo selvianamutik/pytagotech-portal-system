@@ -286,7 +286,16 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Task
 
-> _Akan didokumentasikan saat US-022 dimulai_
+> **Status:** Draft Fase 1 — store minimal + template (US-020/US-021).
+> CRUD penuh, Kanban, sub-task menyusul US-022.
+> `services/task-templates.ts`, halaman `/pengaturan/template-task` (Admin).
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listTaskTemplates()` / `createTaskTemplate()` / `updateTaskTemplate()` / `deleteTaskTemplate()` | Nama, urutan ≥1, durasi ≥1 hari; nonaktif dilewati generate |
+| `generateTasksForProject(projectId, startDate)` (FR-16) | Task berurutan dari tanggal mulai; dipanggil otomatis saat proyek dibuat |
+| `getProjectProgress(projectId)` | Rata-rata task atas yang aktif |
+| `setTaskSummaryActive()` / `deleteTaskSummary()` | PM nonaktifkan/hapus hasil generate |
 
 ---
 
