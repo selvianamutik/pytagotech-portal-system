@@ -1,4 +1,5 @@
 import { mockUsers } from "@/mocks/auth";
+import { isValidEmail } from "@/lib/validators";
 import type {
   AuthSession,
   CreateUserInput,
@@ -16,7 +17,6 @@ import type { ServiceResult } from "@/services/result";
  * Komponen HANYA boleh memanggil fungsi dari file ini.
  */
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 
 let userStore: PortalUser[] = structuredClone(mockUsers);
@@ -44,7 +44,7 @@ export async function login(
 ): Promise<ServiceResult<AuthSession>> {
   const email = input.email.trim().toLowerCase();
 
-  if (!EMAIL_PATTERN.test(email)) {
+  if (!isValidEmail(email)) {
     return { data: null, error: "Format email tidak valid." };
   }
   if (input.password.length < MIN_PASSWORD_LENGTH) {
@@ -80,7 +80,7 @@ export async function requestPasswordReset(
   email: string
 ): Promise<ServiceResult<string>> {
   const normalized = email.trim().toLowerCase();
-  if (!EMAIL_PATTERN.test(normalized)) {
+  if (!isValidEmail(normalized)) {
     return { data: null, error: "Format email tidak valid." };
   }
   const user = userStore.find((candidate) => candidate.email === normalized);
@@ -123,7 +123,7 @@ export async function createUser(
   if (name.length === 0) {
     return { data: null, error: "Nama wajib diisi." };
   }
-  if (!EMAIL_PATTERN.test(email)) {
+  if (!isValidEmail(email)) {
     return { data: null, error: "Format email tidak valid." };
   }
   if (input.roles.length === 0) {
