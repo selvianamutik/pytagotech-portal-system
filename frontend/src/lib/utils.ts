@@ -82,3 +82,17 @@ export function formatCurrency(value: number): string {
     minimumFractionDigits: 0,
   }).format(value);
 }
+
+/**
+ * Format ukuran file ke satuan terbaca (B, KB, MB)
+ * @example formatFileSize(1536) → "1.5 KB"
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
