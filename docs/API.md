@@ -70,9 +70,44 @@ interface DashboardSnapshot {
 
 ## Modul: Users & Roles
 
-> _Akan didokumentasikan saat US-002 dimulai_
+> **Status:** Draft Fase 1 (US-002) — mock di `frontend/src/mocks/auth.ts`,
+> diakses via `frontend/src/services/auth.ts`, tipe di `frontend/src/types/auth.ts`,
+> state sesi di `frontend/src/store/auth.ts` (Zustand).
+> Fase 2: login/logout/reset diganti Supabase Auth; CRUD user memakai tabel
+> `profiles` + `user_roles` dengan RLS (US-003).
+
+### Auth
+
+| Fungsi service | Setara Supabase (Fase 2) | Deskripsi |
+|----------------|--------------------------|-----------|
+| `login({email, password}) → AuthSession` | `signInWithPassword` | Validasi format email + password min 8; pesan error generik |
+| `logout() → true` | `signOut` | Menghapus sesi |
+| `requestPasswordReset(email) → string` | `resetPasswordForEmail` | Pesan tautan reset (mock) |
+| `getSession() → AuthSession \| null` | `getSession` + middleware | Sumber state `store/auth` |
+
+### Manajemen user (khusus Super Admin, halaman `/pengaturan/pengguna`)
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listUsers() → PortalUser[]` | Termasuk user nonaktif (dengan badge) |
+| `createUser({name, email, roles}) → PortalUser` | Email unik; minimal 1 role valid dari `PORTAL_ROLES` |
+| `updateUserRoles(id, roles)` | Minimal 1 role; Super Admin terakhir yang aktif tidak bisa dicabut |
+| `setUserActive(id, active, actorId?)` | Tidak bisa menonaktifkan akun sendiri; tidak bisa menonaktifkan Super Admin terakhir |
+
+```ts
+type UserRole = "Super Admin" | "Executive / Leader" | "Sales / Marketing"
+  | "Project Manager" | "Developer" | "Social Media Specialist"
+  | "Graphic Designer / Video Editor / Copywriter";
+
+interface PortalUser { id: string; name: string; email: string; roles: UserRole[]; isActive: boolean; createdAt: string; }
+interface AuthSession { user: PortalUser; expiresAt: string; }
+```
+
+Halaman tanpa izin menampilkan konten 403 (`/403`, komponen `RequireRole`), bukan data kosong.
 
 ---
+
+## Modul: Master Data
 
 ## Modul: Master Data
 
