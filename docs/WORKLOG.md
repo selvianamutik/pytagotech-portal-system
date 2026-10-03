@@ -335,3 +335,20 @@
 - **Verifikasi:** build ✅ browser ✅
 - **Catatan/Masalah:** FR-9/FR-11/FR-12/FR-13/FR-14 tetap TODO sampai backend Fase 2. Q-012 (SOP panel) masih OPEN.
 - **Langkah berikutnya:** EPIC D / US-019 (Pembuatan proyek dari handover)
+
+---
+
+## 2026-10-04 14:30 — US-019 — Pembuatan proyek dari handover (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-019-proyek-handover
+- **Commit:** 3a81d7e — feat(frontend): proyek dari handover US-019
+- **Yang dilakukan:**
+  - Kontrak `types/project.ts`: 5 status, satu PM (Q-001 A)
+  - `services/projects.ts`: create dari Dikonfirmasi + anti ganda + validasi PM/tanggal; relasi dua arah
+  - Tombol "Buat Proyek" di detail handover (dialog PM + mulai) + seksi proyek tertaut; halaman detail `/proyek/[id]`
+- **File berubah:** types/project, services/projects(.test), components/proyek/*, components/handover/handover-detail, app/proyek/[id], docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (116/116) · browser menyusul di sweep akhir EPIC D
+- **Acceptance Criteria:** 5/5 — salin tanpa input ulang ✅ field + 5 status ✅ relasi dua arah ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-15 tetap TODO sampai backend. Fitur handover dibaca backlog US-023 dari handover tertaut.
+- **Langkah berikutnya:** US-020 (Daftar proyek)

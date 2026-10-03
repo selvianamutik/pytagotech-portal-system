@@ -268,7 +268,16 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Proyek
 
-> _Akan didokumentasikan saat US-019 dimulai_
+> **Status:** Draft Fase 1 (US-019) — mock di `services/projects.ts`
+> (`mockProjects` kosong; proyek lahir dari handover), tipe `types/project.ts`.
+> Halaman detail `/proyek/[id]`; daftar menyusul US-020.
+> Fase 2: tabel `projects` (satu PM per proyek, Q-001 A).
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `createProjectFromHandover(handoverId, {pmName, startDate})` (FR-15) | Hanya dari Dikonfirmasi; salin nama/kode/klien/nilai/deadline; 1 handover = 1 proyek; PM dari daftar; mulai ≤ deadline |
+| `listProjects()` / `getProject(id)` | Dilengkapi nama klien + kode handover (relasi dua arah) |
+| `listProjectManagers()` | PM + Super Admin aktif |
 
 ---
 
