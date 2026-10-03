@@ -10,10 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Inisialisasi struktur proyek (Fase 0)
-- Dokumen: README, CHANGELOG, .env.example, struktur folder docs/
-- PRD dipindahkan ke `tasks/`
-- Dokumentasi awal: PROGRESS, WORKLOG, DECISIONS, QUESTIONS, API, DEPLOYMENT, CHANGE_REQUESTS
+- US-001: fondasi frontend — layout dashboard (sidebar per modul + header user menu), tema light/dark, komponen shadcn/ui dasar (Button, Input, Select, Table, Dialog, Tabs, Badge, Toast), Supabase client (browser/server), kontrak data `DashboardSnapshot` via lapisan `services/` + mock terpisah
+- docs/API.md: draft kontrak `getDashboardSnapshot` (US-001)
+
+### Chore
+- Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal
 
 ---
 

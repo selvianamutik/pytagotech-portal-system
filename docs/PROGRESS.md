@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-04  
-> **Fase saat ini:** Fase 0 — Setup & Perencanaan  
+> **Fase saat ini:** Fase 1 — Frontend (US-001 DONE, berikutnya US-002)  
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -10,7 +10,7 @@
 
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
-| US-001 | Setup proyek & desain sistem | Frontend | TODO | 0/6 | - |
+| US-001 | Setup proyek & desain sistem | Frontend | DONE | 6/6 ✅ | lihat WORKLOG 2026-10-04 |
 | US-002 | Autentikasi & manajemen user | Frontend | TODO | 0/6 | - |
 | US-003 | Row Level Security per role | Backend | TODO | 0/4 | - |
 | US-004 | Audit trail | Backend | TODO | 0/5 | - |
@@ -141,7 +141,7 @@
 
 | Gate | Deskripsi | Status |
 |------|-----------|--------|
-| Gate 0 | Fase 0 selesai: proyek jalan kosong, lint/typecheck lolos | IN_PROGRESS |
+| Gate 0 | Fase 0 selesai: proyek jalan kosong, lint/typecheck lolos | DONE |
 | Gate 1 | Frontend selesai: semua UI dengan mock, kontrak API draft | TODO |
 | Gate 2 | Backend selesai: semua US & FR DONE, mock diganti API | TODO |
 | Gate 3 | Deploy Ready: build produksi bersih, dokumentasi lengkap | TODO |
