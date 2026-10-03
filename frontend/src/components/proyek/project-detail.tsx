@@ -172,6 +172,12 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
       <ProjectTasks projectId={project.id} />
 
+      <div>
+        <Button type="button" render={<Link href={`/proyek/${project.id}/tasks`} />}>
+          Buka Task Board
+        </Button>
+      </div>
+
       {editing ? (
         <Card>
           <CardHeader className="border-b">

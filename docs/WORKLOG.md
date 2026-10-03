@@ -387,3 +387,19 @@
 - **Acceptance Criteria:** 4/4 — kelola template ✅ generate otomatis ✅ nonaktifkan/hapus ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-16 tetap TODO sampai backend. Isi template menunggu Q-005.
 - **Langkah berikutnya:** US-022 (Task board)
+
+---
+
+## 2026-10-04 16:00 — US-022 — Task board (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-022-task-board
+- **Commit:** 965b175 — feat(frontend): task board Kanban + List US-022
+- **Yang dilakukan:**
+  - Field penuh task (5 status, assignee, tanggal, %, catatan, link) + sub-task + rollup `%` induk + hapus beserta anak
+  - `TaskBoard`: Kanban drag-and-drop 5 kolom + List (cari/filter) + dialog (detail, sub-task, komentar, lampiran); halaman `/proyek/[id]/tasks`; tautan dari detail proyek
+- **File berubah:** types/task, services/tasks(.test board), components/proyek/task-board, app/proyek/[id]/tasks, components/proyek/project-detail, services/projects-query.test (rollup induk), docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (128/128) · browser menyusul di sweep akhir EPIC D
+- **Acceptance Criteria:** 6/6 — field ✅ Kanban + List ✅ sub-task + rollup ✅ komentar/lampiran ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-17 tetap TODO sampai backend.
+- **Langkah berikutnya:** US-023 (Backlog fitur)

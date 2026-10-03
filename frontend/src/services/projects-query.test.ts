@@ -63,8 +63,8 @@ describe("progress", () => {
     await addTaskSummary({ projectId, title: "B", percent: 50 });
     await addTaskSummary({ projectId, title: "B-1", percent: 0, parentId: "TSK-002" });
 
-    // Sub-task tidak dihitung langsung (level atas: 100 & 50 → 75).
-    expect((await queryProjects({})).data?.[0]?.progress).toBe(75);
+    // % induk dihitung dari sub-task: B = 0 → (100 + 0) / 2 = 50.
+    expect((await queryProjects({})).data?.[0]?.progress).toBe(50);
   });
 });
 
