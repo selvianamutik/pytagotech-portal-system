@@ -420,3 +420,19 @@
 - **Acceptance Criteria:** 4/4 — field ✅ impor otomatis ✅ jadi task ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** estimasi impor default 1 hari (PM menyesuaikan di US-024).
 - **Langkah berikutnya:** US-024 (Penjadwalan otomatis)
+
+---
+
+## 2026-10-04 17:00 — US-024 — Penjadwalan otomatis (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-024-penjadwalan
+- **Commit:** 29e7f2c — feat(frontend): penjadwalan fitur US-024
+- **Yang dilakukan:**
+  - `services/scheduling.ts`: kalender kerja (Sen–Jumat + libur), durasi dari estimasi × kapasitas, urutan prioritas, berurutan per developer, deteksi bentrok, override beralasan, pengaturan tersimpan
+  - `FeatureScheduleSection` di detail proyek (jadwal + override + kalender/kapasitas)
+- **File berubah:** types/feature, services/scheduling(.test), services/features (writeFeatureSchedule), components/proyek (feature-schedule, detail), docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (139/139) · browser menyusul di sweep akhir EPIC D
+- **Acceptance Criteria:** 5/5 — jadwal otomatis ✅ kapasitas ✅ bentrok ✅ override ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-18 tetap TODO sampai backend.
+- **Langkah berikutnya:** US-025 (Gantt chart)

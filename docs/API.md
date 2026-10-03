@@ -300,6 +300,19 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Penjadwalan Fitur
+
+> **Status:** Draft Fase 1 (US-024) — `services/scheduling.ts`.
+> Penjadwalan di halaman detail proyek. Fase 2: kolom jadwal di tabel `features`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| `scheduleProjectFeatures(projectId)` (FR-18) | Prioritas High→Low; durasi = ceil(estimasi × 8/kapasitas); hari kerja Sen–Jumat − libur; berurutan per developer; bentrok ditandai |
+| `overrideFeatureSchedule(featureId, {startDate, endDate, reason})` | Alasan wajib; dapat memicu bentrok |
+| `getScheduleSettings()` / `setScheduleSettings()` | Hari libur + kapasitas jam/hari per developer |
+
+---
+
 ## Modul: Fitur (Backlog)
 
 > **Status:** Draft Fase 1 (US-023) — `services/features.ts`, tipe `types/feature.ts`.

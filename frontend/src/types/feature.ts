@@ -22,6 +22,11 @@ export interface ProjectFeature {
   source: "handover" | "manual";
   /** Task hasil konversi (US-023: fitur → task). */
   taskId?: string;
+  /** Jadwal otomatis (US-024, YYYY-MM-DD). */
+  scheduledStart?: string;
+  scheduledEnd?: string;
+  /** Override manual + alasan (US-024). */
+  scheduleOverride?: { startDate: string; endDate: string; reason: string };
   createdAt: string;
 }
 
