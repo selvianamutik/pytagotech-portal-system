@@ -117,3 +117,45 @@ export function termAmount(term: { kind: "percent" | "amount"; value: number }, 
 export function isTermStatus(value: string): value is TermStatus {
   return (TERM_STATUSES as readonly string[]).includes(value);
 }
+
+/** Jenis change request (FR-14). */
+export const CR_KINDS = [
+  "negosiasi",
+  "penambahan fitur",
+  "percepatan waktu",
+  "penyesuaian harga",
+] as const;
+
+export type ChangeRequestKind = (typeof CR_KINDS)[number];
+
+export const CR_STATUSES = ["Diajukan", "Disetujui", "Ditolak"] as const;
+
+export type ChangeRequestStatus = (typeof CR_STATUSES)[number];
+
+export interface ChangeRequest {
+  /** Display ID (CR-xxx). */
+  id: string;
+  dealId: string;
+  kind: ChangeRequestKind;
+  description: string;
+  /** Dampak nilai deal (IDR) — null bila tidak berubah. */
+  valueImpact: number | null;
+  /** Dampak deadline (YYYY-MM-DD) — null bila tidak berubah. */
+  deadlineImpact: string | null;
+  status: ChangeRequestStatus;
+  createdById: string;
+  createdByName: string;
+  createdAt: string;
+  decidedAt: string | null;
+}
+
+export interface CreateChangeRequestInput {
+  kind: string;
+  description: string;
+  valueImpact?: number | null;
+  deadlineImpact?: string | null;
+}
+
+export function isChangeRequestKind(value: string): value is ChangeRequestKind {
+  return (CR_KINDS as readonly string[]).includes(value);
+}
