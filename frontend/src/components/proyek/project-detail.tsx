@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/crm/lead-table";
+import { ProjectTasks } from "@/components/proyek/project-tasks";
 import {
   canManageProjects,
   getProject,
@@ -168,6 +169,8 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
           Hanya PM dan Admin yang dapat mengubah proyek.
         </p>
       ) : null}
+
+      <ProjectTasks projectId={project.id} />
 
       {editing ? (
         <Card>

@@ -1,6 +1,7 @@
 import { mockUsers } from "@/mocks/auth";
 import { listClients } from "@/services/clients";
 import { getDeal } from "@/services/deals";
+import { generateTasksForProject } from "@/services/task-templates";
 import { getProjectProgress } from "@/services/tasks";
 import type { PortalUser } from "@/types/auth";
 import type { CreateProjectInput, Project } from "@/types/project";
@@ -174,6 +175,8 @@ export async function createProjectFromHandover(
     updatedAt: now,
   };
   projectStore.push(project);
+  // Task standar ter-generate otomatis dari template (US-021, FR-16).
+  await generateTasksForProject(project.id, project.startDate);
   return { data: { ...project }, error: null };
 }
 

@@ -15,13 +15,39 @@ export function resetMockTasks(): void {
 }
 
 export async function addTaskSummary(
-  input: Omit<TaskSummary, "id">
+  input: Omit<TaskSummary, "id" | "percent" | "isActive"> & {
+    percent?: number;
+    isActive?: boolean;
+  }
 ): Promise<ServiceResult<TaskSummary>> {
   const task: TaskSummary = {
+    isActive: true,
+    percent: 0,
     ...input,
     id: `TSK-${String(taskStore.length + 1).padStart(3, "0")}`,
   };
   taskStore.push(task);
+  return { data: { ...task }, error: null };
+}
+
+export async function deleteTaskSummary(taskId: string): Promise<ServiceResult<true>> {
+  const index = taskStore.findIndex((task) => task.id === taskId);
+  if (index === -1) {
+    return { data: null, error: "Task tidak ditemukan." };
+  }
+  taskStore.splice(index, 1);
+  return { data: true, error: null };
+}
+
+export async function setTaskSummaryActive(
+  taskId: string,
+  isActive: boolean
+): Promise<ServiceResult<TaskSummary>> {
+  const task = taskStore.find((item) => item.id === taskId);
+  if (!task) {
+    return { data: null, error: "Task tidak ditemukan." };
+  }
+  task.isActive = isActive;
   return { data: { ...task }, error: null };
 }
 
@@ -35,12 +61,14 @@ export async function listTaskSummaries(
 }
 
 /**
- * Progress proyek = rata-rata % task level atas (tanpa parent).
+ * Progress proyek = rata-rata % task level atas yang aktif.
  * US-022: % induk dihitung dari sub-task sebelum dirata-rata.
  */
 export async function getProjectProgress(projectId: string): Promise<number> {
   const { data } = await listTaskSummaries(projectId);
-  const topLevel = (data ?? []).filter((task) => !task.parentId);
+  const topLevel = (data ?? []).filter(
+    (task) => !task.parentId && task.isActive !== false
+  );
   if (topLevel.length === 0) {
     return 0;
   }

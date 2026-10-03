@@ -369,3 +369,21 @@
 - **Acceptance Criteria:** 4/4 — tabel + filter ✅ progress otomatis ✅ guard PM/Admin ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-021 (Template task)
+
+---
+
+## 2026-10-04 15:30 — US-021 — Template task (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-021-template-task
+- **Commit:** 1aba6f4 — feat(frontend): template task + generate US-021
+- **Yang dilakukan:**
+  - Perluas `TaskSummary` (tanggal, assignee, isActive); tipe `TaskTemplate`
+  - `services/task-templates.ts`: CRUD + generate berurutan dari tanggal mulai; hook otomatis di `createProjectFromHandover`
+  - Seed placeholder eksplisit menunggu Q-005 (tetap OPEN)
+  - Halaman `/pengaturan/template-task` (Admin) + seksi task di detail proyek (nonaktifkan/hapus, gerbang PM)
+- **File berubah:** types/task, mocks/task-templates, services/task-templates(.test), services/tasks, services/projects, components/proyek (template-manager, project-tasks, detail), app/pengaturan/template-task, mocks/dashboard, services/projects-query.test, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (125+/125+) · browser menyusul di sweep akhir EPIC D
+- **Acceptance Criteria:** 4/4 — kelola template ✅ generate otomatis ✅ nonaktifkan/hapus ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-16 tetap TODO sampai backend. Isi template menunggu Q-005.
+- **Langkah berikutnya:** US-022 (Task board)
