@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-04  
-> **Fase saat ini:** Fase 1 — Frontend (US-001, US-002, US-006, US-007 DONE; berikutnya US-008)
+> **Fase saat ini:** Fase 1 — Frontend (EPIC A fondasi + EPIC B CRM DONE; berikutnya EPIC C / US-014)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---

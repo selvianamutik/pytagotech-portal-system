@@ -221,3 +221,17 @@
 - **Acceptance Criteria:** 5/5 — KPI ✅ rumus di tooltip ✅ tabel per PIC ✅ filter periode ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** definisi Outreach = tanggal hubungi dalam periode (terdokumentasi di API + tooltip).
 - **Langkah berikutnya:** Sweep verifikasi akhir EPIC B (build + browser semua route)
+
+---
+
+## 2026-10-04 11:00 — EPIC B — Sweep verifikasi akhir (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** develop
+- **Yang dilakukan:**
+  - `next build` bersih: 9 route static (`/`, `/403`, `/crm/dashboard`, `/crm/interested`, `/crm/leads`, `/demo/kolaborasi`, `/login`, `/notifikasi`, `/pengaturan/pengguna`)
+  - `next start` + fetch semua route: 200 semua; penanda konten terkonfirmasi (`/login` me-render state loading guard, form muncul setelah hidrasi — sama seperti verifikasi US-002)
+  - EPIC B lengkap: US-007–US-013 DONE (US-008–US-013 masing-masing lint ✅ typecheck ✅ test ✅; total 83/83)
+- **Verifikasi:** build ✅ browser ✅
+- **Catatan/Masalah:** FR-6/FR-7/FR-8/FR-10 tetap TODO sampai backend Fase 2.
+- **Langkah berikutnya:** EPIC C / US-014 (Master Klien)
