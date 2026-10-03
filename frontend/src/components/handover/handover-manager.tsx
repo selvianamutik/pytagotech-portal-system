@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -33,13 +34,13 @@ const STATUS_STYLES: Record<string, string> = {
 /**
  * Halaman Deal Handover (US-015): tabel + form dengan nama proyek
  * terformat otomatis `[Judul] - [Klien] ([Kode])`.
+ * Ubah, termin, dan status dikelola di halaman detail.
  */
 export function HandoverManager() {
   const [deals, setDeals] = useState<DealWithClient[]>([]);
   const [clients, setClients] = useState<{ id: string; companyName: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<DealWithClient | null>(null);
 
   async function refresh() {
     const [dealsResult, clientsResult] = await Promise.all([listDeals(), listClients()]);
@@ -97,13 +98,7 @@ export function HandoverManager() {
             Kesepakatan Sales → Produksi. Handover Dikonfirmasi menjadi proyek (US-019).
           </p>
         </div>
-        <Button
-          type="button"
-          onClick={() => {
-            setEditTarget(null);
-            setDialogOpen(true);
-          }}
-        >
+        <Button type="button" onClick={() => setDialogOpen(true)}>
           <PlusIcon aria-hidden="true" /> Buat handover
         </Button>
       </div>
@@ -144,18 +139,9 @@ export function HandoverManager() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        disabled={deal.status === "Dikonfirmasi"}
-                        title={
-                          deal.status === "Dikonfirmasi"
-                            ? "Hanya bisa diubah via change request"
-                            : undefined
-                        }
-                        onClick={() => {
-                          setEditTarget({ deal, clientName, displayName });
-                          setDialogOpen(true);
-                        }}
+                        render={<Link href={`/handover/${deal.id}`} />}
                       >
-                        Ubah
+                        Buka
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -168,10 +154,10 @@ export function HandoverManager() {
 
       {dialogOpen ? (
         <HandoverForm
-          key={editTarget ? `edit-${editTarget.deal.id}` : "create"}
+          key="create"
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          initial={editTarget?.deal ?? null}
+          initial={null}
           clients={clients}
           onSaved={() => void refresh()}
         />

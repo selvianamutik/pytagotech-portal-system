@@ -39,7 +39,7 @@
 |----|-------|------|--------|--------------|------------|
 | US-014 | Master Klien | Frontend | DONE | 5/5 ✅ | 21cf55d |
 | US-015 | Form Deal Handover | Frontend | DONE | 6/6 ✅ | 753e989 |
-| US-016 | Termin pembayaran | Frontend | TODO | 0/5 | - |
+| US-016 | Termin pembayaran | Frontend | DONE | 5/5 ✅ | 91a9fb0 |
 | US-017 | Konfirmasi Produksi atas handover | Frontend | TODO | 0/5 | - |
 | US-018 | Change request & catatan khusus | Frontend | TODO | 0/4 | - |
 

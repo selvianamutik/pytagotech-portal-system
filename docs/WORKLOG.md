@@ -269,3 +269,20 @@
 - **Acceptance Criteria:** 6/6 — field lengkap ✅ nama otomatis ✅ kode unik + wajib isi ✅ panel panduan ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-11 tetap TODO sampai backend.
 - **Langkah berikutnya:** US-016 (Termin pembayaran)
+
+---
+
+## 2026-10-04 12:30 — US-016 — Termin pembayaran (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-016-termin
+- **Commit:** 91a9fb0 — feat(frontend): termin pembayaran US-016
+- **Yang dilakukan:**
+  - Tipe `PaymentTerm` (%/nominal, tempo tanggal/milestone, 3 status) + `termAmount`
+  - `services/deal-terms.ts`: `listTerms` (+total & seimbang), `replaceTerms` set-based (menolak bila total ≠ nilai deal + pesan selisih), `updateTermStatus`
+  - `TermsEditor` (baris dinamis, banner seimbang live, status per termin) + halaman detail `/handover/[id]` (ringkasan + termin); tabel handover menaut ke detail
+- **File berubah:** types/deal, mocks/deal-terms, services/deal-terms(.test), components/handover (terms-editor, detail, manager), app/handover/[id], docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (105/105) · browser menyusul di sweep akhir EPIC C
+- **Acceptance Criteria:** 5/5 — banyak termin ✅ total = deal ✅ 3 status ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-12 tetap TODO sampai backend. Termin Dikonfirmasi terkunci kecuali via CR (US-018).
+- **Langkah berikutnya:** US-017 (Konfirmasi Produksi)

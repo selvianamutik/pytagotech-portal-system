@@ -77,3 +77,43 @@ export function formatDealName(title: string, clientName: string, code: string):
 export function isHandoverStatus(value: string): value is HandoverStatus {
   return (HANDOVER_STATUSES as readonly string[]).includes(value);
 }
+
+/** Status pembayaran per termin (FR-12). */
+export const TERM_STATUSES = ["Belum Ditagih", "Ditagih", "Lunas"] as const;
+
+export type TermStatus = (typeof TERM_STATUSES)[number];
+
+export interface PaymentTerm {
+  /** Display ID (TRM-xxx). */
+  id: string;
+  dealId: string;
+  name: string;
+  /** percent = % nilai deal; amount = nominal IDR. */
+  kind: "percent" | "amount";
+  value: number;
+  /** Tanggal/milestone jatuh tempo (salah satu atau keduanya). */
+  dueDate?: string;
+  milestone?: string;
+  status: TermStatus;
+}
+
+export interface PaymentTermInput {
+  id?: string;
+  name: string;
+  kind: "percent" | "amount";
+  value: number;
+  dueDate?: string;
+  milestone?: string;
+}
+
+/** Nominal rupiah satu termin terhadap nilai deal. */
+export function termAmount(term: { kind: "percent" | "amount"; value: number }, dealValue: number): number {
+  if (term.kind === "percent") {
+    return Math.round((dealValue * term.value) / 100);
+  }
+  return term.value;
+}
+
+export function isTermStatus(value: string): value is TermStatus {
+  return (TERM_STATUSES as readonly string[]).includes(value);
+}

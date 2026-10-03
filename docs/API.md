@@ -227,6 +227,20 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Termin Pembayaran
+
+> **Status:** Draft Fase 1 (US-016) — mock di `frontend/src/mocks/deal-terms.ts`,
+> diakses via `frontend/src/services/deal-terms.ts`. Editor di halaman detail
+> `/handover/[id]`. Fase 2: tabel `deal_payment_terms`.
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listTerms(dealId)` | Termin + `{totalAmount, dealValue, balanced}` |
+| `replaceTerms(dealId, inputs)` (FR-12) | Simpan set: tiap baris wajib nama + nilai + tempo (tanggal/milestone); **total wajib = nilai deal** — ditolak dengan pesan selisih; status lama dipertahankan per id; terkunci bila Dikonfirmasi |
+| `updateTermStatus(termId, status)` | Belum Ditagih / Ditagih / Lunas |
+
+---
+
 ## Modul: Proyek
 
 > _Akan didokumentasikan saat US-019 dimulai_
