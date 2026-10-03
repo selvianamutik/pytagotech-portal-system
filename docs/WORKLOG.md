@@ -286,3 +286,21 @@
 - **Acceptance Criteria:** 5/5 — banyak termin ✅ total = deal ✅ 3 status ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-12 tetap TODO sampai backend. Termin Dikonfirmasi terkunci kecuali via CR (US-018).
 - **Langkah berikutnya:** US-017 (Konfirmasi Produksi)
+
+---
+
+## 2026-10-04 13:00 — US-017 — Konfirmasi Produksi (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-017-konfirmasi
+- **Commit:** d1455b3 — feat(frontend): alur konfirmasi handover US-017
+- **Yang dilakukan:**
+  - `setDealStatus` di `services/deals.ts` (tanpa siklus import)
+  - `services/deal-workflow.ts`: alur valid, gate termin seimbang, putusan PM, komentar wajib revisi, notifikasi + audit; komentar PM tersimpan sebagai komentar deal (US-006 reusable, tipe `deal` baru)
+  - `pushNotification` di `services/collaboration.ts`
+  - `HandoverStatusActions` di halaman detail
+- **File berubah:** services/deals, services/deal-workflow(.test), services/collaboration, types/collaboration, components/handover (status, detail), docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (108/108) · browser menyusul di sweep akhir EPIC C
+- **Acceptance Criteria:** 5/5 — alur status ✅ putusan PM + komentar ✅ notifikasi ✅ Dikonfirmasi-gate (US-019) ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-13 tetap TODO sampai backend.
+- **Langkah berikutnya:** US-018 (Change request)

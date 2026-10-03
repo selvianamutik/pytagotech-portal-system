@@ -214,9 +214,38 @@ export async function deleteAttachment(
   return { data: true, error: null };
 }
 
-export async function listNotifications(): Promise<
-  ServiceResult<NotificationItem[]>
-> {
+export interface PushNotificationInput {
+  type: NotificationItem["type"];
+  title: string;
+  message: string;
+  entityType?: NotificationItem["entityType"];
+  entityId?: string;
+  actorName?: string;
+}
+
+/**
+ * Buat notifikasi in-app manual (dipakai alur handover US-017, dsb.).
+ * Fase 2: dipicu otomatis via Supabase Realtime.
+ */
+export async function pushNotification(
+  input: PushNotificationInput
+): Promise<ServiceResult<NotificationItem>> {
+  const notification: NotificationItem = {
+    id: nextId("NTF", notificationStore.length + 100),
+    type: input.type,
+    title: input.title,
+    message: input.message,
+    entityType: input.entityType,
+    entityId: input.entityId,
+    actorName: input.actorName,
+    isRead: false,
+    createdAt: new Date().toISOString(),
+  };
+  notificationStore.unshift(notification);
+  return { data: { ...notification }, error: null };
+}
+
+export async function listNotifications(): Promise<ServiceResult<NotificationItem[]>> {
   return {
     data: [...notificationStore]
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
