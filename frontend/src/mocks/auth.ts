@@ -47,4 +47,20 @@ export const mockUsers: PortalUser[] = [
     isActive: false,
     createdAt: "2026-09-05T02:00:00Z",
   },
+  {
+    id: "USR-006",
+    name: "Fira",
+    email: "fira@pytagotech.test",
+    roles: ["Sales / Marketing"],
+    isActive: true,
+    createdAt: "2026-09-06T02:00:00Z",
+  },
+  {
+    id: "USR-007",
+    name: "Figo",
+    email: "figo@pytagotech.test",
+    roles: ["Sales / Marketing"],
+    isActive: true,
+    createdAt: "2026-09-07T02:00:00Z",
+  },
 ];

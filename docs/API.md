@@ -117,7 +117,25 @@ Halaman tanpa izin menampilkan konten 403 (`/403`, komponen `RequireRole`), buka
 
 ## Modul: CRM — Leads
 
-> _Akan didokumentasikan saat US-007 dimulai_
+> **Status:** Draft Fase 1 (US-007) — mock di `frontend/src/mocks/leads.ts`,
+> diakses via `frontend/src/services/leads.ts`, tipe di `frontend/src/types/lead.ts`.
+> Halaman `/crm/leads` (tabel + form tambah/ubah). Validator format bersama di
+> `frontend/src/lib/validators.ts` (dipakai ulang service auth).
+> Fase 2: tabel `leads` + trigger display ID `LEAD-xxx` + unique index WhatsApp.
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listLeads()` | Terurut tanggal hubungi terbaru |
+| `getLead(id)` | Error jika tidak dikenal |
+| `createLead(input)` | Field wajib: perusahaan, industri (`INDUSTRY_CATEGORIES`), WhatsApp, email, PIC, status, tanggal; Instagram opsional (`@nama`); **peringatan duplikat non-blokir** via WhatsApp ternormalisasi atau nama perusahaan |
+| `updateLead(id, partial)` | Validasi ulang field yang diubah; duplikat mengecualikan diri sendiri |
+| `findDuplicates(whatsapp, companyName, excludeId?)` | Deteksi FR-7 |
+| `listLeadPICs()` | User aktif (dropdown PIC) |
+
+```ts
+type LeadStatus = "New" | "Contacted" | "Follow Up" | "Interest" | "Not Interested" | "Lost" | "Closing";
+interface Lead { id: string; contactDate: string; companyName: string; industry: IndustryCategory; whatsapp: string; instagram: string; email: string; picName: string; status: LeadStatus; createdAt: string; updatedAt: string; }
+```
 
 ---
 

@@ -86,8 +86,8 @@ describe("requestPasswordReset", () => {
 describe("manajemen user", () => {
   it("membuat user baru dengan banyak role", async () => {
     const result = await createUser({
-      name: "Figo",
-      email: "figo@pytagotech.test",
+      name: "Gilang",
+      email: "gilang@pytagotech.test",
       roles: ["Sales / Marketing", "Executive / Leader"],
     });
 
@@ -95,7 +95,7 @@ describe("manajemen user", () => {
     expect(result.data?.roles).toHaveLength(2);
 
     const list = await listUsers();
-    expect(list.data).toHaveLength(6);
+    expect(list.data).toHaveLength(8);
   });
 
   it("menolak email duplikat dan role kosong", async () => {

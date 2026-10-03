@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs/API.md: draft kontrak auth & manajemen user; docs/DECISIONS.md: DEC-007 (mock-first auth)
 - US-006: kolaborasi reusable (mock) — komentar + @mention → notifikasi, lampiran + batas ukuran, bell + halaman `/notifikasi`, galeri `/demo/kolaborasi`
 - docs/API.md: draft kontrak komentar/lampiran/notifikasi; docs/DECISIONS.md: DEC-008 (mention + demo)
+- US-007: database lead (mock) — form + tabel 7 status, validasi WA/email, peringatan duplikat, halaman `/crm/leads`
+- docs/API.md: draft kontrak CRM leads
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal
