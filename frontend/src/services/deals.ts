@@ -200,8 +200,7 @@ export async function updateDeal(
 /**
  * Tulis status handover langsung (dipakai workflow US-017 yang memiliki
  * validasi alurnya sendiri). Tidak untuk form — form memakai updateDeal.
- */
-export async function setDealStatus(
+ */export async function setDealStatus(
   dealId: string,
   status: HandoverStatus
 ): Promise<ServiceResult<DealHandover>> {
@@ -214,5 +213,40 @@ export async function setDealStatus(
   }
   deal.status = status;
   deal.updatedAt = new Date().toISOString();
+  return { data: structuredClone(deal), error: null };
+}
+
+export interface ApprovedChangeImpacts {
+  value: number | null;
+  deadline: string | null;
+  note: string;
+}
+
+/**
+ * Terapkan CR yang Disetujui (US-018, FR-14): perbarui nilai/deadline
+ * + tambah entri riwayat versi. Satu-satunya jalur ubah deal Dikonfirmasi.
+ */
+export async function applyApprovedChangeRequest(
+  dealId: string,
+  impacts: ApprovedChangeImpacts
+): Promise<ServiceResult<DealHandover>> {
+  const deal = dealStore.find((item) => item.id === dealId);
+  if (!deal) {
+    return { data: null, error: "Deal handover tidak ditemukan." };
+  }
+  if (impacts.value !== null) {
+    deal.value = impacts.value;
+  }
+  if (impacts.deadline) {
+    deal.deadline = impacts.deadline;
+  }
+  deal.updatedAt = new Date().toISOString();
+  deal.versions.push({
+    version: deal.versions.length + 1,
+    value: deal.value,
+    deadline: deal.deadline,
+    note: impacts.note,
+    createdAt: new Date().toISOString(),
+  });
   return { data: structuredClone(deal), error: null };
 }

@@ -241,6 +241,20 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Change Request
+
+> **Status:** Draft Fase 1 (US-018) — mock di `frontend/src/mocks/change-requests.ts`,
+> diakses via `frontend/src/services/change-requests.ts`. Log + riwayat versi
+> di halaman detail `/handover/[id]`. Fase 2: tabel `change_requests`.
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listChangeRequests(dealId)` | Log per deal |
+| `createChangeRequest(dealId, input, author)` | Jenis: negosiasi/penambahan fitur/percepatan waktu/penyesuaian harga; wajib deskripsi + minimal 1 dampak |
+| `decideChangeRequest({crId, decision, actor})` (FR-14) | Persetujuan menerapkan dampak ke deal + versi baru + notifikasi; penolakan tanpa perubahan; anti putusan ganda |
+
+---
+
 ## Modul: Konfirmasi Handover
 
 > **Status:** Draft Fase 1 (US-017) — `services/deal-workflow.ts`.

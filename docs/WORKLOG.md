@@ -304,3 +304,20 @@
 - **Acceptance Criteria:** 5/5 — alur status ✅ putusan PM + komentar ✅ notifikasi ✅ Dikonfirmasi-gate (US-019) ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-13 tetap TODO sampai backend.
 - **Langkah berikutnya:** US-018 (Change request)
+
+---
+
+## 2026-10-04 13:30 — US-018 — Change request (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-018-change-request
+- **Commit:** a06d4fb — feat(frontend): change request + riwayat versi US-018
+- **Yang dilakukan:**
+  - Tipe `ChangeRequest` (4 jenis, 3 status, dampak nilai/deadline)
+  - `services/change-requests.ts`: ajukan + putuskan (setuju → terapkan dampak + versi baru + notifikasi + audit; tolak; anti ganda); `applyApprovedChangeRequest` di `services/deals.ts`
+  - `ChangeRequestSection` (log + ajukan + setujui/tolak + riwayat versi) di halaman detail
+- **File berubah:** types/deal, mocks/change-requests, services/change-requests(.test), services/deals, components/handover (change-request-section, detail), docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (112/112) · browser menyusul di sweep akhir EPIC C
+- **Acceptance Criteria:** 4/4 — log CR ✅ setuju → versi baru ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-14 tetap TODO sampai backend.
+- **Langkah berikutnya:** Sweep verifikasi akhir EPIC C (build + browser semua route)

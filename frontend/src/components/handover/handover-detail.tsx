@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { HandoverForm } from "@/components/handover/handover-form";
+import { ChangeRequestSection } from "@/components/handover/change-request-section";
 import { HandoverStatusActions } from "@/components/handover/handover-status";
 import { TermsEditor } from "@/components/handover/terms-editor";
 import { listClients } from "@/services/clients";
@@ -163,6 +164,12 @@ export function HandoverDetail({ dealId }: { dealId: string }) {
       <HandoverStatusActions
         dealId={deal.id}
         status={deal.status}
+        onChanged={() => void refresh()}
+      />
+
+      <ChangeRequestSection
+        dealId={deal.id}
+        versions={deal.versions}
         onChanged={() => void refresh()}
       />
 
