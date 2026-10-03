@@ -183,6 +183,11 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
           Buka Task Board
         </Button>
       </div>
+      <div>
+        <Button type="button" variant="outline" render={<Link href={`/proyek/${project.id}/gantt`} />}>
+          Buka Gantt Chart
+        </Button>
+      </div>
 
       {editing ? (
         <Card>

@@ -1,5 +1,6 @@
 import type { TaskInput, TaskStatus, TaskSummary } from "@/types/task";
 import { isTaskStatus } from "@/types/task";
+import { listDependencies } from "@/services/task-dependencies";
 import type { ServiceResult } from "@/services/result";
 
 /**
@@ -184,4 +185,75 @@ export async function getProjectProgress(projectId: string): Promise<number> {
   }
   const total = topLevel.reduce((sum, task) => sum + effectiveTaskPercent(task, all), 0);
   return Math.round(total / topLevel.length);
+}
+
+function shiftDateIso(dateIso: string, days: number): string {
+  const date = new Date(`${dateIso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function diffDays(fromIso: string, toIso: string): number {
+  const from = new Date(`${fromIso}T00:00:00Z`).getTime();
+  const to = new Date(`${toIso}T00:00:00Z`).getTime();
+  return Math.round((to - from) / (24 * 60 * 60 * 1000));
+}
+
+/**
+ * Geser task ke tanggal mulai baru (US-025, FR-19): seluruh rentang
+ * ikut bergeser; successor FS yang tertabrak ikut tergeser (kaskade).
+ * Mengembalikan semua task yang berubah.
+ */
+export async function moveTaskDates(
+  taskId: string,
+  newStartDate: string
+): Promise<ServiceResult<TaskSummary[]>> {
+  const task = taskStore.find((item) => item.id === taskId);
+  if (!task) {
+    return { data: null, error: "Task tidak ditemukan." };
+  }
+  if (!task.startDate || Number.isNaN(Date.parse(newStartDate))) {
+    return { data: null, error: "Task belum punya tanggal mulai." };
+  }
+  const shift = diffDays(task.startDate, newStartDate);
+  const changed: TaskSummary[] = [];
+
+  const shiftOne = (id: string, days: number) => {
+    const item = taskStore.find((candidate) => candidate.id === id);
+    if (!item || !item.startDate) {
+      return;
+    }
+    item.startDate = shiftDateIso(item.startDate, days);
+    if (item.targetDate) {
+      item.targetDate = shiftDateIso(item.targetDate, days);
+    }
+    changed.push({ ...item });
+  };
+  shiftOne(taskId, shift);
+
+  // Kaskade FS: successor mulai paling cepat sehari setelah predecessor selesai.
+  const { data: dependencies } = await listDependencies(task.projectId);
+  const queue = [taskId];
+  const visited = new Set([taskId]);
+  while (queue.length > 0) {
+    const currentId = queue.shift() as string;
+    const current = taskStore.find((item) => item.id === currentId);
+    if (!current?.targetDate) {
+      continue;
+    }
+    const minimumStart = shiftDateIso(current.targetDate, 1);
+    for (const dependency of dependencies ?? []) {
+      if (dependency.predecessorId !== currentId || visited.has(dependency.successorId)) {
+        continue;
+      }
+      visited.add(dependency.successorId);
+      const successor = taskStore.find((item) => item.id === dependency.successorId);
+      if (successor?.startDate && successor.startDate <= current.targetDate) {
+        const successorShift = diffDays(successor.startDate, minimumStart);
+        shiftOne(dependency.successorId, successorShift);
+        queue.push(dependency.successorId);
+      }
+    }
+  }
+  return { data: changed, error: null };
 }

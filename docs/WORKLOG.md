@@ -436,3 +436,20 @@
 - **Acceptance Criteria:** 5/5 — jadwal otomatis ✅ kapasitas ✅ bentrok ✅ override ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-18 tetap TODO sampai backend.
 - **Langkah berikutnya:** US-025 (Gantt chart)
+
+---
+
+## 2026-10-04 17:30 — US-025 — Gantt chart (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-025-gantt
+- **Commit:** 3fd89a1 — feat(frontend): Gantt interaktif US-025
+- **Yang dilakukan:**
+  - `services/task-dependencies.ts`: FS + tolak siklus/duplikat/refleksif
+  - `moveTaskDates` di `services/tasks.ts`: geser rentang + kaskade successor tertabrak
+  - `GanttChart`: task + fitur, zoom 3 level, seret-untuk-pindah (tersimpan; fitur via override beralasan), garis hari ini & deadline, editor dependensi; halaman `/proyek/[id]/gantt`
+- **File berubah:** services/task-dependencies(.test gantt), services/tasks, components/proyek (gantt-chart, detail), app/proyek/[id]/gantt, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (143/143) · browser menyusul di sweep akhir EPIC D
+- **Acceptance Criteria:** 5/5 — zoom ✅ drag tersimpan ✅ FS + kaskade ✅ today/deadline ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-19 tetap TODO sampai backend.
+- **Langkah berikutnya:** US-026 (Dashboard produksi)

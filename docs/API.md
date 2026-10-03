@@ -313,6 +313,18 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Gantt Chart
+
+> **Status:** Draft Fase 1 (US-025) — `services/task-dependencies.ts`, halaman `/proyek/[id]/gantt`.
+> Fase 2: tabel `task_dependencies`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| `moveTaskDates(taskId, newStart)` (FR-19) | Geser rentang + kaskade successor FS yang tertabrak |
+| `addDependency()` / `removeDependency()` | FS saja; tolak siklus/duplikat/refleksif |
+
+---
+
 ## Modul: Fitur (Backlog)
 
 > **Status:** Draft Fase 1 (US-023) — `services/features.ts`, tipe `types/feature.ts`.
