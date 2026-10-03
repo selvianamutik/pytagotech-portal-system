@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - US-001: fondasi frontend — layout dashboard (sidebar per modul + header user menu), tema light/dark, komponen shadcn/ui dasar (Button, Input, Select, Table, Dialog, Tabs, Badge, Toast), Supabase client (browser/server), kontrak data `DashboardSnapshot` via lapisan `services/` + mock terpisah
 - docs/API.md: draft kontrak `getDashboardSnapshot` (US-001)
+- US-002: autentikasi & manajemen user (mock) — halaman `/login` (masuk/keluar/reset), `/pengaturan/pengguna` (CRUD user, multi-role, nonaktifkan, khusus Super Admin), halaman `/403` + guard `RequireRole`, state sesi Zustand
+- docs/API.md: draft kontrak auth & manajemen user; docs/DECISIONS.md: DEC-007 (mock-first auth)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal

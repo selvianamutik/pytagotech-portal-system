@@ -79,7 +79,6 @@
 ---
 
 ## DEC-006: ID Format untuk Entitas
-
 - **Tanggal:** 2026-10-04
 - **Terkait:** US-028, US-031, FR-23
 - **Konteks:** PRD menyebutkan format ID `MAT-xxxx` dan `PUB-xxxx` untuk content materials dan publications. Perlu konvensi untuk entitas lain.
@@ -89,3 +88,15 @@
   - Display ID di-generate via Supabase trigger + sequence, bukan UUID
 - **Alasan:** UUID cocok untuk relasi database; display ID pendek lebih user-friendly dan sesuai PRD.
 - **Konsekuensi:** Setiap tabel entitas utama perlu kolom `display_id` dengan trigger auto-generate.
+
+---
+
+## DEC-007: Auth Fase 1 Mock-First, Signature Meniru Supabase Auth
+
+- **Tanggal:** 2026-10-04
+- **Terkait:** US-002, FR-1
+- **Konteks:** Fase 1 wajib memakai data mock (AGENT_RULES.md); belum ada kredensial proyek Supabase sehingga Auth asli belum bisa diverifikasi.
+- **Keputusan:** `services/auth.ts` mock in-memory dengan signature yang meniru Supabase Auth (`login` ≈ `signInWithPassword`, `requestPasswordReset` ≈ `resetPasswordForEmail`). Tidak ada password yang disimpan di mock — verifikasi kredensial asli menjadi tanggung jawab Supabase Auth di Fase 2.
+- **Alternatif yang dipertimbangkan:** Langsung memanggil Supabase Auth dengan env placeholder (tidak bisa diverifikasi tanpa proyek Supabase; melanggar aturan mock-first Fase 1).
+- **Alasan:** UI dan alur bisa selesai dan terverifikasi sekarang; penggantian ke Supabase hanya menyentuh `services/` tanpa mengubah komponen.
+- **Konsekuensi:** Proteksi route Fase 1 hanya di client (`RequireRole`); middleware + RLS server-side wajib di US-003 sebelum data nyata dipakai.

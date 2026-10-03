@@ -4,7 +4,7 @@ export const dashboardSnapshot: DashboardSnapshot = {
   currentUser: {
     name: "Dinda Prameswari",
     email: "dinda@pytagotech.test",
-    roles: ["Super Admin", "Executive"],
+    roles: ["Super Admin", "Executive / Leader"],
   },
   metrics: [
     { label: "Lead aktif", value: "128", change: "+18 minggu ini", tone: "info" },
@@ -14,10 +14,11 @@ export const dashboardSnapshot: DashboardSnapshot = {
   ],
   navigation: [
     { label: "Ringkasan kerja", module: "Beranda", href: "#beranda", roles: ["Semua role"] },
-    { label: "Database Lead", module: "CRM", href: "#crm", badge: 12, roles: ["Sales / Marketing", "Executive"] },
+    { label: "Database Lead", module: "CRM", href: "#crm", badge: 12, roles: ["Sales / Marketing", "Executive / Leader"] },
     { label: "Deal Handover", module: "Klien & Handover", href: "#handover", badge: 7, roles: ["Sales / Marketing", "Project Manager"] },
     { label: "Task Board", module: "Proyek", href: "#proyek", badge: 18, roles: ["Project Manager", "Developer"] },
-    { label: "Content Planner", module: "Sosmed", href: "#sosmed", badge: 9, roles: ["Social Media Specialist", "Leader"] },
+    { label: "Content Planner", module: "Sosmed", href: "#sosmed", badge: 9, roles: ["Social Media Specialist", "Executive / Leader"] },
+    { label: "Pengguna", module: "Pengaturan", href: "/pengaturan/pengguna", roles: ["Super Admin"] },
     { label: "Master Data", module: "Pengaturan", href: "#pengaturan", roles: ["Super Admin"] },
   ],
   workQueue: [

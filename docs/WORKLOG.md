@@ -58,3 +58,24 @@
 - **Acceptance Criteria:** 6/6 — Next.js+Supabase ✅ shadcn/ui ✅ layout dashboard ✅ light/dark ✅ lint/typecheck ✅ browser ✅
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-002 (Autentikasi & manajemen user)
+
+---
+
+## 2026-10-04 06:00 — US-002 — Autentikasi & manajemen user (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-002-auth-manajemen-user
+- **Commit:** 9c1834f — feat(frontend): autentikasi dan manajemen user dengan mock US-002
+- **Yang dilakukan:**
+  - Kontrak `types/auth.ts`: 7 role kanonis PRD Bagian 3, `PortalUser` multi-role, `AuthSession`, `hasRole`
+  - Mock `mocks/auth.ts` (5 user, 1 nonaktif); selaraskan label role di `mocks/dashboard.ts` + tambah nav "Pengguna"
+  - `services/auth.ts`: login/logout/reset/list/create/update-roles/set-active + proteksi (akun sendiri, Super Admin terakhir); `services/result.ts` sebagai tipe hasil bersama
+  - `store/auth.ts` (Zustand): status loading/authenticated/unauthenticated, signIn/signOut/initialize
+  - Komponen `auth/require-role.tsx` (guard → konten 403, bukan data kosong), `auth/login-form.tsx`, `auth/user-management.tsx`
+  - Halaman `/login`, `/403`, `/pengaturan/pengguna` (khusus Super Admin)
+  - Test: `services/auth.test.ts`, `store/auth.test.ts`, `require-role.test.tsx`
+- **File berubah:** 16 file (lihat commit 9c1834f)
+- **Verifikasi:** lint ✅ (exit 0, setelah perbaiki `set-state-in-effect` di user-management) · typecheck ✅ · test ✅ (22/22, 4 file) · build ✅ (route `/login`, `/403`, `/pengaturan/pengguna` static) · browser ✅ (`next start` → semua route 200; `/403` memuat konten 403; `/login` & `/pengaturan/pengguna` me-render state loading guard) · tanpa `console.log`/`TODO` ✅
+- **Acceptance Criteria:** 6/6 — login/logout/reset ✅ CRUD user + multi-role ✅ halaman 403 ✅ lint/typecheck ✅ browser ✅
+- **Catatan/Masalah:** proteksi route Fase 1 hanya client-side; middleware + RLS server-side dicatat di DEC-007 dan dikerjakan di US-003 (Fase 2). FR-1 tetap TODO sampai RLS selesai.
+- **Langkah berikutnya:** US-006 (Komentar, lampiran, notifikasi)
