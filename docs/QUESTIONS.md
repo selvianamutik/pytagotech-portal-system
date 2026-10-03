@@ -147,3 +147,15 @@
   - B) Ringkas menjadi panduan per field
 - **Dampak jika salah:** Panel saat ini memakai panduan interim yang diturunkan dari PRD; perlu diganti setelah jawaban tersedia.
 - **Jawaban:** _(diisi pemilik proyek)_
+
+---
+
+## Q-013 — [OPEN]
+
+- **Terkait:** US-026 / FR-20
+- **Pertanyaan:** Apa yang dimaksud "divisi" pada filter dashboard produksi (per divisi, proyek, rentang waktu)? Apakah divisi = tim/role (Sales, Produksi, Sosmed), atau ada struktur divisi tersendiri?
+- **Opsi yang dipertimbangkan:**
+  - A) Divisi = tim pelaksana (filter per PM/role yang sudah ada)
+  - B) Ada master divisi tersendiri (perlu tabel + filter baru)
+- **Dampak jika salah:** Filter dashboard salah sasaran; bila opsi B, perlu master data tambahan.
+- **Jawaban:** _(diisi pemilik proyek)_
