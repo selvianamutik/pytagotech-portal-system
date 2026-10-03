@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-012: activity log per lead (timeline catatan + perubahan, follow-up + badge Overdue)
 - US-013: dashboard CRM (KPI otomatis + rumus, kinerja per PIC, filter periode)
 - US-014: master klien (otomatis dari lead Closing, halaman `/klien`)
+- US-015: form deal handover (nama otomatis, kode unik, panel panduan, halaman `/handover`)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal
