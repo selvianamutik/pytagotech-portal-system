@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-04  
-> **Fase saat ini:** Fase 1 — Frontend (US-001–US-002 DONE, berikutnya US-006; US-003–US-005 bertipe Backend, dikerjakan di Fase 2)
+> **Fase saat ini:** Fase 1 — Frontend (US-001, US-002, US-006 DONE; US-003–US-005 bertipe Backend, dikerjakan di Fase 2; berikutnya EPIC B / US-007)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -15,7 +15,7 @@
 | US-003 | Row Level Security per role | Backend | TODO | 0/4 | - |
 | US-004 | Audit trail | Backend | TODO | 0/5 | - |
 | US-005 | Pengaturan master data & dropdown | Backend | TODO | 0/5 | - |
-| US-006 | Komentar, lampiran, dan notifikasi | Frontend | TODO | 0/5 | - |
+| US-006 | Komentar, lampiran, dan notifikasi | Frontend | DONE | 5/5 ✅ | 52af09f |
 
 ---
 

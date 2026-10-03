@@ -201,13 +201,47 @@ Halaman tanpa izin menampilkan konten 403 (`/403`, komponen `RequireRole`), buka
 
 ## Modul: Komentar & Lampiran
 
-> _Akan didokumentasikan saat US-006 dimulai_
+> **Status:** Draft Fase 1 (US-006) — mock di `frontend/src/mocks/collaboration.ts`,
+> diakses via `frontend/src/services/collaboration.ts`, tipe di
+> `frontend/src/types/collaboration.ts`. Komponen reusable di
+> `frontend/src/components/collaboration/` (satu komponen untuk lead, task,
+> fitur, konten — cukup ganti `entityType` + `entityId`).
+> Fase 2: komentar → tabel `comments`; lampiran → Supabase Storage + tabel
+> `attachments`; mention resolution → tabel user nyata.
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listComments(entityType, entityId)` | Filter per entitas |
+| `addComment({entityType, entityId, authorId, body})` | Body wajib isi, maks 2000 karakter; token `@Nama` (nama depan/lengkap, case-insensitive) otomatis membuat notifikasi mention |
+| `listAttachments(entityType, entityId)` | Filter per entitas |
+| `uploadAttachment({... fileName, fileSizeBytes, mimeType})` | Batas dari `NEXT_PUBLIC_MAX_ATTACHMENT_SIZE_BYTES` (default 10MB); error jelas jika melebihi |
+| `deleteAttachment(id)` | Error jika id tidak dikenal |
+
+```ts
+type CollaborableEntityType = "lead" | "task" | "fitur" | "konten";
+interface CommentItem { id: string; entityType: CollaborableEntityType; entityId: string; authorId: string; authorName: string; body: string; mentionedUserIds: string[]; createdAt: string; }
+interface AttachmentItem { id: string; entityType: CollaborableEntityType; entityId: string; fileName: string; fileSizeBytes: number; mimeType: string; url: string; uploadedById: string; uploadedByName: string; createdAt: string; }
+```
 
 ---
 
 ## Modul: Notifikasi
 
-> _Akan didokumentasikan saat US-006 dimulai_
+> **Status:** Draft Fase 1 (US-006) — mock + `store/notifications.ts` (Zustand)
+> untuk badge bell di header. Halaman `/notifikasi` (daftar, filter, tandai
+> dibaca). Galeri verifikasi: `/demo/kolaborasi`.
+> Fase 2: diganti Supabase Realtime + tabel `notifications`.
+
+| Fungsi service | Deskripsi |
+|----------------|-----------|
+| `listNotifications()` | Terurut terbaru; tipe `assignment` \| `mention` \| `status` |
+| `getUnreadNotificationCount()` | Sumber badge bell |
+| `markNotificationRead(id)` / `markAllNotificationsRead()` | Tandai dibaca |
+
+```ts
+type NotificationType = "assignment" | "mention" | "status";
+interface NotificationItem { id: string; type: NotificationType; title: string; message: string; entityType?: CollaborableEntityType; entityId?: string; actorName?: string; isRead: boolean; createdAt: string; }
+```
 
 ---
 
