@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-016: termin pembayaran (banyak termin %/nominal, total wajib = deal, halaman detail)
 - US-017: alur konfirmasi handover (putusan PM, komentar revisi, notifikasi + audit)
 - US-018: change request + riwayat versi nilai/deadline di detail handover
+- US-019: proyek dari handover Dikonfirmasi (relasi dua arah, halaman detail)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal

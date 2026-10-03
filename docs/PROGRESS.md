@@ -49,7 +49,7 @@
 
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
-| US-019 | Pembuatan proyek dari handover | Frontend | TODO | 0/5 | - |
+| US-019 | Pembuatan proyek dari handover | Frontend | DONE | 5/5 ✅ | 3a81d7e |
 | US-020 | Daftar proyek | Frontend | TODO | 0/4 | - |
 | US-021 | Template task otomatis | Frontend | TODO | 0/4 | - |
 | US-022 | Task board (Kanban dan List) | Frontend | TODO | 0/6 | - |
