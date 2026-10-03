@@ -80,9 +80,9 @@ export const mockLeads: Lead[] = [
     instagram: "@kopinusantara",
     email: "hello@kopinusantara.id",
     picName: "Figo",
-    status: "Not Interested",
+    status: "Interest",
     createdAt: "2026-09-12T03:00:00Z",
-    updatedAt: "2026-09-20T04:00:00Z",
+    updatedAt: "2026-10-02T04:00:00Z",
   },
   {
     id: "LEAD-007",

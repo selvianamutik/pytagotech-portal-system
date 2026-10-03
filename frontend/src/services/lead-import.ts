@@ -6,7 +6,6 @@ import {
 } from "@/services/leads";
 import { normalizeWhatsapp } from "@/lib/validators";
 import type { CreateLeadInput } from "@/types/lead";
-import { isLeadStatus } from "@/types/lead";
 import type { ServiceResult } from "@/services/result";
 
 /**

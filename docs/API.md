@@ -109,8 +109,6 @@ Halaman tanpa izin menampilkan konten 403 (`/403`, komponen `RequireRole`), buka
 
 ## Modul: Master Data
 
-## Modul: Master Data
-
 > _Akan didokumentasikan saat US-005 dimulai_
 
 ---
@@ -144,7 +142,19 @@ interface Lead { id: string; contactDate: string; companyName: string; industry:
 
 ## Modul: CRM — Interested Leads (Pipeline)
 
-> _Akan didokumentasikan saat US-011 dimulai_
+> **Status:** Draft Fase 1 (US-011) — `services/interest.ts`, tipe `types/interest.ts`.
+> Halaman `/crm/interested` (Kanban drag-and-drop + tabel).
+> Fase 2: tabel `lead_interests`; Closing pipeline → klien + handover (US-014).
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `getPipeline()` | Otomatis berisi lead berstatus Interest + tahap/kebutuhan; tahap awal `New Interest` |
+| `moveInterestStage(leadId, stage, actor)` | Hanya untuk lead Interest; dicatat audit `lead.move-stage` |
+| `updateInterestNeed(leadId, need)` | Kebutuhan/solusi yang dicari klien |
+
+```ts
+type InterestStage = "New Interest" | "Contacted" | "Demo" | "Price Sent" | "Negotiation" | "Closing" | "Lost";
+```
 
 ---
 
