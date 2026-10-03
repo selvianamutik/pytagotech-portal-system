@@ -5,7 +5,7 @@
 
 ---
 
-## Q-001 — [OPEN]
+## Q-001 — [ANSWERED]
 
 - **Terkait:** US-020, US-019 / FR-15
 - **Pertanyaan:** Apakah satu klien dapat memiliki beberapa PM (Project Manager), atau satu PM per proyek?
@@ -13,11 +13,11 @@
   - A) Satu PM per proyek (relasi 1-1 proyek:PM)
   - B) Banyak PM per proyek (relasi M-M proyek:PM) — lebih fleksibel tapi lebih kompleks
 - **Dampak jika salah:** Skema database berbeda (kolom `pm_id` vs tabel join `project_managers`); perlu migration ulang.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** A
 
 ---
 
-## Q-002 — [OPEN]
+## Q-002 — [ANSWERED]
 
 - **Terkait:** US-035, FR-25
 - **Pertanyaan:** Rumus Engagement Rate resmi: berdasarkan Reach atau Views/Impresi?
@@ -26,11 +26,11 @@
   - B) `ER = (Likes + Comments + Shares + Saves) / Views × 100%`
   - C) Formula lain yang sudah digunakan tim
 - **Dampak jika salah:** Angka dashboard akan berbeda dari laporan lama; perlu update formula dan data historis.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** C (Total engagement ÷ Total reach) × 100%
 
 ---
 
-## Q-003 — [OPEN]
+## Q-003 — [ANSWERED]
 
 - **Terkait:** US-027, FR-21
 - **Pertanyaan:** Berapa ambang skor kelengkapan brief minimal agar ide bisa berstatus "Siap Masuk Produksi"?
@@ -38,11 +38,11 @@
   - A) 5/5 (semua field brief wajib terisi)
   - B) 4/5 (satu field boleh kosong)
 - **Dampak jika salah:** Jika terlalu ketat (5/5), banyak ide tertahan dan menghambat produksi. Jika terlalu longgar (4/5), ada konten kurang persiapan masuk produksi.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** A
 
 ---
 
-## Q-004 — [OPEN]
+## Q-004 — [ANSWERED]
 
 - **Terkait:** US-033, FR-24
 - **Pertanyaan:** Berapa jam/hari toleransi sebelum jadwal rilis konten ditandai "Overdue" dan "Kritis"?
@@ -50,7 +50,7 @@
   - A) Overdue: melewati jam rilis yang dijadwalkan; Kritis: > 24 jam dari jadwal
   - B) Nilai jam dapat dikonfigurasi dari halaman Pengaturan
 - **Dampak jika salah:** Indikator Overdue/Kritis akan muncul terlalu cepat atau terlambat, memengaruhi SOP tim.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** B
 
 ---
 
@@ -64,7 +64,7 @@
 
 ---
 
-## Q-006 — [OPEN]
+## Q-006 — [ANSWERED]
 
 - **Terkait:** US-016, FR-12
 - **Pertanyaan:** Apakah termin pembayaran perlu pengingat/notifikasi otomatis ke Sales/Finance saat tanggal jatuh tempo mendekat?
@@ -73,11 +73,11 @@
   - B) Notifikasi in-app saja (sesuai US-006)
   - C) Notifikasi eksternal (email/WhatsApp) — ini memerlukan CR terpisah
 - **Dampak jika salah:** Jika tidak ada pengingat, Sales/Finance bisa melewatkan tanggal tagihan. Jika notifikasi eksternal dibutuhkan, perlu integrasi tambahan di luar scope PRD saat ini.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** C
 
 ---
 
-## Q-007 — [OPEN]
+## Q-007 — [ANSWERED]
 
 - **Terkait:** US-035, FR-25
 - **Pertanyaan:** Siapa yang berhak mengubah data KPI Final setelah terkunci — hanya Super Admin, atau Leader juga?
@@ -85,11 +85,11 @@
   - A) Hanya Super Admin
   - B) Super Admin + Leader/Executive
 - **Dampak jika salah:** Jika terlalu terbuka, integritas data KPI Final terganggu. Jika terlalu ketat, Admin terbebani permintaan unlock.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** B
 
 ---
 
-## Q-008 — [OPEN]
+## Q-008 — [ANSWERED]
 
 - **Terkait:** US-006, FR-4
 - **Pertanyaan:** Apakah notifikasi perlu dikirim via saluran eksternal (email / WhatsApp) selain in-app?
@@ -98,11 +98,11 @@
   - B) Email tambahan
   - C) WhatsApp tambahan (perlu integrasi — CR terpisah)
 - **Dampak jika salah:** Jika notifikasi eksternal diminta sekarang, perlu CR dan integrasi tambahan yang tidak ada di PRD.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** A
 
 ---
 
-## Q-009 — [OPEN]
+## Q-009 — [ANSWERED]
 
 - **Terkait:** US-007, US-013, US-027 / FR-6, FR-10, FR-21
 - **Pertanyaan:** Apakah tiga lini bisnis (Pytagotech, Pytabelajar, Pytafix) memisahkan data CRM dan Proyek, atau hanya Sosmed?
@@ -110,11 +110,11 @@
   - A) Lini bisnis hanya relevan untuk modul Sosmed (kolom `brand` di tabel konten)
   - B) Semua modul (CRM, Proyek, Sosmed) memiliki kolom `lini_bisnis` — lead, proyek, dan konten bisa difilter per brand
 - **Dampak jika salah:** Skema tabel dan filter dashboard berbeda; perlu tambah kolom di `leads`, `projects`, dll. jika pilihan B.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** C untuk sekarang hanya 1 lini bisnis saja
 
 ---
 
-## Q-010 — [OPEN]
+## Q-010 — [ANSWERED]
 
 - **Terkait:** US-006, US-034 / FR-4
 - **Pertanyaan:** Berapa batas ukuran lampiran per file, dan berapa lama data arsip disimpan sebelum dihapus permanen?
@@ -122,11 +122,11 @@
   - Ukuran: A) 5MB  B) 10MB  C) Dapat dikonfigurasi dari Pengaturan
   - Retensi arsip: A) Tidak pernah dihapus otomatis  B) Dihapus setelah X tahun (perlu dikonfirmasi)
 - **Dampak jika salah:** Jika terlalu kecil, user frustrasi. Jika terlalu besar, biaya Supabase Storage membengkak. Kebijakan retensi memengaruhi prosedur backup (US-043).
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** ukuran : C, retensi arsip : B
 
 ---
 
-## Q-011 — [OPEN]
+## Q-011 — [ANSWERED]
 
 - **Terkait:** US-016 / FR-12
 - **Pertanyaan:** Apakah diperlukan role Finance khusus untuk mengelola termin pembayaran, atau cukup Sales dan Admin?
@@ -134,4 +134,4 @@
   - A) Tidak perlu role Finance terpisah — Sales + Admin cukup
   - B) Tambah role Finance — bisa melihat dan mengubah status termin (perlu CR jika disetujui)
 - **Dampak jika salah:** Jika Finance dibutuhkan, perlu tambah role, RLS policy, dan menu navigasi — ini di luar scope PRD saat ini.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** B
