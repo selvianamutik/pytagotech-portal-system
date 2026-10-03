@@ -235,3 +235,19 @@
 - **Verifikasi:** build ✅ browser ✅
 - **Catatan/Masalah:** FR-6/FR-7/FR-8/FR-10 tetap TODO sampai backend Fase 2.
 - **Langkah berikutnya:** EPIC C / US-014 (Master Klien)
+
+---
+
+## 2026-10-04 11:30 — US-014 — Master Klien (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-014-master-klien
+- **Commit:** 21cf55d — feat(frontend): master klien + konversi Closing US-014
+- **Yang dilakukan:**
+  - Kontrak `types/client.ts`, mock 2 klien, `services/clients.ts` (CRUD + validasi + `createClientFromLead` + `listConvertibleLeads`)
+  - `ClientForm` (mode manual/ubah/dari-lead dengan field lead dikunci) + `ClientsManager` (tabel + seksi Closing) + halaman `/klien` + nav
+- **File berubah:** types/client, mocks/clients, services/clients(.test), components/clients/*, app/klien, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (92/92) · browser menyusul di sweep akhir EPIC C
+- **Acceptance Criteria:** 5/5 — field lengkap ✅ otomatis dari Closing ✅ 1-N siap relasi ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-9 tetap TODO sampai backend.
+- **Langkah berikutnya:** US-015 (Form Deal Handover)
