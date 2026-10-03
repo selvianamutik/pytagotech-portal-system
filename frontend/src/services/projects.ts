@@ -1,6 +1,7 @@
 import { mockUsers } from "@/mocks/auth";
 import { listClients } from "@/services/clients";
 import { getDeal } from "@/services/deals";
+import { ensureBacklogFromHandover } from "@/services/features";
 import { generateTasksForProject } from "@/services/task-templates";
 import { getProjectProgress } from "@/services/tasks";
 import type { PortalUser } from "@/types/auth";
@@ -177,6 +178,8 @@ export async function createProjectFromHandover(
   projectStore.push(project);
   // Task standar ter-generate otomatis dari template (US-021, FR-16).
   await generateTasksForProject(project.id, project.startDate);
+  // Fitur handover masuk backlog otomatis (US-023).
+  await ensureBacklogFromHandover(project.id, project.handoverId);
   return { data: { ...project }, error: null };
 }
 
