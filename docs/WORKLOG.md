@@ -470,3 +470,17 @@
 - **Acceptance Criteria:** 5/5 — KPI ✅ deadline ✅ filter ✅ ekspor PDF+Excel ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-20 tetap TODO sampai backend. Filter divisi menunggu Q-013.
 - **Langkah berikutnya:** Sweep verifikasi akhir EPIC D (build + browser semua route)
+
+---
+
+## 2026-10-04 18:30 — EPIC D — Sweep verifikasi akhir (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** develop
+- **Yang dilakukan:**
+  - `next build` bersih: 15 route (11 static + 4 dinamis)
+  - `next start` + fetch: `/proyek`, `/proyek/dashboard`, `/pengaturan/template-task`, `/klien`, `/handover` → 200 + penanda; rute dinamis proyek/tasks/gantt → 200 (state loading, konten setelah hidrasi)
+  - EPIC D lengkap: US-019–US-026 DONE (masing-masing lint ✅ typecheck ✅ test ✅; total 148/148)
+- **Verifikasi:** build ✅ browser ✅
+- **Catatan/Masalah:** FR-11/FR-15/FR-16/FR-17/FR-18/FR-19/FR-20 tetap TODO sampai backend. Q-005 (template) & Q-012 (SOP) & Q-013 (divisi) masih OPEN.
+- **Langkah berikutnya:** EPIC E / US-027 (Content Planner)
