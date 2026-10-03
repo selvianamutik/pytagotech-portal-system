@@ -114,3 +114,15 @@
 - **Alternatif yang dipertimbangkan:** Autocomplete mention penuh (butuh popover + pencarian user — over-engineering untuk mock); menunda US-006 sampai host ada (melanggar urutan PRD).
 - **Alasan:** AC "dapat dipasang pada lead, task, fitur, dan konten" terverifikasi langsung; komponen tidak berubah saat host asli tiba.
 - **Konsekuensi:** `/demo/kolaborasi` adalah scaffolding — diganti host asli bertahap (US-012/022/030) dan dihapus sebelum Gate 3 bila sudah tak dipakai.
+
+---
+
+## DEC-009: Dependensi Ekspor — SheetJS (xlsx) + jsPDF
+
+- **Tanggal:** 2026-10-04
+- **Terkait:** US-026, FR-20
+- **Konteks:** PRD mewajibkan ekspor laporan ke PDF dan Excel. Tidak ada library ekspor di proyek.
+- **Keputusan:** Tambah `xlsx` (Excel, SheetJS) dan `jspdf` (PDF). Keduanya murni client-side, tanpa server, tanpa build script; lockfile di-commit.
+- **Alternatif yang dipertimbangkan:** CSV saja (tidak memenuhi "Excel"), print-to-PDF browser (tidak memenuhi "ekspor PDF" sebagai file).
+- **Alasan:** Dua AC terpenuhi langsung dengan API kecil; builder terisolasi di `services/production-export.ts` sehingga mudah diganti.
+- **Konsekuensi:** Ukuran bundle bertambah; audit `pnpm audit` dicatat di Fase 3.

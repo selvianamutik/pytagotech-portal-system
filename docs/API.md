@@ -325,6 +325,22 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Dashboard Produksi
+
+> **Status:** Draft Fase 1 (US-026) — `services/production-dashboard.ts` +
+> `services/production-export.ts`. Halaman `/proyek/dashboard`.
+> Filter "divisi" menunggu Q-013. Fase 2: agregasi SQL.
+
+| Fungsi | Definisi |
+|--------|----------|
+| Total Proyek / Proyek Aktif | Jumlah proyek (aktif = status Active) pada filter |
+| Task Selesai / Berlangsung / Blocked | Hitung status task lintas proyek (berlangsung = In Progress + Review) |
+| Progress per proyek | Dari `getProjectProgress` (FR-17) |
+| Deadline watch | Target ≤ 7 hari atau lewat, belum Completed/Cancelled |
+| Ekspor Excel / PDF | SheetJS (KPI + Proyek) / jsPDF dari data tampil |
+
+---
+
 ## Modul: Fitur (Backlog)
 
 > **Status:** Draft Fase 1 (US-023) — `services/features.ts`, tipe `types/feature.ts`.

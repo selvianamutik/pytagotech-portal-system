@@ -56,7 +56,7 @@
 | US-023 | Backlog fitur | Frontend | DONE | 4/4 ✅ | 0e761ff |
 | US-024 | Penjadwalan fitur otomatis | Frontend | DONE | 5/5 ✅ | 29e7f2c |
 | US-025 | Gantt chart interaktif | Frontend | DONE | 5/5 ✅ | 3fd89a1 |
-| US-026 | Dashboard eksekutif produksi | Frontend | TODO | 0/5 | - |
+| US-026 | Dashboard eksekutif produksi | Frontend | DONE | 5/5 ✅ | e1eac90 |
 
 ---
 

@@ -453,3 +453,20 @@
 - **Acceptance Criteria:** 5/5 — zoom ✅ drag tersimpan ✅ FS + kaskade ✅ today/deadline ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-19 tetap TODO sampai backend.
 - **Langkah berikutnya:** US-026 (Dashboard produksi)
+
+---
+
+## 2026-10-04 18:00 — US-026 — Dashboard produksi (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-026-dashboard-produksi
+- **Commit:** e1eac90 — feat(frontend): dashboard produksi + ekspor US-026
+- **Yang dilakukan:**
+  - `services/production-dashboard.ts`: KPI + deadline watch + filter PM/proyek/periode
+  - `services/production-export.ts`: builder Excel (SheetJS) + PDF (jsPDF) + unduhan
+  - Halaman `/proyek/dashboard` + nav; dependensi baru `xlsx`, `jspdf` (DEC-009); Q-013 (arti "divisi")
+- **File berubah:** services/production-dashboard(.test export), services/production-export, components/proyek/production-dashboard, app/proyek/dashboard, mocks/dashboard, package.json + lockfile, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (148/148) · browser menyusul di sweep akhir EPIC D
+- **Acceptance Criteria:** 5/5 — KPI ✅ deadline ✅ filter ✅ ekspor PDF+Excel ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-20 tetap TODO sampai backend. Filter divisi menunggu Q-013.
+- **Langkah berikutnya:** Sweep verifikasi akhir EPIC D (build + browser semua route)
