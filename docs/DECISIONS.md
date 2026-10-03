@@ -100,3 +100,17 @@
 - **Alternatif yang dipertimbangkan:** Langsung memanggil Supabase Auth dengan env placeholder (tidak bisa diverifikasi tanpa proyek Supabase; melanggar aturan mock-first Fase 1).
 - **Alasan:** UI dan alur bisa selesai dan terverifikasi sekarang; penggantian ke Supabase hanya menyentuh `services/` tanpa mengubah komponen.
 - **Konsekuensi:** Proteksi route Fase 1 hanya di client (`RequireRole`); middleware + RLS server-side wajib di US-003 sebelum data nyata dipakai.
+
+---
+
+## DEC-008: Mention via Pencocokan Nama + Halaman Demo Kolaborasi
+
+- **Tanggal:** 2026-10-04
+- **Terkait:** US-006, FR-4
+- **Konteks:** PRD meminta `@mention` dan komponen reusable untuk lead/task/fitur/konten, tetapi halaman host (lead, task, konten) baru ada di US berikutnya. Butuh permukaan untuk verifikasi browser Fase 1.
+- **Keputusan:**
+  - Mention di-resolve dengan mencocokkan token `@Nama` ke nama depan/lengkap user (case-insensitive); user nonaktif diabaikan. Fase 2 diganti user picker + tabel user nyata.
+  - Galeri verifikasi di `/demo/kolaborasi` me-mount komponen yang sama pada 4 tipe entitas; halaman `/notifikasi` adalah permukaan nyata (diakses dari bell header).
+- **Alternatif yang dipertimbangkan:** Autocomplete mention penuh (butuh popover + pencarian user — over-engineering untuk mock); menunda US-006 sampai host ada (melanggar urutan PRD).
+- **Alasan:** AC "dapat dipasang pada lead, task, fitur, dan konten" terverifikasi langsung; komponen tidak berubah saat host asli tiba.
+- **Konsekuensi:** `/demo/kolaborasi` adalah scaffolding — diganti host asli bertahap (US-012/022/030) dan dihapus sebelum Gate 3 bila sudah tak dipakai.

@@ -1,6 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
 import {
-  BellIcon,
   BriefcaseBusinessIcon,
   ChevronRightIcon,
   CircleCheckIcon,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/collaboration/notification-bell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -165,9 +165,7 @@ export default async function Home() {
                 />
               </div>
             </div>
-            <Button variant="outline" size="icon" aria-label="Buka notifikasi" title="Notifikasi">
-              <BellIcon aria-hidden="true" />
-            </Button>
+            <NotificationBell />
             <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" className="h-10 gap-2 px-2" />}>
