@@ -37,7 +37,7 @@
 
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
-| US-014 | Master Klien | Frontend | TODO | 0/5 | - |
+| US-014 | Master Klien | Frontend | DONE | 5/5 ✅ | 21cf55d |
 | US-015 | Form Deal Handover | Frontend | TODO | 0/6 | - |
 | US-016 | Termin pembayaran | Frontend | TODO | 0/5 | - |
 | US-017 | Konfirmasi Produksi atas handover | Frontend | TODO | 0/5 | - |

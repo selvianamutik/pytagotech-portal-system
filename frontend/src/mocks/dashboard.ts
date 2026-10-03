@@ -18,6 +18,7 @@ export const dashboardSnapshot: DashboardSnapshot = {
     { label: "Interested Leads", module: "CRM", href: "/crm/interested", badge: 2, roles: ["Sales / Marketing", "Executive / Leader"] },
     { label: "Dashboard CRM", module: "CRM", href: "/crm/dashboard", roles: ["Sales / Marketing", "Executive / Leader"] },
     { label: "Deal Handover", module: "Klien & Handover", href: "#handover", badge: 7, roles: ["Sales / Marketing", "Project Manager"] },
+    { label: "Master Klien", module: "Klien & Handover", href: "/klien", roles: ["Sales / Marketing", "Project Manager"] },
     { label: "Task Board", module: "Proyek", href: "#proyek", badge: 18, roles: ["Project Manager", "Developer"] },
     { label: "Content Planner", module: "Sosmed", href: "#sosmed", badge: 9, roles: ["Social Media Specialist", "Executive / Leader"] },
     { label: "Pengguna", module: "Pengaturan", href: "/pengaturan/pengguna", roles: ["Super Admin"] },

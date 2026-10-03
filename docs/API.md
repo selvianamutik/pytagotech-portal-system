@@ -191,7 +191,20 @@ type InterestStage = "New Interest" | "Contacted" | "Demo" | "Price Sent" | "Neg
 
 ## Modul: Klien
 
-> _Akan didokumentasikan saat US-014 dimulai_
+> **Status:** Draft Fase 1 (US-014) — mock di `frontend/src/mocks/clients.ts`,
+> diakses via `frontend/src/services/clients.ts`, tipe di `frontend/src/types/client.ts`.
+> Halaman `/klien`. Fase 2: tabel `clients` + relasi 1-N ke `deals`/`projects`.
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listClients()` / `getClient(id)` | Terurut nama perusahaan |
+| `createClient(input)` / `updateClient(id, partial)` | Validasi WA/email; peringatan bila perusahaan sudah terdaftar |
+| `listConvertibleLeads()` | Lead Closing yang belum menjadi klien |
+| `createClientFromLead(leadId, {picName, referrer})` (FR-9) | Hanya dari lead Closing; data terisi otomatis, anti konversi ganda |
+
+```ts
+interface Client { id: string; companyName: string; picName: string; phone: string; email: string; referrer: string; sourceLeadId?: string; createdAt: string; updatedAt: string; }
+```
 
 ---
 
