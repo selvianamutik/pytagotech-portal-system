@@ -60,7 +60,11 @@ export async function listLeadPICs(): Promise<
   };
 }
 
-function validateLeadInput(
+/**
+ * Validasi satu baris input lead (dipakai form, update, dan impor CSV).
+ * Diekspor agar impor CSV memakai aturan yang sama persis.
+ */
+export function validateLeadInput(
   input: CreateLeadInput,
   picNames: string[]
 ): string | null {

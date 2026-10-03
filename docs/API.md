@@ -133,6 +133,7 @@ Halaman tanpa izin menampilkan konten 403 (`/403`, komponen `RequireRole`), buka
 | `listLeadPICs()` | User aktif (dropdown PIC) |
 | `queryLeads(query)` (US-008) | Pencarian teks (perusahaan/email/WA/IG) + filter status/PIC/industri/rentang tanggal + sort (`companyName`/`contactDate`/`status`/`picName`) + paginasi (`page`, `limit` default 5) → `{items, total, page, limit, pageCount}` |
 | `assignLeadPIC(ids, picName, actor)` (US-009) | Assign/reassign satuan & massal; tiap perubahan PIC dicatat ke audit trail (`lead.assign-pic`, pratinjau US-004) |
+| `previewLeadImport(csv)` / `importLeads(preview, {skipDuplicates})` (US-010) | Template header `companyName,industry,contactDate,whatsapp,instagram,email,picName,status`; preview tandai valid/tidak-valid/duplikat (vs data + dalam file); impor lewati duplikat bila diminta |
 
 ```ts
 type LeadStatus = "New" | "Contacted" | "Follow Up" | "Interest" | "Not Interested" | "Lost" | "Closing";

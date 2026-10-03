@@ -152,3 +152,20 @@
 - **Acceptance Criteria:** 4/4 — assign satuan+massal ✅ audit PIC ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** halaman Audit Log penuh tetap di US-004 (Fase 2).
 - **Langkah berikutnya:** US-010 (Import lead dari CSV)
+
+---
+
+## 2026-10-04 09:00 — US-010 — Import lead dari CSV (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-010-impor-csv
+- **Commit:** 046168d — feat(frontend): impor lead CSV dengan preview US-010
+- **Yang dilakukan:**
+  - Ekspor `validateLeadInput` dari `services/leads.ts` agar impor memakai aturan identik
+  - `services/lead-import.ts`: parser CSV (kutip/koma), `LEAD_CSV_TEMPLATE`, preview (valid/tidak-valid/duplikat vs data + dalam file ternormalisasi), `importLeads` dengan opsi lewati duplikat
+  - Komponen `crm/import-leads-dialog.tsx`: unduh template, unggah, preview, konfirmasi; tombol di `LeadsManager`
+- **File berubah:** services/leads.ts, services/lead-import.ts(.test), components/crm/import-leads-dialog.tsx, leads-manager.tsx, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (67/67) · browser menyusul di sweep akhir EPIC B
+- **Acceptance Criteria:** 5/5 — template ✅ preview ✅ duplikat dilewati ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** -
+- **Langkah berikutnya:** US-011 (Pipeline Interested Leads)

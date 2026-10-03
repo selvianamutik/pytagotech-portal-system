@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs/API.md: draft kontrak CRM leads
 - US-008: pencarian, filter multi-kriteria, sort per kolom, paginasi di database lead
 - US-009: assign/reassign PIC satuan & massal dengan pencatatan audit trail
+- US-010: impor lead dari CSV (template, preview, lewati duplikat)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal
