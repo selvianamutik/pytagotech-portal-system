@@ -1,7 +1,10 @@
 import { mockUsers } from "@/mocks/auth";
 import { listClients } from "@/services/clients";
 import { getDeal } from "@/services/deals";
+import { getProjectProgress } from "@/services/tasks";
+import type { PortalUser } from "@/types/auth";
 import type { CreateProjectInput, Project } from "@/types/project";
+import { isProjectStatus } from "@/types/project";
 import type { ServiceResult } from "@/services/result";
 
 /**
@@ -34,6 +37,16 @@ export interface ProjectWithNames {
   project: Project;
   clientName: string;
   handoverCode: string;
+  /** % dihitung otomatis dari task (US-020, FR-17). */
+  progress: number;
+}
+
+/** Role yang boleh membuat/mengubah proyek: PM dan Admin (Super Admin). */
+export function canManageProjects(user: PortalUser | null): boolean {
+  if (!user || !user.isActive) {
+    return false;
+  }
+  return user.roles.includes("Project Manager") || user.roles.includes("Super Admin");
 }
 
 async function withNames(project: Project): Promise<ProjectWithNames> {
@@ -45,6 +58,7 @@ async function withNames(project: Project): Promise<ProjectWithNames> {
       (clients ?? []).find((client) => client.id === project.clientId)?.companyName ??
       "Klien tidak dikenal",
     handoverCode: found?.deal.code ?? "-",
+    progress: await getProjectProgress(project.id),
   };
 }
 
@@ -71,6 +85,44 @@ export async function getProject(
 export function findProjectByHandover(handoverId: string): Project | null {
   const project = projectStore.find((item) => item.handoverId === handoverId);
   return project ? { ...project } : null;
+}
+
+export interface ProjectQuery {
+  search?: string;
+  statuses?: Project["status"][];
+  pmNames?: string[];
+  clientIds?: string[];
+}
+
+/**
+ * Daftar proyek dengan pencarian + filter status/PM/klien (US-020).
+ * Fase 2: query Supabase server-side dengan parameter sama.
+ */
+export async function queryProjects(
+  query: ProjectQuery
+): Promise<ServiceResult<ProjectWithNames[]>> {
+  const { data } = await listProjects();
+  const search = (query.search ?? "").trim().toLowerCase();
+  const items = (data ?? []).filter((item) => {
+    if (search) {
+      const haystack =
+        `${item.project.name} ${item.project.code} ${item.clientName} ${item.project.pmName}`.toLowerCase();
+      if (!haystack.includes(search)) {
+        return false;
+      }
+    }
+    if (query.statuses && query.statuses.length > 0 && !query.statuses.includes(item.project.status)) {
+      return false;
+    }
+    if (query.pmNames && query.pmNames.length > 0 && !query.pmNames.includes(item.project.pmName)) {
+      return false;
+    }
+    if (query.clientIds && query.clientIds.length > 0 && !query.clientIds.includes(item.project.clientId)) {
+      return false;
+    }
+    return true;
+  });
+  return { data: items, error: null };
 }
 
 /**
@@ -122,5 +174,50 @@ export async function createProjectFromHandover(
     updatedAt: now,
   };
   projectStore.push(project);
+  return { data: { ...project }, error: null };
+}
+
+export interface UpdateProjectInput {
+  status?: Project["status"];
+  pmName?: string;
+  startDate?: string;
+  targetDate?: string;
+}
+
+/**
+ * Ubah proyek (US-020). UI memanggil hanya untuk PM/Admin
+ * (canManageProjects); Fase 2 ditegakkan RLS.
+ */
+export async function updateProject(
+  projectId: string,
+  input: UpdateProjectInput
+): Promise<ServiceResult<Project>> {
+  const project = projectStore.find((item) => item.id === projectId);
+  if (!project) {
+    return { data: null, error: "Proyek tidak ditemukan." };
+  }
+  if (input.status && !isProjectStatus(input.status)) {
+    return { data: null, error: "Status proyek tidak dikenal." };
+  }
+  if (input.pmName && !listProjectManagers().includes(input.pmName)) {
+    return { data: null, error: "PM tidak dikenal." };
+  }
+  const startDate = input.startDate ?? project.startDate;
+  const targetDate = input.targetDate ?? project.targetDate;
+  if (Number.isNaN(Date.parse(startDate)) || Number.isNaN(Date.parse(targetDate))) {
+    return { data: null, error: "Tanggal proyek tidak valid." };
+  }
+  if (startDate > targetDate) {
+    return { data: null, error: "Tanggal mulai tidak boleh melewati target selesai." };
+  }
+  if (input.status) {
+    project.status = input.status;
+  }
+  if (input.pmName) {
+    project.pmName = input.pmName;
+  }
+  project.startDate = startDate;
+  project.targetDate = targetDate;
+  project.updatedAt = new Date().toISOString();
   return { data: { ...project }, error: null };
 }
