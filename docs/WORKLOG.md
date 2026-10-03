@@ -98,3 +98,23 @@
 - **Acceptance Criteria:** 5/5 — komentar reusable + mention ✅ lampiran + batas ukuran ✅ notifikasi in-app ✅ lint/typecheck ✅ browser ✅
 - **Catatan/Masalah:** `/demo/kolaborasi` scaffolding Fase 1 (dicatat DEC-008); mention Fase 2 diganti user picker. FR-4 tetap TODO sampai backend (tabel + Storage + Realtime).
 - **Langkah berikutnya:** EPIC B / US-007 (Database Lead)
+
+---
+
+## 2026-10-04 07:30 — US-007 — Database Lead (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-007-database-lead
+- **Commit:** 98c62e1 — feat(frontend): database lead CRM dengan validasi dan duplikat US-007
+- **Yang dilakukan:**
+  - Kontrak `types/lead.ts`: 7 status, 10 kategori industri (lokal; digantikan master data US-005), `Lead` + input
+  - `lib/validators.ts` bersama (email, normalisasi + validasi WA Indonesia); service auth dialihkan ke validator ini
+  - Mock 8 lead (semua status + contoh duplikat WA); tambah user mock Fira & Figo (PIC sesuai contoh PRD)
+  - `services/leads.ts`: list/get/create/update + `findDuplicates` (WA ternormalisasi atau nama perusahaan, non-blokir) + `listLeadPICs`
+  - Komponen `crm/`: `LeadTable` (badge warna per status), `LeadForm` (tambah/ubah + error service), `LeadsManager` (loading/empty/error + banner peringatan)
+  - Halaman `/crm/leads`; nav dashboard "Database Lead" → route nyata
+- **File berubah:** 14 file (lihat commit 98c62e1)
+- **Verifikasi:** lint ✅ · typecheck ✅ (setelah perbaiki tipe state status) · test ✅ (52/52, 9 file; tambah Fira/Figo ke mock agar PIC valid) · build ✅ (route `/crm/leads` static) · browser ✅ (`next start` → `/crm/leads` 200 + judul; nav beranda menaut ke `/crm/leads`) · tanpa `console.log`/`TODO` ✅
+- **Acceptance Criteria:** 6/6 — form+tabel lengkap ✅ 7 status ✅ validasi WA/email ✅ peringatan duplikat ✅ lint/typecheck ✅ browser ✅
+- **Catatan/Masalah:** FR-6/FR-7 tetap TODO sampai backend (tabel + trigger + unique index).
+- **Langkah berikutnya:** US-008 (Pencarian, filter, pewarnaan status)

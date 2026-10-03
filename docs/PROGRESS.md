@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-04  
-> **Fase saat ini:** Fase 1 — Frontend (US-001, US-002, US-006 DONE; US-003–US-005 bertipe Backend, dikerjakan di Fase 2; berikutnya EPIC B / US-007)
+> **Fase saat ini:** Fase 1 — Frontend (US-001, US-002, US-006, US-007 DONE; berikutnya US-008)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -23,7 +23,7 @@
 
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
-| US-007 | Database Lead | Frontend | TODO | 0/6 | - |
+| US-007 | Database Lead | Frontend | DONE | 6/6 ✅ | 98c62e1 |
 | US-008 | Pencarian, filter, dan pewarnaan status | Frontend | TODO | 0/5 | - |
 | US-009 | Penugasan PIC & bulk action | Frontend | TODO | 0/4 | - |
 | US-010 | Import lead dari CSV | Frontend | TODO | 0/5 | - |
