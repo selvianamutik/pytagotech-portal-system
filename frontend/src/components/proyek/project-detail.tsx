@@ -2,21 +2,39 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, PencilIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getProject, type ProjectWithNames } from "@/services/projects";
+import { Input } from "@/components/ui/input";
+import { FormSelect } from "@/components/crm/lead-table";
+import {
+  canManageProjects,
+  getProject,
+  listProjectManagers,
+  updateProject,
+  type ProjectWithNames,
+} from "@/services/projects";
+import { useAuthStore } from "@/store/auth";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { PROJECT_STATUSES } from "@/types/project";
 
 /**
  * Detail proyek (US-019): info + tautan balik ke handover asal.
  * Task, fitur, dan timeline menyusul di US-021 s.d. US-025.
  */
 export function ProjectDetail({ projectId }: { projectId: string }) {
+  const user = useAuthStore((state) => state.user);
   const [item, setItem] = useState<ProjectWithNames | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [status, setStatus] = useState("");
+  const [pmName, setPmName] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [targetDate, setTargetDate] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,6 +75,38 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
   }
 
   const { project, clientName, handoverCode } = item;
+  const manageable = canManageProjects(user);
+
+  function beginEdit() {
+    setStatus(project.status);
+    setPmName(project.pmName);
+    setStartDate(project.startDate);
+    setTargetDate(project.targetDate);
+    setError(null);
+    setEditing(true);
+  }
+
+  async function handleSave(event: React.FormEvent) {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
+    const { data, error: saveError } = await updateProject(project.id, {
+      status: status as ProjectWithNames["project"]["status"],
+      pmName,
+      startDate,
+      targetDate,
+    });
+    setPending(false);
+    if (saveError || !data) {
+      setError(saveError ?? "Gagal menyimpan proyek.");
+      return;
+    }
+    setEditing(false);
+    const { data: refreshed } = await getProject(project.id);
+    if (refreshed) {
+      setItem(refreshed);
+    }
+  }
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6">
@@ -107,6 +157,82 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
           </div>
         </CardContent>
       </Card>
+
+      {manageable && !editing ? (
+        <Button type="button" variant="outline" onClick={beginEdit}>
+          <PencilIcon aria-hidden="true" /> Ubah proyek
+        </Button>
+      ) : null}
+      {!manageable ? (
+        <p className="text-xs text-muted-foreground" role="note">
+          Hanya PM dan Admin yang dapat mengubah proyek.
+        </p>
+      ) : null}
+
+      {editing ? (
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle className="text-base">Ubah proyek</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSave} className="grid gap-4 sm:grid-cols-2">
+              <FormSelect
+                id="project-edit-status"
+                label="Status"
+                value={status}
+                onChange={setStatus}
+                options={PROJECT_STATUSES}
+                required
+              />
+              <FormSelect
+                id="project-edit-pm"
+                label="Project Manager"
+                value={pmName}
+                onChange={setPmName}
+                options={listProjectManagers()}
+                required
+              />
+              <div className="space-y-2">
+                <label htmlFor="project-edit-start" className="text-sm font-medium">
+                  Tanggal mulai
+                </label>
+                <Input
+                  id="project-edit-start"
+                  type="date"
+                  value={startDate}
+                  onChange={(event) => setStartDate(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="project-edit-target" className="text-sm font-medium">
+                  Target selesai
+                </label>
+                <Input
+                  id="project-edit-target"
+                  type="date"
+                  value={targetDate}
+                  onChange={(event) => setTargetDate(event.target.value)}
+                  required
+                />
+              </div>
+              {error ? (
+                <p role="alert" className="text-sm text-destructive sm:col-span-2">
+                  {error}
+                </p>
+              ) : null}
+              <div className="flex gap-2 sm:col-span-2">
+                <Button type="submit" disabled={pending}>
+                  {pending ? "Menyimpan..." : "Simpan"}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setEditing(false)}>
+                  Batal
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      ) : null}
     </main>
   );
 }

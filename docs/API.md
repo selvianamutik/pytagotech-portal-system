@@ -278,6 +278,9 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 | `createProjectFromHandover(handoverId, {pmName, startDate})` (FR-15) | Hanya dari Dikonfirmasi; salin nama/kode/klien/nilai/deadline; 1 handover = 1 proyek; PM dari daftar; mulai ≤ deadline |
 | `listProjects()` / `getProject(id)` | Dilengkapi nama klien + kode handover (relasi dua arah) |
 | `listProjectManagers()` | PM + Super Admin aktif |
+| `queryProjects({search, statuses, pmNames, clientIds})` (US-020) | Pencarian + filter; progress otomatis dari task |
+| `updateProject(id, partial)` (US-020) | Status/PM/tanggal; UI hanya untuk PM/Admin |
+| `canManageProjects(user)` | Gerbang tombol buat/ubah proyek |
 
 ---
 

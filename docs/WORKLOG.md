@@ -352,3 +352,20 @@
 - **Acceptance Criteria:** 5/5 — salin tanpa input ulang ✅ field + 5 status ✅ relasi dua arah ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-15 tetap TODO sampai backend. Fitur handover dibaca backlog US-023 dari handover tertaut.
 - **Langkah berikutnya:** US-020 (Daftar proyek)
+
+---
+
+## 2026-10-04 15:00 — US-020 — Daftar proyek (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-020-daftar-proyek
+- **Commit:** 7f2d81f — feat(frontend): daftar proyek + progress + guard US-020
+- **Yang dilakukan:**
+  - Store task minimal + `getProjectProgress` (rata-rata task atas; induk-dari-subtask di US-022)
+  - `queryProjects` (cari + filter status/PM/klien), `updateProject`, `canManageProjects`
+  - Halaman `/proyek` (filter + progress bar); edit proyek + tombol Buat Proyek digerbang PM/Admin; nav
+- **File berubah:** types/task, services/tasks, services/projects(+test), components/proyek (list, detail, handover-section), app/proyek, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (120/120) · browser menyusul di sweep akhir EPIC D
+- **Acceptance Criteria:** 4/4 — tabel + filter ✅ progress otomatis ✅ guard PM/Admin ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** -
+- **Langkah berikutnya:** US-021 (Template task)

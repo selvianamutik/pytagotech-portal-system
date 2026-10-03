@@ -7,7 +7,8 @@ import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateProjectDialog } from "@/components/proyek/create-project-dialog";
-import { findProjectByHandover } from "@/services/projects";
+import { canManageProjects, findProjectByHandover } from "@/services/projects";
+import { useAuthStore } from "@/store/auth";
 import { formatCurrency } from "@/lib/utils";
 import type { Project } from "@/types/project";
 
@@ -23,8 +24,10 @@ export function HandoverProjectSection({
   handoverStatus: string;
 }) {
   // Store mock dibaca sinkron (Fase 1) — tanpa effect.
+  const user = useAuthStore((state) => state.user);
   const [project] = useState<Project | null>(() => findProjectByHandover(handoverId));
   const [dialogOpen, setDialogOpen] = useState(false);
+  const manageable = canManageProjects(user);
 
   if (project) {
     return (
@@ -54,6 +57,19 @@ export function HandoverProjectSection({
           <CardTitle className="text-base">Proyek</CardTitle>
           <CardDescription>
             Tombol “Buat Proyek” muncul setelah handover Dikonfirmasi Produksi.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  if (!manageable) {
+    return (
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle className="text-base">Proyek</CardTitle>
+          <CardDescription>
+            Hanya PM dan Admin yang dapat membuat proyek dari handover ini.
           </CardDescription>
         </CardHeader>
       </Card>
