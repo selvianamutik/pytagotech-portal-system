@@ -169,3 +169,21 @@
 - **Acceptance Criteria:** 5/5 — template ✅ preview ✅ duplikat dilewati ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-011 (Pipeline Interested Leads)
+
+---
+
+## 2026-10-04 09:30 — US-011 — Pipeline Interested Leads (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-011-pipeline
+- **Commit:** 069d400 — feat(frontend): pipeline Interested Kanban + tabel US-011
+- **Yang dilakukan:**
+  - Kontrak `types/interest.ts`: 7 tahapan + kebutuhan klien
+  - `services/interest.ts`: pipeline otomatis dari lead Interest; pindah tahap (audit `lead.move-stage`) + ubah kebutuhan
+  - LEAD-006 (Kopi Nusantara) → Interest agar pipeline berisi 2 kartu demo
+  - Komponen `crm/interest-pipeline.tsx`: Kanban drag-and-drop 7 kolom + tampilan tabel + dialog tahap/kebutuhan; halaman `/crm/interested`; nav dashboard
+- **File berubah:** types/interest, services/interest(.test), mocks/leads, components/crm/interest-pipeline.tsx, app/crm/interested, mocks/dashboard, services/lead-import (hapus import tak terpakai), docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (71/71) · browser menyusul di sweep akhir EPIC B
+- **Acceptance Criteria:** 5/5 — otomatis dari Interest ✅ 7 tahap ✅ Kanban + tabel ✅ kebutuhan ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-8 tetap TODO sampai backend (Closing → klien + handover di US-014).
+- **Langkah berikutnya:** US-012 (Activity log per lead)
