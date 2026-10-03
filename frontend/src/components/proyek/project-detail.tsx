@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/crm/lead-table";
 import { FeatureBacklog } from "@/components/proyek/feature-backlog";
+import { FeatureScheduleSection } from "@/components/proyek/feature-schedule";
 import { ProjectTasks } from "@/components/proyek/project-tasks";
 import {
   canManageProjects,
@@ -174,6 +175,8 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
       <ProjectTasks projectId={project.id} />
 
       <FeatureBacklog projectId={project.id} handoverId={project.handoverId} />
+
+      <FeatureScheduleSection projectId={project.id} />
 
       <div>
         <Button type="button" render={<Link href={`/proyek/${project.id}/tasks`} />}>

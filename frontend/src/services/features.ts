@@ -138,8 +138,7 @@ export async function ensureBacklogFromHandover(
 }
 
 /**
- * Ubah fitur menjadi task proyek (US-023). Task mewarisi nama,
- * developer, dan estimasi sebagai catatan awal.
+ * Ubah fitur menjadi task proyek (US-023). Task mewarisi nama, * developer, dan estimasi sebagai catatan awal.
  */
 export async function convertFeatureToTask(
   featureId: string
@@ -162,4 +161,35 @@ export async function convertFeatureToTask(
   }
   feature.taskId = task.id;
   return { data: { taskId: task.id }, error: null };
+}
+
+export interface WriteScheduleInput {
+  startDate: string;
+  endDate: string;
+  /** Alasan override (null = jadwal otomatis). */
+  overrideReason: string | null;
+  markOverridden?: boolean;
+}
+
+/** Tulis hasil penjadwalan ke fitur (dipakai US-024; dibaca Gantt US-025). */
+export async function writeFeatureSchedule(
+  featureId: string,
+  schedule: WriteScheduleInput
+): Promise<ServiceResult<true>> {
+  const feature = featureStore.find((item) => item.id === featureId);
+  if (!feature) {
+    return { data: null, error: "Fitur tidak ditemukan." };
+  }
+  feature.scheduledStart = schedule.startDate;
+  feature.scheduledEnd = schedule.endDate;
+  if (schedule.markOverridden) {
+    feature.scheduleOverride = {
+      startDate: schedule.startDate,
+      endDate: schedule.endDate,
+      reason: schedule.overrideReason ?? "",
+    };
+  } else if (!schedule.overrideReason) {
+    feature.scheduleOverride = undefined;
+  }
+  return { data: true, error: null };
 }

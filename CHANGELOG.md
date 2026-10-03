@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-021: template task + generate otomatis (seed menunggu Q-005)
 - US-022: task board Kanban + List (sub-task, rollup %, komentar/lampiran)
 - US-023: backlog fitur (impor handover otomatis, ubah jadi task)
+- US-024: penjadwalan fitur otomatis (hari kerja, kapasitas, bentrok, override)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal
