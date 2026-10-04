@@ -41,14 +41,14 @@ describe("queryProjects", () => {
   it("filter pencarian, status, PM, dan klien", async () => {
     await seedProject();
 
-    expect((await queryProjects({})).data).toHaveLength(1);
-    expect((await queryProjects({ search: "sinar" })).data).toHaveLength(1);
+    expect((await queryProjects({})).data).toHaveLength(3);
+    expect((await queryProjects({ search: "sinar" })).data).toHaveLength(2);
     expect((await queryProjects({ search: "xyz" })).data).toHaveLength(0);
-    expect((await queryProjects({ statuses: ["Active"] })).data).toHaveLength(0);
-    expect((await queryProjects({ statuses: ["Planning"] })).data).toHaveLength(1);
+    expect((await queryProjects({ statuses: ["Active"] })).data).toHaveLength(1);
+    expect((await queryProjects({ statuses: ["Planning"] })).data).toHaveLength(2);
     expect((await queryProjects({ pmNames: ["Feby"] })).data).toHaveLength(0);
-    expect((await queryProjects({ clientIds: ["KLI-002"] })).data).toHaveLength(0);
-    expect((await queryProjects({ clientIds: ["KLI-001"] })).data).toHaveLength(1);
+    expect((await queryProjects({ clientIds: ["KLI-002"] })).data).toHaveLength(1);
+    expect((await queryProjects({ clientIds: ["KLI-001"] })).data).toHaveLength(2);
   });
 });
 

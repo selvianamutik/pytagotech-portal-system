@@ -66,10 +66,13 @@ describe("daysUntil", () => {
 });
 
 describe("getProductionDashboard", () => {
-  it("KPI kosong tanpa proyek", async () => {
-    const { data } = await getProductionDashboard({});
+  it("KPI dari 2 proyek seed (tanpa task)", async () => {
+    const { data } = await getProductionDashboard({}, "2026-10-04");
 
-    expect(data?.kpi.totalProjects).toBe(0);
+    expect(data?.kpi.totalProjects).toBe(2);
+    expect(data?.kpi.activeProjects).toBe(1);
+    expect(data?.kpi.tasksDone).toBe(0);
+    expect(data?.projects).toHaveLength(2);
     expect(data?.deadlineWatch).toHaveLength(0);
   });
 
@@ -86,16 +89,16 @@ describe("getProductionDashboard", () => {
     await updateTaskSummary(t2.data!.id, { status: "Blocked" });
 
     const full = await getProductionDashboard({}, "2026-10-04");
-    expect(full.data?.kpi.totalProjects).toBe(1);
+    expect(full.data?.kpi.totalProjects).toBe(3);
     expect(full.data?.kpi.tasksDone).toBe(1);
     expect(full.data?.kpi.tasksBlocked).toBe(1);
 
-    // Target 2026-12-20 → jauh dari deadline.
-    expect(full.data?.deadlineWatch).toHaveLength(0);
+    // Target 2026-12-20 → jauh dari deadline (seed PRJ-001 12-15 ikut terpantau).
+    expect(full.data?.deadlineWatch.map((row) => row.projectId)).toEqual([]);
 
     const near = await getProductionDashboard({}, "2026-12-18");
-    expect(near.data?.deadlineWatch).toHaveLength(1);
-    expect(near.data?.deadlineWatch[0]?.daysToDeadline).toBe(2);
+    expect(near.data?.deadlineWatch.map((row) => row.projectId)).toEqual(["PRJ-001", created.data!.id]);
+    expect(near.data?.deadlineWatch[0]?.daysToDeadline).toBe(-3);
 
     expect((await getProductionDashboard({ pmName: "Feby" })).data?.kpi.totalProjects).toBe(0);
     expect(
