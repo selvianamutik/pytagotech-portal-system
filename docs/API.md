@@ -356,7 +356,16 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Content Planner
 
-> _Akan didokumentasikan saat US-027 dimulai_
+> **Status:** Draft Fase 1 (US-027) — mock di `frontend/src/mocks/content-ideas.ts`,
+> diakses via `frontend/src/services/ideas.ts`. Halaman `/sosmed/planner`.
+> Konstanta bersama Sosmed di `frontend/src/types/sosmed.ts`.
+> Fase 2: tabel `content_ideas`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| Skor brief | Field terisi ÷ 5 (FR-21) |
+| Ambang Siap Produksi | 5/5 (Q-003 A) — ditolak dengan pesan bila kurang |
+| CRUD ide | Brand (3 lini), pillar, funnel, multi-platform, 4 status kelayakan |
 
 ---
 

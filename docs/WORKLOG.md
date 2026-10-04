@@ -484,3 +484,19 @@
 - **Verifikasi:** build ✅ browser ✅
 - **Catatan/Masalah:** FR-11/FR-15/FR-16/FR-17/FR-18/FR-19/FR-20 tetap TODO sampai backend. Q-005 (template) & Q-012 (SOP) & Q-013 (divisi) masih OPEN.
 - **Langkah berikutnya:** EPIC E / US-027 (Content Planner)
+
+---
+
+## 2026-10-04 19:00 — US-027 — Content Planner (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-027-content-planner
+- **Commit:** dee11fe — feat(frontend): content planner US-027
+- **Yang dilakukan:**
+  - Konstanta Sosmed bersama (3 brand, 5 platform; satu dataset — Q-009)
+  - Kontrak ide + skor brief + ambang 5/5 (Q-003 A); CRUD + halaman `/sosmed/planner` + nav
+- **File berubah:** types/sosmed, types/content-idea, mocks/content-ideas, services/ideas(.test), components/sosmed/idea-manager, app/sosmed/planner, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (152/152) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 5/5 — field ✅ brief + skor ✅ 4 status ✅ ambang ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-21 tetap TODO sampai backend.
+- **Langkah berikutnya:** US-028 (Database Produksi Konten)
