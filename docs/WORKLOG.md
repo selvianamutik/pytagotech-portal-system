@@ -724,6 +724,19 @@
 
 ---
 
+## 2026-10-05 03:30 — Chore — Layout global portal (permintaan pemilik)
+
+- **Branch:** chore/portal-global-layout
+- **Yang dilakukan:**
+  - Shell dashboard (sidebar + header) dipindah dari `app/page.tsx` ke grup route `(portal)/layout.tsx`; seluruh halaman modul pindah ke grup (URL tidak berubah)
+  - Komponen baru: `layout/portal-sidebar` (nav + state aktif), `layout/portal-header`, `layout/status-badge` + `tone-classes`
+  - `/login` dan `/403` tetap tanpa shell; nav "Ringkasan kerja" → `/`
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (198/198) build ✅ browser ✅ (shell di portal, tanpa shell di login/403)
+- **Catatan/Masalah:** nav anchor `#proyek` (Task Board) & `#pengaturan` (Master Data) masih menunggu halamannya (US-005/backend).
+- **Langkah berikutnya:** Fase 2 — Backend, mulai US-003 (RLS)
+
+---
+
 ## 2026-10-05 02:00 — US-042 — SOP & RACI (DONE)
 
 - **Fase:** 1 (Frontend)

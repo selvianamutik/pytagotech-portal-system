@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Layout portal (sidebar + header + menu aktif) menjadi global via grup route `(portal)`; URL tidak berubah; `/login` dan `/403` tetap tanpa shell
+
 ## [0.1.0] - 2026-10-05
 
 ### Added

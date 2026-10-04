@@ -13,7 +13,7 @@ export const dashboardSnapshot: DashboardSnapshot = {
     { label: "SLA sosmed", value: "92%", change: "routing WA rata-rata 11m", tone: "priority" },
   ],
   navigation: [
-    { label: "Ringkasan kerja", module: "Beranda", href: "#beranda", roles: ["Semua role"] },
+    { label: "Ringkasan kerja", module: "Beranda", href: "/", roles: ["Semua role"] },
     { label: "Database Lead", module: "CRM", href: "/crm/leads", badge: 12, roles: ["Sales / Marketing", "Executive / Leader"] },
     { label: "Interested Leads", module: "CRM", href: "/crm/interested", badge: 2, roles: ["Sales / Marketing", "Executive / Leader"] },
     { label: "Dashboard CRM", module: "CRM", href: "/crm/dashboard", roles: ["Sales / Marketing", "Executive / Leader"] },
