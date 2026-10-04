@@ -448,6 +448,22 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: KPI Scorecard Sosmed
+
+> **Status:** Draft Fase 1 (US-039) — `services/scorecard.ts`.
+> Halaman `/sosmed/scorecard`. Target interim (resmi US-041).
+
+| KPI | Definisi capaian |
+|-----|------------------|
+| Content Production | Materi dibuat pada periode + brand |
+| Reach & Awareness | Σ reach metrik (Terverifikasi bila ada Final) |
+| Engagement Rate | Rata-rata ER metrik |
+| Audience Growth | Σ (masuk − unfollows) growth |
+| Social Footprint | Σ followers terkini per platform |
+| WhatsApp Lead Handover | Inquiry dialihkan pada periode |
+
+---
+
 ## Modul: Community & Inquiry
 
 > **Status:** Draft Fase 1 — community di US-037 (`services/community.ts`);

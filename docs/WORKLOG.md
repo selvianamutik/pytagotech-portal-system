@@ -674,3 +674,19 @@
 - **Acceptance Criteria:** 5/5 — inquiry ✅ routing SLA ✅ 3 status ✅ Jadikan Lead ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-28 tetap TODO sampai backend.
 - **Langkah berikutnya:** US-039 (KPI Scorecard Sosmed)
+
+---
+
+## 2026-10-05 01:00 — US-039 — KPI Scorecard (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-039-scorecard
+- **Commit:** 2c9b118 — feat(frontend): KPI scorecard sosmed US-039
+- **Yang dilakukan:**
+  - 6 KPI (produksi, reach, ER, growth, footprint, handover) + target interim + status verifikasi + filter brand/periode
+  - Halaman `/sosmed/scorecard` + nav
+- **File berubah:** services/scorecard(.test), components/sosmed/sosmed-scorecard, app/sosmed/scorecard, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (190/190) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 4/4 — 6 KPI ✅ filter ✅ target + status ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** target resmi menunggu US-041.
+- **Langkah berikutnya:** US-040 (Evaluasi KIST)

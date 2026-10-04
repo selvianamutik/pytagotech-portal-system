@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-036: pertumbuhan akun (Net Growth + grafik tren)
 - US-037: community + SLA response time 30 menit
 - US-038: inquiry tracking (routing 15 mnt + Jadikan Lead CRM)
+- US-039: KPI scorecard sosmed (6 KPI + target interim + verifikasi)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal
