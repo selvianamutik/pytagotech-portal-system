@@ -705,3 +705,18 @@
 - **Acceptance Criteria:** 4/4 — KIST ✅ hipotesis Test ✅ filter ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-29 tetap TODO sampai backend.
 - **Langkah berikutnya:** EPIC G / US-042 (SOP & RACI)
+
+---
+
+## 2026-10-05 02:00 — US-042 — SOP & RACI (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-042-panduan
+- **Commit:** eba2031 — feat(frontend): panduan SOP dan RACI US-042
+- **Yang dilakukan:**
+  - Panduan markdown (baca semua, sunting Admin) + perender minimal + matriks RACI 3×7 + halaman `/pengaturan/panduan` + nav
+- **File berubah:** types/guide, services/guides(.test), components/sosmed (markdown, guides-manager), app/pengaturan/panduan, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (194/194) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 3/3 — panduan + edit ✅ RACI ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** -
+- **Langkah berikutnya:** US-044 (Pencarian global)
