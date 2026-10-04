@@ -500,3 +500,19 @@
 - **Acceptance Criteria:** 5/5 — field ✅ brief + skor ✅ 4 status ✅ ambang ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-21 tetap TODO sampai backend.
 - **Langkah berikutnya:** US-028 (Database Produksi Konten)
+
+---
+
+## 2026-10-04 19:30 — US-028 — Database Produksi Konten (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-028-materi
+- **Commit:** 081b5da — feat(frontend): database materi US-028
+- **Yang dilakukan:**
+  - Kontrak materi (ID otomatis, 4 status, jadwal + jam, 3 assignee, gate menempel)
+  - CRUD + buat-dari-ide (gerbang Disetujui) + halaman `/sosmed/materi` + nav
+- **File berubah:** types/material, mocks/materials, services/materials(.test), components/sosmed/material-manager, app/sosmed/materi, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (155/155) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 4/4 — materi induk ✅ penugasan ✅ dari ide ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** -
+- **Langkah berikutnya:** US-029 (Quality gate)

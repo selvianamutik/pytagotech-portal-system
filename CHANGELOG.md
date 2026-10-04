@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-025: Gantt interaktif (zoom, drag tersimpan, dependensi FS + kaskade)
 - US-026: dashboard produksi (KPI, deadline watch, filter, ekspor Excel + PDF)
 - US-027: content planner (skor brief otomatis, ambang 5/5)
+- US-028: database materi (ID otomatis, dari ide Disetujui)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal
