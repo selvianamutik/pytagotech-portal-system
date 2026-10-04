@@ -549,3 +549,19 @@
 - **Acceptance Criteria:** 5/5 — versi + reviewer ✅ 3 keputusan ✅ feedback + bukti ✅ gerbang Disetujui ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-031 (Distribusi)
+
+---
+
+## 2026-10-04 21:00 — US-031 — Distribusi (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-031-distribusi
+- **Commit:** a01fc8a — feat(frontend): distribusi Parent-Child US-031
+- **Yang dilakukan:**
+  - Kontrak publikasi (PUB otomatis, 5 platform, Single/Crosspost, jadwal + rilis menempel)
+  - CRUD publikasi + target dari ide + peringatan rekonsiliasi; seksi distribusi di detail materi
+- **File berubah:** types/publication, services/publications(.test), components/sosmed (distribution-section, material-detail), docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (166/166) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 4/4 — 1 MAT banyak PUB ✅ pola ✅ rekonsiliasi ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-23 tetap TODO sampai backend.
+- **Langkah berikutnya:** US-032 (Kalender publikasi)

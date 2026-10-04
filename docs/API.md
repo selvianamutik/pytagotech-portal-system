@@ -398,7 +398,14 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Publications
 
-> _Akan didokumentasikan saat US-031 dimulai_
+> **Status:** Draft Fase 1 (US-031) — `services/publications.ts`, tipe
+> `types/publication.ts`. Distribusi di halaman detail materi.
+> Fase 2: tabel `publications`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| `createPublication(materialId, platform, pattern)` | 1 platform = 1 PUB; pola Single/Crosspost; jadwal warisan materi |
+| `getUncoveredPlatforms(materialId)` (rekonsiliasi) | Target dari ide asal (atau 5 platform) minus yang sudah ada |
 
 ---
 
