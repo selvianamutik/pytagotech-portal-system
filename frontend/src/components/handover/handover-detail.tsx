@@ -14,6 +14,8 @@ import { HandoverStatusActions } from "@/components/handover/handover-status";
 import { TermsEditor } from "@/components/handover/terms-editor";
 import { listClients } from "@/services/clients";
 import { getDeal, type DealWithClient } from "@/services/deals";
+import { canManageProjects } from "@/services/projects";
+import { useAuthStore } from "@/store/auth";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 /**
@@ -33,6 +35,7 @@ export function HandoverDetail({
   const [clients, setClients] = useState<{ id: string; companyName: string }[]>([]);
   const [notFound, setNotFound] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const user = useAuthStore((state) => state.user);
 
   async function refresh() {
     const [dealResult, clientsResult] = await Promise.all([getDeal(dealId), listClients()]);
@@ -97,6 +100,18 @@ export function HandoverDetail({
   }
 
   const { deal, clientName, displayName } = item;
+
+  // Kartu konfirmasi ditempel bawah layar selama belum ACC dan hanya
+  // untuk PM/Admin; selebihnya tampil normal di paling bawah.
+  const pinStatus = deal.status !== "Dikonfirmasi" && canManageProjects(user);
+
+  const statusCard = (
+    <HandoverStatusActions
+      dealId={deal.id}
+      status={deal.status}
+      onChanged={() => void refresh()}
+    />
+  );
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6">
@@ -170,12 +185,6 @@ export function HandoverDetail({
 
       <TermsEditor dealId={deal.id} dealValue={deal.value} />
 
-      <HandoverStatusActions
-        dealId={deal.id}
-        status={deal.status}
-        onChanged={() => void refresh()}
-      />
-
       <ChangeRequestSection
         dealId={deal.id}
         versions={deal.versions}
@@ -183,6 +192,17 @@ export function HandoverDetail({
       />
 
       <HandoverProjectSection handoverId={deal.id} handoverStatus={deal.status} />
+
+      {pinStatus ? (
+        <>
+          <div className="fixed inset-x-4 bottom-4 z-30 sm:inset-x-6 xl:left-[19rem]">
+            {statusCard}
+          </div>
+          <div aria-hidden="true" className="h-64" />
+        </>
+      ) : (
+        statusCard
+      )}
 
       {editOpen ? (
         <HandoverForm

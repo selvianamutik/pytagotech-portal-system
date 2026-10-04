@@ -961,3 +961,16 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (detail 200; posisi fixed perlu cek visual pemilik)
 - **Catatan/Masalah:** - (pemetaan: US-020)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 12:00 — Fix — Posisi card konfirmasi & proyek handover (permintaan pemilik)
+
+- **Branch:** fix/handover-card-position
+- **Yang dilakukan:**
+  - Card Konfirmasi Produksi: fixed bawah layar selama belum ACC khusus PM/Admin; selebihnya (sudah ACC / bukan PM) tampil normal di paling bawah
+  - Card Proyek disembunyikan total untuk non-PM/Admin
+- **File berubah:** components/handover/handover-detail, components/proyek/handover-project-section
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (207/207) build ✅ browser ✅
+- **Catatan/Masalah:** - (pemetaan: US-017, US-019)
+- **Langkah berikutnya:** Fase 2 — Skema Database
