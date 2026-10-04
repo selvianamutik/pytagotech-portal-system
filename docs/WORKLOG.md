@@ -690,3 +690,18 @@
 - **Acceptance Criteria:** 4/4 — 6 KPI ✅ filter ✅ target + status ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** target resmi menunggu US-041.
 - **Langkah berikutnya:** US-040 (Evaluasi KIST)
+
+---
+
+## 2026-10-05 01:30 — US-040 — Evaluasi KIST (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-040-kist
+- **Commit:** b554c2d — feat(frontend): evaluasi KIST US-040
+- **Yang dilakukan:**
+  - CRUD evaluasi + filter kategori/brand/periode + hipotesis wajib untuk Test + halaman `/sosmed/evaluasi` + nav
+- **File berubah:** types/evaluation, services/evaluations(.test), components/sosmed/kist-board, app/sosmed/evaluasi, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (192/192) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 4/4 — KIST ✅ hipotesis Test ✅ filter ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-29 tetap TODO sampai backend.
+- **Langkah berikutnya:** EPIC G / US-042 (SOP & RACI)
