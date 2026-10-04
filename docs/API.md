@@ -406,6 +406,7 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 |--------|---------------|
 | `createPublication(materialId, platform, pattern)` | 1 platform = 1 PUB; pola Single/Crosspost; jadwal warisan materi |
 | `getUncoveredPlatforms(materialId)` (rekonsiliasi) | Target dari ide asal (atau 5 platform) minus yang sudah ada |
+| `recordRelease(publicationId, {releaseDate, liveLink})` (US-033) | Aktual rilis; mengunci jadwal-ulang; urgensi otomatis via kalender |
 
 ---
 

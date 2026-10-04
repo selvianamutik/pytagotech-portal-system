@@ -116,3 +116,31 @@ export async function savePublication(
   publicationStore[index] = { ...publication };
   return { data: { ...publication }, error: null };
 }
+
+export interface RecordReleaseInput {
+  releaseDate: string;
+  liveLink: string;
+}
+
+/**
+ * Catat rilis aktual + link post live (US-033). Setelah live,
+ * publikasi terkunci dari jadwal ulang (US-032).
+ */
+export async function recordRelease(
+  publicationId: string,
+  input: RecordReleaseInput
+): Promise<ServiceResult<Publication>> {
+  const publication = publicationStore.find((item) => item.id === publicationId);
+  if (!publication) {
+    return { data: null, error: "Publikasi tidak ditemukan." };
+  }
+  if (!input.releaseDate || Number.isNaN(Date.parse(input.releaseDate))) {
+    return { data: null, error: "Tanggal aktual rilis tidak valid." };
+  }
+  if (!input.liveLink.trim()) {
+    return { data: null, error: "Link post live wajib diisi." };
+  }
+  publication.releaseDate = input.releaseDate;
+  publication.liveLink = input.liveLink.trim();
+  return { data: { ...publication }, error: null };
+}
