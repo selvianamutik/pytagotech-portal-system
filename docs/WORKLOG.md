@@ -612,3 +612,19 @@
 - **Acceptance Criteria:** 4/4 — metadata ✅ 30 hari ✅ tolak kedaluwarsa ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-27 tetap TODO sampai backend.
 - **Langkah berikutnya:** EPIC F / US-035 (Analytics)
+
+---
+
+## 2026-10-04 23:00 — US-035 — Analytics (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-035-analitik
+- **Commit:** 57f1440 — feat(frontend): analytics posting US-035
+- **Yang dilakukan:**
+  - ER otomatis Q-002 C + snapshot Monitoring/Final + dedup + kunci Q-007 B
+  - Halaman `/sosmed/analitik` (pilih publikasi, tabel + ER + form + hapus) + nav
+- **File berubah:** types/metric, services/metrics(.test), components/sosmed/metrics-manager, app/sosmed/analitik, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (180/180; perbaiki test yang menimpa snapshot) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 5/5 — 7 metrik ✅ ER + rumus ✅ snapshot ✅ dedup + kunci ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-25 tetap TODO sampai backend.
+- **Langkah berikutnya:** US-036 (Pertumbuhan akun)
