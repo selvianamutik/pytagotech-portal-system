@@ -5,12 +5,14 @@ import { TriangleAlertIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/crm/lead-table";
 import {
   createPublication,
   deletePublication,
   getUncoveredPlatforms,
   listPublications,
+  recordRelease,
 } from "@/services/publications";
 import { SOSMED_PLATFORMS } from "@/types/sosmed";
 import type { Publication } from "@/types/publication";
@@ -27,6 +29,9 @@ export function DistributionSection({ materialId }: { materialId: string }) {
   const [pattern, setPattern] = useState<string>(DISTRIBUTION_PATTERNS[0]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [releaseFor, setReleaseFor] = useState<string | null>(null);
+  const [releaseDate, setReleaseDate] = useState("");
+  const [liveLink, setLiveLink] = useState("");
 
   async function refresh() {
     const [{ data: pubData }, { data: uncoveredData }] = await Promise.all([
@@ -80,6 +85,28 @@ export function DistributionSection({ materialId }: { materialId: string }) {
     await refresh();
   }
 
+  async function handleRelease(event: React.FormEvent) {
+    event.preventDefault();
+    if (!releaseFor) {
+      return;
+    }
+    setPending(true);
+    setError(null);
+    const { error: releaseError } = await recordRelease(releaseFor, {
+      releaseDate,
+      liveLink,
+    });
+    setPending(false);
+    if (releaseError) {
+      setError(releaseError);
+      return;
+    }
+    setReleaseFor(null);
+    setReleaseDate("");
+    setLiveLink("");
+    await refresh();
+  }
+
   const usedPlatforms = new Set(publications.map((publication) => publication.platform));
   const available = SOSMED_PLATFORMS.filter((item) => !usedPlatforms.has(item));
 
@@ -109,24 +136,80 @@ export function DistributionSection({ materialId }: { materialId: string }) {
             {publications.map((publication) => (
               <li
                 key={publication.id}
-                className="flex items-center justify-between gap-2 rounded-lg border px-3 py-2"
+                className="rounded-lg border px-3 py-2"
               >
-                <div>
-                  <p className="text-sm font-medium">{publication.platform}</p>
-                  <p className="font-mono text-xs text-muted-foreground">
-                    {publication.id} · {publication.pattern}
-                    {publication.scheduleDate ? ` · ${publication.scheduleDate}` : ""}
-                  </p>
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium">{publication.platform}</p>
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {publication.id} · {publication.pattern}
+                      {publication.scheduleDate ? ` · ${publication.scheduleDate}` : ""}
+                    </p>
+                    {publication.releaseDate ? (
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                        Live {publication.releaseDate}
+                        {publication.liveLink ? ` · ${publication.liveLink}` : ""}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex gap-2">
+                    {!publication.releaseDate ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setReleaseFor(publication.id);
+                          setReleaseDate(publication.scheduleDate ?? "");
+                          setLiveLink("");
+                          setError(null);
+                        }}
+                      >
+                        Catat rilis
+                      </Button>
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Hapus publikasi ${publication.platform}`}
+                      onClick={() => void handleDelete(publication.id)}
+                    >
+                      <Trash2Icon aria-hidden="true" />
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Hapus publikasi ${publication.platform}`}
-                  onClick={() => void handleDelete(publication.id)}
-                >
-                  <Trash2Icon aria-hidden="true" />
-                </Button>
+                {releaseFor === publication.id ? (
+                  <form onSubmit={handleRelease} className="mt-2 flex flex-wrap items-end gap-2 border-t pt-2">
+                    <div className="space-y-1">
+                      <label htmlFor={`rel-date-${publication.id}`} className="text-xs text-muted-foreground">
+                        Tanggal aktual rilis
+                      </label>
+                      <Input
+                        id={`rel-date-${publication.id}`}
+                        type="date"
+                        value={releaseDate}
+                        onChange={(event) => setReleaseDate(event.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="min-w-52 flex-1 space-y-1">
+                      <label htmlFor={`rel-link-${publication.id}`} className="text-xs text-muted-foreground">
+                        Link post live
+                      </label>
+                      <Input
+                        id={`rel-link-${publication.id}`}
+                        placeholder="https://..."
+                        value={liveLink}
+                        onChange={(event) => setLiveLink(event.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" size="sm" disabled={pending}>
+                      {pending ? "Menyimpan..." : "Simpan"}
+                    </Button>
+                  </form>
+                ) : null}
               </li>
             ))}
           </ul>

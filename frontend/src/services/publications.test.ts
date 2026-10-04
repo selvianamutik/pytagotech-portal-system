@@ -8,6 +8,7 @@ import {
   getTargetPlatforms,
   getUncoveredPlatforms,
   listPublications,
+  recordRelease,
   resetMockPublications,
 } from "@/services/publications";
 
@@ -48,5 +49,36 @@ describe("publications", () => {
 
     expect((await deletePublication("PUB-0001")).error).toBeNull();
     expect((await getUncoveredPlatforms("MAT-0018")).data).toEqual(["Instagram", "TikTok"]);
+  });
+});
+
+describe("recordRelease", () => {
+  it("mencatat tanggal aktual + link live", async () => {
+    await createPublication("MAT-0018", "Instagram", "Single");
+    const pub = (await listPublications("MAT-0018")).data![0]!;
+
+    const result = await recordRelease(pub.id, {
+      releaseDate: "2026-10-05",
+      liveLink: "https://instagram.test/p/abc",
+    });
+
+    expect(result.error).toBeNull();
+    expect(result.data?.releaseDate).toBe("2026-10-05");
+  });
+
+  it("menolak tanggal/link tak valid dan id asing", async () => {
+    await createPublication("MAT-0018", "Instagram", "Single");
+    const pub = (await listPublications("MAT-0018")).data![0]!;
+
+    expect(
+      (await recordRelease(pub.id, { releaseDate: "kapan", liveLink: "https://x.test" })).error
+    ).toMatch(/Tanggal aktual/);
+    expect(
+      (await recordRelease(pub.id, { releaseDate: "2026-10-05", liveLink: "  " })).error
+    ).toMatch(/Link post live/);
+    expect(
+      (await recordRelease("PUB-9999", { releaseDate: "2026-10-05", liveLink: "https://x.test" }))
+        .error
+    ).toBe("Publikasi tidak ditemukan.");
   });
 });

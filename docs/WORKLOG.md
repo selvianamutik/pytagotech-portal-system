@@ -581,3 +581,18 @@
 - **Acceptance Criteria:** 5/5 — bulan/minggu ✅ 4 filter ✅ klik + drag ✅ Overdue/Kritis ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-24 tetap TODO sampai backend. Ambang penuh di Pengaturan US-041.
 - **Langkah berikutnya:** US-033 (Pelacakan rilis)
+
+---
+
+## 2026-10-04 22:00 — US-033 — Pelacakan rilis (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-033-rilis
+- **Commit:** 2e2e0aa — feat(frontend): pelacakan rilis US-033
+- **Yang dilakukan:**
+  - `recordRelease` (tanggal aktual + link live wajib; mengunci jadwal-ulang) + form rilis per publikasi di seksi distribusi
+- **File berubah:** services/publications(.test), components/sosmed/distribution-section, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (173/173) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 3/3 — aktual + link ✅ Overdue/Kritis otomatis (US-032) ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** -
+- **Langkah berikutnya:** US-034 (Asset library)
