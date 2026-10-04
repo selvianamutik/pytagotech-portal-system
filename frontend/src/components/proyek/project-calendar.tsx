@@ -136,6 +136,8 @@ export function ProjectCalendar({ projectId }: { projectId?: string }) {
 
   const items: CalendarItem[] = useMemo(() => {
     const list: CalendarItem[] = [];
+    // Halaman asal untuk tombol kembali di Task Board.
+    const backPath = projectId ? `/proyek/${projectId}/kalender` : "/kalender";
     const projectShort = (id: string) => {
       const name = projectNames.get(id);
       return name ? ` · ${name.split(" - ")[0]}` : "";
@@ -150,7 +152,7 @@ export function ProjectCalendar({ projectId }: { projectId?: string }) {
           sub: `${task.id}${task.assignee ? ` · ${task.assignee}` : ""}${projectId ? "" : projectShort(task.projectId)}`,
           startDate: task.startDate as string,
           endDate: (task.targetDate ?? task.startDate) as string,
-          href: `/proyek/${task.projectId}/tasks`,
+          href: `/proyek/${task.projectId}/tasks?from=${encodeURIComponent(backPath)}`,
         });
       }
     }

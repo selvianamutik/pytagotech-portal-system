@@ -12,16 +12,22 @@ export const metadata: Metadata = {
 
 export default async function ProjectTasksPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { id } = await params;
+  const { from } = await searchParams;
+  // Kembali ke halaman asal bila valid (mis. /kalender), jika tidak ke detail.
+  const backHref = from && from.startsWith("/") && !from.startsWith("//") ? from : `/proyek/${id}`;
+  const backLabel = backHref === `/proyek/${id}` ? "Detail proyek" : "Kembali";
   return (
     <main className="mx-auto w-full max-w-7xl space-y-4 px-4 py-6 sm:px-6">
       <div className="flex flex-col gap-2">
         <div>
-          <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/proyek/${id}`} />}>
-            <ArrowLeftIcon aria-hidden="true" /> Detail proyek
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link href={backHref} />}>
+            <ArrowLeftIcon aria-hidden="true" /> {backLabel}
           </Button>
         </div>
         <div>
