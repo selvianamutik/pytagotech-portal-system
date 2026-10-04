@@ -596,3 +596,19 @@
 - **Acceptance Criteria:** 3/3 — aktual + link ✅ Overdue/Kritis otomatis (US-032) ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-034 (Asset library)
+
+---
+
+## 2026-10-04 22:30 — US-034 — Asset library (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-034-aset
+- **Commit:** 8615370 — feat(frontend): asset library US-034
+- **Yang dilakukan:**
+  - Kontrak aset + CRUD + status kedaluwarsa + `linkAssetsToMaterial` (tolak kedaluwarsa)
+  - Halaman `/sosmed/aset` + penautan aset di detail materi (opsi kedaluwarsa terkunci)
+- **File berubah:** types/asset, mocks/assets, services/assets(.test), components/sosmed (asset-manager, material-assets, material-detail), app/sosmed/aset, types/material, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (176/176) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 4/4 — metadata ✅ 30 hari ✅ tolak kedaluwarsa ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-27 tetap TODO sampai backend.
+- **Langkah berikutnya:** EPIC F / US-035 (Analytics)

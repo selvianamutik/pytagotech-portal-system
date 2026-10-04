@@ -71,7 +71,7 @@
 | US-031 | Distribusi multiplatform (Parent-Child) | Frontend | DONE | 4/4 ✅ | a01fc8a |
 | US-032 | Kalender publikasi | Frontend | DONE | 5/5 ✅ | 105bfa3 |
 | US-033 | Pelacakan rilis & post live | Frontend | DONE | 3/3 ✅ | 2e2e0aa |
-| US-034 | Asset & Content Library | Frontend | TODO | 0/4 | - |
+| US-034 | Asset & Content Library | Frontend | DONE | 4/4 ✅ | 8615370 |
 
 ---
 
