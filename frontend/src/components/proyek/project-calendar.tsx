@@ -22,6 +22,8 @@ interface CalendarItem {
   id: string;
   label: string;
   sub: string;
+  /** PIC pelaksana (assignee task / developer fitur), tampil di sel. */
+  pic: string;
   startDate: string;
   endDate: string;
   href: string;
@@ -150,6 +152,7 @@ export function ProjectCalendar({ projectId }: { projectId?: string }) {
           id: task.id,
           label: task.title,
           sub: `${task.id}${task.assignee ? ` · ${task.assignee}` : ""}${projectId ? "" : projectShort(task.projectId)}`,
+          pic: task.assignee ?? "",
           startDate: task.startDate as string,
           endDate: (task.targetDate ?? task.startDate) as string,
           href: `/proyek/${task.projectId}/tasks?from=${encodeURIComponent(backPath)}`,
@@ -164,6 +167,7 @@ export function ProjectCalendar({ projectId }: { projectId?: string }) {
           id: feature.id,
           label: feature.name,
           sub: `${feature.id} · fitur${feature.developer ? ` · ${feature.developer}` : ""}${projectId ? "" : projectShort(feature.projectId)}`,
+          pic: feature.developer,
           startDate: feature.scheduledStart as string,
           endDate: (feature.scheduledEnd ?? feature.scheduledStart) as string,
           href: `/proyek/${feature.projectId}?from=${encodeURIComponent(backPath)}`,
@@ -383,7 +387,10 @@ export function ProjectCalendar({ projectId }: { projectId?: string }) {
                           }`}
                           title={`${entry.label} (${entry.sub})`}
                         >
-                          {entry.label}
+                          <span className="block truncate font-medium">{entry.label}</span>
+                          {entry.pic ? (
+                            <span className="block truncate opacity-80">👤 {entry.pic}</span>
+                          ) : null}
                         </Link>
                       ))}
                     </div>
