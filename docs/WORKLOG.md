@@ -720,3 +720,19 @@
 - **Acceptance Criteria:** 3/3 — panduan + edit ✅ RACI ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-044 (Pencarian global)
+
+---
+
+## 2026-10-05 02:30 — US-044 — Pencarian global (DONE, Frontend selesai!)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-044-pencarian
+- **Commit:** ac3b400 — feat(frontend): pencarian global + Tugas saya US-044
+- **Yang dilakukan:**
+  - `services/search.ts`: pencarian lintas 5 entitas + `getMyWork` per role
+  - `GlobalSearch` (Ctrl+K) gantikan input dekoratif header + `MyWorkSection` di beranda
+- **File berubah:** services/search(.test), components/search/*, app/page, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (196/196) · browser menyusul di sweep akhir + Gate 1
+- **Acceptance Criteria:** 4/4 — pencarian ✅ Tugas saya ✅ hak akses (paritas signature RLS) ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-31 tetap TODO sampai backend. Seluruh 39 US Frontend DONE.
+- **Langkah berikutnya:** Sweep verifikasi akhir + Gate 1 (Frontend Selesai)

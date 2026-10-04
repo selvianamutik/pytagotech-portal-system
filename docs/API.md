@@ -583,3 +583,16 @@ interface NotificationItem { id: string; type: NotificationType; title: string; 
 |--------|---------------|
 | `listGuides()` / `updateGuide(slug, markdown)` | Markdown `#/##/-/tebal/link`; isi tak boleh kosong |
 | `listRaci()` / `setRaciCell(activity, role, value)` | 3 aktivitas × 7 role; nilai R/A/C/I/kosong |
+
+---
+
+## Modul: Pencarian Global & Beranda
+
+> **Status:** Draft Fase 1 (US-044) — `services/search.ts`.
+> Ctrl/Cmd+K di header + seksi Tugas saya di beranda.
+> Fase 2: RLS memfilter hasil per hak akses (FR-31).
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| `globalSearch(query, user)` | Lead, klien, proyek, task, materi; min 2 huruf; maks 30 hasil |
+| `getMyWork(user)` | Task assignee + follow-up overdue + review + SLA per role |
