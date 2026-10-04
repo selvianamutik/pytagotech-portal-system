@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PIC pelaksana tampil di sel kalender kerja
 - Kartu Ubah proyek fixed di bawah layar saat mode edit
 - Card konfirmasi handover menampilkan keterangan revisi & riwayat
+- Task Board global lintas proyek (`/proyek/board`)
 - Card konfirmasi handover fixed bila belum ACC (PM/Admin); card proyek disembunyi untuk non-PM
 - Perbaiki guard role yang macet di "Memeriksa akses" (guard kini memicu muat sesi)
 - Perbaiki warning Base UI: `nativeButton={false}` pada tombol bermuatan link/label

@@ -23,7 +23,7 @@ export const dashboardSnapshot: DashboardSnapshot = {
     { label: "Kalender Kerja", module: "Proyek", href: "/kalender", roles: ["Project Manager", "Developer", "Executive / Leader"] },
     { label: "Template Task", module: "Pengaturan", href: "/pengaturan/template-task", roles: ["Super Admin"] },
     { label: "Developer", module: "Pengaturan", href: "/pengaturan/developer", roles: ["Super Admin"] },
-    { label: "Task Board", module: "Proyek", href: "#proyek", badge: 18, roles: ["Project Manager", "Developer"] },
+    { label: "Task Board", module: "Proyek", href: "/proyek/board", badge: 18, roles: ["Project Manager", "Developer"] },
     { label: "Content Planner", module: "Sosmed", href: "/sosmed/planner", badge: 9, roles: ["Social Media Specialist", "Executive / Leader"] },
     { label: "Produksi Konten", module: "Sosmed", href: "/sosmed/materi", roles: ["Social Media Specialist", "Executive / Leader"] },
     { label: "Kalender Publikasi", module: "Sosmed", href: "/sosmed/kalender", roles: ["Social Media Specialist", "Executive / Leader"] },

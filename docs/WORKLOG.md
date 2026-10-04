@@ -986,3 +986,15 @@
 - **Langkah berikutnya:** Fase 2 — Skema Database
 
 ---
+
+## 2026-10-05 13:00 — Fix — Task Board global (nav mati, laporan pemilik)
+
+- **Branch:** feature/board-global
+- **Akar masalah:** nav "Task Board" masih anchor mati `#proyek`.
+- **Yang dilakukan:**
+  - Halaman `/proyek/board`: Kanban 5 status lintas proyek + cari + seret pindah status + buka board proyek (`?from=/proyek/board`)
+  - Nav menaut ke route nyata; test komponen render lintas proyek
+- **File berubah:** components/proyek/global-task-board(+test), app/proyek/board, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (`/proyek/board` 200)
+- **Catatan/Masalah:** - (pemetaan: US-022)
+- **Langkah berikutnya:** Fase 2 — Skema Database
