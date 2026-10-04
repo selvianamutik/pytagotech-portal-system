@@ -151,6 +151,7 @@ export async function createLead(
     picName: input.picName,
     status: input.status,
     nextFollowUp: input.nextFollowUp || undefined,
+    source: input.source?.trim() || undefined,
     createdAt: now,
     updatedAt: now,
   };
