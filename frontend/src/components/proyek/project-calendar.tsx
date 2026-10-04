@@ -5,9 +5,10 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { listFeatures } from "@/services/features";
+import { listAllFeatures, listFeatures } from "@/services/features";
 import { moveTaskDates } from "@/services/tasks";
-import { listTaskSummaries } from "@/services/tasks";
+import { listAllTaskSummaries, listTaskSummaries } from "@/services/tasks";
+import { listProjects } from "@/services/projects";
 import { overrideFeatureSchedule } from "@/services/scheduling";
 import type { ProjectFeature } from "@/types/feature";
 import type { TaskSummary } from "@/types/task";
@@ -47,24 +48,33 @@ function shiftDate(dateIso: string, days: number): string {
 }
 
 /**
- * Kalender proyek (permintaan pemilik, ala kalender sosmed): bulan/minggu
+ * Kalender kerja (permintaan pemilik, ala kalender sosmed): bulan/minggu
  * berisi task + fitur berjadwal, klik → board/detail, seret untuk
  * menjadwal ulang (task via moveTaskDates, fitur via override beralasan).
+ * Tanpa `projectId` = universal lintas proyek + filter proyek.
  */
-export function ProjectCalendar({ projectId }: { projectId: string }) {
+export function ProjectCalendar({ projectId }: { projectId?: string }) {
   const [tasks, setTasks] = useState<TaskSummary[]>([]);
   const [features, setFeatures] = useState<ProjectFeature[]>([]);
+  const [projectNames, setProjectNames] = useState<Map<string, string>>(new Map());
+  const [projectFilter, setProjectFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("bulan");
   const [cursor, setCursor] = useState(() => toIso(new Date()));
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("semua");
   const [error, setError] = useState<string | null>(null);
 
+  const scopedTasks = projectId
+    ? tasks
+    : tasks.filter((task) => !projectFilter || task.projectId === projectFilter);
+  const scopedFeatures = projectId
+    ? features
+    : features.filter((feature) => !projectFilter || feature.projectId === projectFilter);
+
   async function refresh() {
-    const [{ data: taskData }, { data: featureData }] = await Promise.all([
-      listTaskSummaries(projectId),
-      listFeatures(projectId),
-    ]);
+    const [{ data: taskData }, { data: featureData }] = projectId
+      ? await Promise.all([listTaskSummaries(projectId), listFeatures(projectId)])
+      : await Promise.all([listAllTaskSummaries(), listAllFeatures()]);
     if (taskData) {
       setTasks(taskData.filter((task) => task.isActive !== false && task.startDate));
     }
@@ -77,9 +87,12 @@ export function ProjectCalendar({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([listTaskSummaries(projectId), listFeatures(projectId)]).then(
-      ([taskResult, featureResult]) => {
-        if (!cancelled) {
+    if (projectId) {
+      void Promise.all([listTaskSummaries(projectId), listFeatures(projectId)]).then(
+        ([taskResult, featureResult]) => {
+          if (cancelled) {
+            return;
+          }
           setTasks(
             (taskResult.data ?? []).filter((task) => task.isActive !== false && task.startDate)
           );
@@ -90,8 +103,32 @@ export function ProjectCalendar({ projectId }: { projectId: string }) {
           );
           setLoading(false);
         }
-      }
-    );
+      );
+    } else {
+      void Promise.all([
+        listAllTaskSummaries(),
+        listAllFeatures(),
+        listProjects(),
+      ]).then(([taskResult, featureResult, projectResult]) => {
+        if (cancelled) {
+          return;
+        }
+        setTasks(
+          (taskResult.data ?? []).filter((task) => task.isActive !== false && task.startDate)
+        );
+        setFeatures(
+          (featureResult.data ?? []).filter(
+            (feature) => feature.scheduledStart && feature.scheduledEnd
+          )
+        );
+        setProjectNames(
+          new Map(
+            (projectResult.data ?? []).map((item) => [item.project.id, item.project.name])
+          )
+        );
+        setLoading(false);
+      });
+    }
     return () => {
       cancelled = true;
     };
@@ -99,36 +136,40 @@ export function ProjectCalendar({ projectId }: { projectId: string }) {
 
   const items: CalendarItem[] = useMemo(() => {
     const list: CalendarItem[] = [];
+    const projectShort = (id: string) => {
+      const name = projectNames.get(id);
+      return name ? ` · ${name.split(" - ")[0]}` : "";
+    };
     if (typeFilter === "semua" || typeFilter === "task") {
-      for (const task of tasks) {
+      for (const task of scopedTasks) {
         list.push({
           key: `task-${task.id}`,
           kind: "task",
           id: task.id,
           label: task.title,
-          sub: `${task.id}${task.assignee ? ` · ${task.assignee}` : ""}`,
+          sub: `${task.id}${task.assignee ? ` · ${task.assignee}` : ""}${projectId ? "" : projectShort(task.projectId)}`,
           startDate: task.startDate as string,
           endDate: (task.targetDate ?? task.startDate) as string,
-          href: `/proyek/${projectId}/tasks`,
+          href: `/proyek/${task.projectId}/tasks`,
         });
       }
     }
     if (typeFilter === "semua" || typeFilter === "fitur") {
-      for (const feature of features) {
+      for (const feature of scopedFeatures) {
         list.push({
           key: `feature-${feature.id}`,
           kind: "fitur",
           id: feature.id,
           label: feature.name,
-          sub: `${feature.id} · fitur${feature.developer ? ` · ${feature.developer}` : ""}`,
+          sub: `${feature.id} · fitur${feature.developer ? ` · ${feature.developer}` : ""}${projectId ? "" : projectShort(feature.projectId)}`,
           startDate: feature.scheduledStart as string,
           endDate: (feature.scheduledEnd ?? feature.scheduledStart) as string,
-          href: `/proyek/${projectId}`,
+          href: `/proyek/${feature.projectId}`,
         });
       }
     }
     return list;
-  }, [tasks, features, typeFilter, projectId]);
+  }, [scopedTasks, scopedFeatures, typeFilter, projectId, projectNames]);
 
   const days: string[] = useMemo(() => {
     const base = new Date(`${cursor}T00:00:00Z`);
@@ -241,7 +282,7 @@ export function ProjectCalendar({ projectId }: { projectId: string }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {(
               [
                 ["semua", "Semua"],
@@ -259,6 +300,21 @@ export function ProjectCalendar({ projectId }: { projectId: string }) {
                 {label}
               </Button>
             ))}
+            {!projectId ? (
+              <select
+                aria-label="Filter proyek"
+                className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm"
+                value={projectFilter}
+                onChange={(event) => setProjectFilter(event.target.value)}
+              >
+                <option value="">Semua proyek</option>
+                {[...projectNames.entries()].map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name.split(" - ")[0]} ({id})
+                  </option>
+                ))}
+              </select>
+            ) : null}
           </div>
 
           {error ? (

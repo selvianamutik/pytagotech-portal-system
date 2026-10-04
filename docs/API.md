@@ -323,7 +323,7 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 |--------|---------------|
 | `moveTaskDates(taskId, newStart)` (FR-19) | Geser rentang + kaskade successor FS yang tertabrak |
 | `addDependency()` / `removeDependency()` | FS saja; tolak siklus/duplikat/refleksif |
-| Kalender proyek (permintaan pemilik) | Bulan/minggu task + fitur per proyek; klik; seret (task via move, fitur via override) |
+| Kalender proyek & universal | Bulan/minggu task + fitur (per proyek atau lintas proyek + filter); klik; seret (task via move, fitur via override) |
 
 ---
 

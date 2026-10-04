@@ -860,3 +860,16 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ (201/201) build ✅ browser ✅ (2 halaman 200)
 - **Catatan/Masalah:** - (pemetaan: US-025/022, US-005/FR-3)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 08:00 — Kalender universal lintas proyek (permintaan pemilik)
+
+- **Branch:** feature/kalender-universal
+- **Yang dilakukan:**
+  - `ProjectCalendar` mendukung mode global (tanpa `projectId`): agregat task + fitur semua proyek + filter proyek + nama proyek per entri
+  - Halaman `/kalender` ("Kalender Kerja") + nav Proyek; `listAllTaskSummaries` + `listAllFeatures` + test
+- **File berubah:** components/proyek/project-calendar, app kalender, services tasks/features(+test), mocks/dashboard, docs
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (`/kalender` 200)
+- **Catatan/Masalah:** - (pemetaan: US-025)
+- **Langkah berikutnya:** Fase 2 — Skema Database

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Seed demo: 2 handover Dikonfirmasi + 2 proyek + termin seimbang agar `/proyek` terisi
 - Gabung Daftar Proyek + Dashboard Produksi menjadi satu halaman `/proyek` (filter dashboard dihapus)
 - Kalender proyek per proyek + master data developer (internal/external) + dropdown assignee
+- Kalender Kerja universal (`/kalender`): tracking semua task + fitur lintas proyek
 
 ### Changed
 - Layout portal (sidebar + header + menu aktif) menjadi global via grup route `(portal)`; URL tidak berubah; `/login` dan `/403` tetap tanpa shell

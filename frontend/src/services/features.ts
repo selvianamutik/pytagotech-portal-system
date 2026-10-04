@@ -46,6 +46,11 @@ export async function listFeatures(
   };
 }
 
+/** Seluruh fitur lintas proyek (kalender universal). */
+export async function listAllFeatures(): Promise<ServiceResult<ProjectFeature[]>> {
+  return { data: featureStore.map((feature) => ({ ...feature })), error: null };
+}
+
 export async function createFeature(
   projectId: string,
   input: FeatureInput

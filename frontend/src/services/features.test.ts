@@ -5,6 +5,7 @@ import {
   createFeature,
   deleteFeature,
   ensureBacklogFromHandover,
+  listAllFeatures,
   listFeatures,
   resetMockFeatures,
   updateFeature,
@@ -117,5 +118,27 @@ describe("convertFeatureToTask", () => {
       /sudah dijadikan task/
     );
     expect((await convertFeatureToTask("FIT-999")).error).toBe("Fitur tidak ditemukan.");
+  });
+});
+
+describe("listAllFeatures", () => {
+  it("menggabungkan fitur lintas proyek", async () => {
+    await createFeature("PRJ-001", {
+      name: "F1",
+      category: "Web",
+      priority: "High",
+      developer: "",
+      estimateDays: 1,
+    });
+    await createFeature("PRJ-002", {
+      name: "F2",
+      category: "Web",
+      priority: "Low",
+      developer: "",
+      estimateDays: 1,
+    });
+
+    const { data } = await listAllFeatures();
+    expect(data?.map((feature) => feature.projectId).sort()).toEqual(["PRJ-001", "PRJ-002"]);
   });
 });

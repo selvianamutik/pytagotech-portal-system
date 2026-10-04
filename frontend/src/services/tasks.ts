@@ -155,6 +155,11 @@ export async function listTaskSummaries(
   };
 }
 
+/** Seluruh task lintas proyek (kalender universal). */
+export async function listAllTaskSummaries(): Promise<ServiceResult<TaskSummary[]>> {
+  return { data: taskStore.map((task) => ({ ...task })), error: null };
+}
+
 /**
  * % efektif task: bila punya sub-task aktif, rata-rata sub-task;
  * bila tidak, % sendiri. (FR-17: % induk dari sub-task.)
