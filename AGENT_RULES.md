@@ -9,7 +9,7 @@
 ## 0. Prinsip Utama
 
 1. **PRD adalah sumber kebenaran.** Tidak ada fitur, halaman, endpoint, tabel, atau dependensi di luar PRD.
-2. **Urutan kerja tidak boleh dilompati:** `Frontend → Backend → Deploy Ready`.
+2. **Urutan kerja tidak boleh dilompati:** `Frontend → Skema Database → Backend → Deploy Ready`.
 3. **Semua yang dikerjakan harus tercatat** (dokumentasi + commit).
 4. **Satu perubahan kecil = satu commit.** Jangan menumpuk pekerjaan besar dalam satu commit.
 5. **Jangan berasumsi.** Jika PRD ambigu atau kurang, tulis di `docs/QUESTIONS.md` dan tanyakan. Jangan menebak.
@@ -34,9 +34,12 @@ Agent harus membuat dan memelihara struktur berikut (sesuaikan nama stack, tapi 
 │   ├── WORKLOG.md              # log kerja kronologis (append-only)
 │   ├── DECISIONS.md            # keputusan teknis + alasannya (ADR ringkas)
 │   ├── QUESTIONS.md            # pertanyaan / ambiguitas PRD yang belum dijawab
-│   ├── API.md                  # dokumentasi endpoint (diisi di fase backend)
+│   ├── DATABASE.md             # skema DB: ERD, kamus data, relasi, index (fase skema database)
+│   ├── API.md                  # dokumentasi endpoint (draft di frontend, final di backend)
 │   ├── DEPLOYMENT.md           # panduan deploy (diisi di fase deploy)
 │   └── CHANGE_REQUESTS.md      # permintaan perubahan PRD (lihat Bagian 7)
+├── database/
+│   └── schema.sql              # draf DDL referensi (bukan migration resmi)
 ├── frontend/
 ├── backend/
 └── ...
@@ -66,6 +69,8 @@ Agent **DILARANG**:
 - Mengerjakan apa pun yang tercantum di **Non-Goals**.
 - Mengganti stack, framework, atau library utama tanpa persetujuan (lihat Bagian 7).
 - Mengubah desain/UX yang sudah ditentukan di PRD.
+- Membuat tabel, kolom, relasi, atau index yang tidak ada di `docs/DATABASE.md` yang disetujui (dan tidak berdasar PRD).
+- Menulis migration atau kode backend sebelum skema database berstatus `APPROVED`.
 - Melakukan refactor besar yang tidak diminta oleh PRD.
 - Menambah dependensi baru tanpa mencatatnya di `docs/DECISIONS.md` beserta alasannya.
 
@@ -83,7 +88,7 @@ Contoh: requirement bertentangan, kurang detail, atau tidak mungkin diimplementa
 Fase **tidak boleh dilompati**. Pindah ke fase berikutnya hanya jika **Gate** fase sebelumnya terpenuhi dan dicatat di `docs/PROGRESS.md`.
 
 ```
-[Fase 0: Setup] → [Fase 1: Frontend] → [Fase 2: Backend] → [Fase 3: Deploy Ready]
+[Fase 0: Setup] → [Fase 1: Frontend] → [Fase 2: Skema Database] → [Fase 3: Backend] → [Fase 4: Deploy Ready]
 ```
 
 ### Fase 0 — Setup & Perencanaan
@@ -120,24 +125,167 @@ Fase **tidak boleh dilompati**. Pindah ke fase berikutnya hanya jika **Gate** fa
 - [ ] Semua US bertipe UI berstatus `DONE` di `docs/PROGRESS.md`.
 - [ ] Semua halaman & alur di PRD bisa dijalankan dengan data mock.
 - [ ] Kontrak data/API terdokumentasi di `docs/API.md` (draft).
+- [ ] Semua entitas & field data yang muncul di UI/mock sudah terdaftar di kontrak data (bahan untuk perancangan skema).
 - [ ] Build produksi frontend berhasil (`build` tanpa error/warning kritis).
 - [ ] Merge ke `develop` + tag `v0.1.0-frontend`.
 
-> 🚫 **Dilarang mulai backend sebelum Gate 1 terpenuhi.**
+> 🚫 **Dilarang mulai perancangan skema database dan backend sebelum Gate 1 terpenuhi.**
 
 ---
 
-### Fase 2 — Backend
-**Tujuan:** Mengimplementasikan API, database, dan logika bisnis sesuai kontrak dari Fase 1, lalu menghubungkan frontend ke backend nyata.
+### Fase 2 — Perancangan Skema Database
+**Tujuan:** Merancang skema database yang **lengkap, ternormalisasi, dan memuat seluruh relasi antar tabel** berdasarkan PRD dan kontrak data dari Fase 1, **sebelum** satu pun kode backend atau migration ditulis. Fase ini menghasilkan **dokumen desain**, bukan implementasi.
+
+**Sumber rancangan (urutan prioritas):**
+1. PRD (User Stories, Functional Requirements, Technical Considerations).
+2. Kontrak data & tipe di frontend (`frontend/src/types/`) serta data mock di `frontend/src/mocks/`.
+3. Draf `docs/API.md` dari Fase 1.
+
+**Langkah-langkah wajib (kerjakan berurutan):**
+
+1. **Identifikasi entitas.** Daftarkan semua entitas/tabel yang dibutuhkan PRD. Setiap entitas **harus** bisa ditelusuri ke minimal satu `US-xxx` atau `FR-x`. Entitas tanpa dasar di PRD **dilarang**.
+2. **Definisikan atribut (kolom).** Untuk setiap kolom tentukan: nama, tipe data, `NULL`/`NOT NULL`, nilai default, `UNIQUE`, dan batasan (`CHECK`, enum). Setiap field yang tampil di UI atau data mock **harus** punya kolom, atau diberi alasan mengapa dihitung (computed).
+3. **Tentukan Primary Key.** Satu strategi PK konsisten di seluruh skema (misalnya `id` UUID atau BIGINT auto-increment). Catat pilihannya di `docs/DECISIONS.md`.
+4. **Tentukan relasi antar tabel (wajib lengkap).** Untuk **setiap pasang tabel yang berhubungan**, catat:
+   - Jenis relasi: **1:1**, **1:N**, atau **N:M**.
+   - Kolom Foreign Key beserta tabel & kolom yang dirujuk.
+   - Kardinalitas dan opsionalitas (wajib/opsional di tiap sisi).
+   - Aturan `ON DELETE` dan `ON UPDATE` (`CASCADE` / `RESTRICT` / `SET NULL` / `NO ACTION`) **beserta alasannya**.
+   - Relasi **N:M wajib** memakai **tabel penghubung (junction table)** dengan PK komposit atau unique constraint pada pasangan FK.
+   - Relasi **self-referencing** (misalnya parent–child, subtask) ditulis eksplisit bila ada.
+5. **Normalisasi.** Skema minimal mencapai **3NF**. Denormalisasi hanya boleh dengan alasan performa/PRD dan **harus dicatat** di `docs/DECISIONS.md`.
+6. **Rancang index.** Wajib: PK, semua FK, kolom `UNIQUE`, serta kolom yang dipakai untuk filter/sort/pencarian di PRD (contoh: filter prioritas → index pada `priority`). Jangan menambah index tanpa dasar kebutuhan PRD.
+7. **Kolom standar & kebijakan data.** Tentukan `created_at` dan `updated_at` pada semua tabel utama. Gunakan `deleted_at` (soft delete) **hanya jika** PRD membutuhkan riwayat/pemulihan data. Catat kebijakan timezone (disarankan UTC).
+8. **Konvensi penamaan.** Satu gaya konsisten, misalnya: tabel `snake_case` jamak (`tasks`), kolom `snake_case`, FK `<tabel_tunggal>_id` (`user_id`), junction `a_b` (`task_tags`). Catat di dokumen skema.
+9. **Rancang data awal (seed).** Tentukan data referensi/master yang wajib ada (role, status, kategori) bila dibutuhkan PRD. Data dummy untuk development dipisahkan dari seed produksi.
+10. **Buat ERD** (Entity Relationship Diagram) memakai **Mermaid** di `docs/DATABASE.md` agar bisa dirender langsung di repository.
+11. **Validasi skema (wajib sebelum minta persetujuan).** Lakukan *walkthrough* tertulis: untuk **setiap User Story**, tunjukkan tabel & query/operasi apa yang dipakai. Pastikan:
+    - Semua FR dan US yang menyimpan/membaca data terpenuhi oleh skema.
+    - Tidak ada tabel yatim (tanpa relasi atau tanpa kegunaan di PRD).
+    - Tidak ada relasi yang menggantung (FK tanpa tabel tujuan).
+    - Tidak ada redundansi data yang tidak disengaja.
+    - Tidak ada kolom/tabel di luar PRD (cek juga terhadap **Non-Goals**).
+12. **Minta persetujuan eksplisit.** Setelah dokumen selesai, **berhenti** dan minta pemilik proyek me-review `docs/DATABASE.md`. Tanpa persetujuan tertulis (dicatat di dokumen), **dilarang** lanjut ke Fase 3.
+
+**Output wajib di `docs/DATABASE.md`:**
+- Ringkasan & konvensi (DBMS, penamaan, strategi PK, timezone).
+- **ERD Mermaid** yang memuat semua tabel, kolom kunci, dan relasi.
+- **Kamus data (data dictionary)** untuk setiap tabel.
+- **Matriks relasi** semua FK beserta aturan `ON DELETE/UPDATE`.
+- **Daftar index** beserta alasan kebutuhannya.
+- **Tabel keterlacakan** (entitas → US/FR).
+- **Hasil walkthrough** per User Story.
+- Rencana seed data.
+- Status persetujuan (`DRAFT` / `APPROVED` + tanggal + penyetuju).
+
+**Template minimal `docs/DATABASE.md`:**
+
+````markdown
+# Skema Database
+**Status:** DRAFT | APPROVED (oleh: ___, tanggal: ___)
+**DBMS:** PostgreSQL | **PK:** UUID | **Timezone:** UTC | **Penamaan:** snake_case, tabel jamak
+
+## 1. ERD
+```mermaid
+erDiagram
+    USERS ||--o{ TASKS : "memiliki"
+    TASKS }o--o{ TAGS : "diberi label"
+    TASKS ||--o{ TASK_TAGS : ""
+    TAGS ||--o{ TASK_TAGS : ""
+    TASKS ||--o{ TASKS : "subtask (parent_id)"
+
+    USERS {
+        uuid id PK
+        string email UK "NOT NULL"
+        string name "NOT NULL"
+        timestamp created_at
+        timestamp updated_at
+    }
+    TASKS {
+        uuid id PK
+        uuid user_id FK "NOT NULL"
+        uuid parent_id FK "NULL"
+        string title "NOT NULL"
+        string priority "high|medium|low, default medium"
+        timestamp created_at
+        timestamp updated_at
+    }
+    TAGS {
+        uuid id PK
+        string name UK
+    }
+    TASK_TAGS {
+        uuid task_id FK
+        uuid tag_id FK
+    }
+```
+
+## 2. Kamus Data — `tasks`
+| Kolom | Tipe | Null | Default | Constraint | Keterangan | Ref PRD |
+|-------|------|------|---------|------------|------------|---------|
+| id | uuid | NO | gen | PK | Identitas task | FR-1 |
+| user_id | uuid | NO | - | FK → users.id | Pemilik task | US-001 |
+| priority | varchar(6) | NO | 'medium' | CHECK IN (high,medium,low) | Prioritas | FR-1 |
+
+## 3. Matriks Relasi
+| Dari (FK) | Ke (PK) | Jenis | Wajib? | ON DELETE | ON UPDATE | Alasan |
+|-----------|---------|-------|--------|-----------|-----------|--------|
+| tasks.user_id | users.id | N:1 | Ya | CASCADE | CASCADE | Task ikut terhapus bila user dihapus |
+| task_tags.task_id | tasks.id | N:1 | Ya | CASCADE | CASCADE | Junction N:M tasks–tags |
+
+## 4. Index
+| Tabel | Kolom | Tipe | Alasan | Ref PRD |
+|-------|-------|------|--------|---------|
+| tasks | user_id | BTREE | FK + listing per user | US-001 |
+| tasks | priority | BTREE | Filter prioritas | US-004 |
+
+## 5. Keterlacakan
+| Tabel | US/FR terkait |
+|-------|---------------|
+| tasks | US-001, US-002, FR-1 |
+
+## 6. Walkthrough per User Story
+- **US-004 (filter prioritas):** `SELECT ... FROM tasks WHERE user_id = ? AND priority = ?` → memakai index `tasks(priority)`.
+
+## 7. Seed Data
+- (daftar data referensi wajib)
+````
+
+**Aturan khusus Fase 2:**
+- **Dilarang** membuat file migration, model ORM, atau kode backend pada fase ini.
+- Boleh membuat draf DDL referensi di `database/schema.sql` hanya sebagai pelengkap dokumen, bukan sebagai migration resmi.
+- Skema harus mencakup **seluruh** data yang dibutuhkan PRD, tidak kurang dan tidak lebih.
+- Jika kebutuhan data tidak jelas, catat di `docs/QUESTIONS.md` dan tanyakan sebelum merancang bagian itu.
+
+**Gate 2 (Skema Database Selesai & Disetujui):**
+- [ ] `docs/DATABASE.md` memuat semua output wajib (ERD, kamus data, matriks relasi, index, keterlacakan, walkthrough).
+- [ ] Setiap tabel & kolom terlacak ke `US-xxx`/`FR-x`; tidak ada yang di luar PRD.
+- [ ] Semua relasi (1:1, 1:N, N:M, self-reference) terdefinisi lengkap dengan FK dan aturan `ON DELETE/UPDATE`.
+- [ ] Skema mencapai minimal 3NF (pengecualian tercatat di `docs/DECISIONS.md`).
+- [ ] Walkthrough membuktikan setiap User Story yang menyentuh data dapat dipenuhi.
+- [ ] **Persetujuan eksplisit pemilik proyek** tercatat (`Status: APPROVED`).
+- [ ] Merge ke `develop` + tag `v0.2.0-database`.
+
+> 🚫 **Dilarang mulai backend/migration sebelum Gate 2 terpenuhi.**
+
+---
+
+### Fase 3 — Backend
+**Tujuan:** Mengimplementasikan database (dari skema yang sudah disetujui), API, dan logika bisnis sesuai kontrak dari Fase 1, lalu menghubungkan frontend ke backend nyata.
 
 **Aturan:**
-- Implementasikan **hanya** endpoint/tabel yang dibutuhkan oleh PRD dan kontrak di `docs/API.md`.
-- Semua perubahan skema database **wajib lewat migration** (tidak ada perubahan manual).
+- **Langkah pertama backend:** terjemahkan `docs/DATABASE.md` (status `APPROVED`) menjadi **migration** dan model/entitas. Hasil implementasi harus **identik** dengan skema yang disetujui: tabel, kolom, tipe, constraint, FK, `ON DELETE/UPDATE`, dan index.
+- **Dilarang menyimpang dari skema yang disetujui.** Jika implementasi menuntut perubahan skema:
+  1. Hentikan dan catat di `docs/CHANGE_REQUESTS.md` (dan `docs/DECISIONS.md`).
+  2. Perbarui `docs/DATABASE.md` (ERD, kamus data, matriks relasi) **dalam commit yang sama** dengan migration baru.
+  3. Tunggu persetujuan pemilik proyek sebelum melanjutkan.
+- Semua perubahan skema database **wajib lewat migration** (tidak ada perubahan manual) dan harus bisa di-rollback.
+- Implementasikan **hanya** endpoint yang dibutuhkan oleh PRD dan kontrak di `docs/API.md`.
 - Validasi semua input di sisi server. Jangan percaya data dari frontend.
 - Autentikasi/otorisasi diterapkan sesuai PRD. Jangan membuat endpoint tanpa proteksi jika PRD mensyaratkannya.
 - Error response konsisten (format seragam, kode HTTP tepat, tanpa membocorkan detail internal).
 - **Dilarang** meng-hardcode secret, kredensial, atau API key. Gunakan environment variable dan update `.env.example`.
-- Tulis test (unit/integrasi) untuk logika bisnis dan endpoint utama.
+- Tulis test (unit/integrasi) untuk logika bisnis dan endpoint utama, termasuk test integritas relasi (FK, unique, cascade) yang penting bagi PRD.
 - Setelah endpoint siap, **ganti mock di frontend dengan API nyata** lewat lapisan `services/` (tanpa mengubah komponen UI).
 - Perbarui `docs/API.md` agar sesuai implementasi final (method, path, request, response, error, contoh).
 
@@ -146,37 +294,38 @@ Fase **tidak boleh dilompati**. Pindah ke fase berikutnya hanya jika **Gate** fa
 - Uji alur end-to-end dari UI ke database sesuai Acceptance Criteria.
 - Catat hasilnya di `docs/WORKLOG.md`.
 
-**Gate 2 (Backend Selesai):**
+**Gate 3 (Backend Selesai):**
 - [ ] Semua US & FR di PRD berstatus `DONE`.
+- [ ] Migration dari database kosong berjalan tanpa error dan hasilnya **sesuai** `docs/DATABASE.md` (tidak ada selisih tabel/kolom/relasi/index).
 - [ ] Tidak ada lagi data mock yang dipakai di jalur produksi.
-- [ ] Migration bisa dijalankan dari database kosong tanpa error.
 - [ ] Seluruh test, lint, dan typecheck lolos.
-- [ ] `docs/API.md` sesuai implementasi.
-- [ ] Merge ke `develop` + tag `v0.2.0-backend`.
+- [ ] `docs/API.md` dan `docs/DATABASE.md` sesuai implementasi.
+- [ ] Merge ke `develop` + tag `v0.3.0-backend`.
 
-> 🚫 **Dilarang mulai fase deploy sebelum Gate 2 terpenuhi.**
+> 🚫 **Dilarang mulai fase deploy sebelum Gate 3 terpenuhi.**
 
 ---
 
-### Fase 3 — Deploy Ready
+### Fase 4 — Deploy Ready
 **Tujuan:** Aplikasi siap dirilis oleh manusia. Agent **menyiapkan** deploy, bukan men-deploy ke production tanpa izin.
 
 **Tugas:**
 - [ ] Konfigurasi build produksi untuk frontend & backend.
 - [ ] Buat `Dockerfile` / `docker-compose.yml` / konfigurasi platform (sesuai stack & PRD).
 - [ ] Pastikan semua konfigurasi lewat environment variable; `.env.example` lengkap dan terdokumentasi.
+- [ ] Siapkan prosedur migration & seed untuk production, termasuk **backup dan rollback database**.
 - [ ] Siapkan CI (lint → typecheck → test → build) bila PRD/proyek mensyaratkan.
-- [ ] Siapkan health check endpoint dan penanganan error/logging dasar.
+- [ ] Siapkan health check endpoint (termasuk cek koneksi database) dan penanganan error/logging dasar.
 - [ ] Audit dependensi (`npm audit` / setara) dan catat temuan.
 - [ ] Hapus kode debug, data dummy, dan file tidak terpakai.
 - [ ] Lengkapi `README.md` dan `docs/DEPLOYMENT.md` (langkah deploy, rollback, env var, migration).
 - [ ] Rapikan `CHANGELOG.md` dan buat rilis `v1.0.0`.
 
-**Gate 3 (Deploy Ready):**
-- [ ] Build produksi bersih dari nol (`clean install → build → start`) berhasil.
+**Gate 4 (Deploy Ready):**
+- [ ] Build produksi bersih dari nol (`clean install → migrate → build → start`) berhasil.
 - [ ] Semua Acceptance Criteria di PRD terpenuhi (centang satu per satu di `docs/PROGRESS.md`).
 - [ ] Tidak ada secret di repository (cek riwayat commit).
-- [ ] Dokumentasi lengkap dan akurat.
+- [ ] Dokumentasi lengkap dan akurat (termasuk `docs/DATABASE.md`).
 - [ ] Merge `develop` → `main`, tag `v1.0.0`.
 
 > ⚠️ **Deploy ke production hanya dilakukan setelah ada konfirmasi eksplisit dari pemilik proyek.**
@@ -191,11 +340,12 @@ Fase **tidak boleh dilompati**. Pindah ke fase berikutnya hanya jika **Gate** fa
 | `main` | Selalu stabil & siap rilis. **Dilarang commit langsung.** |
 | `develop` | Integrasi pekerjaan harian. |
 | `feature/US-xxx-deskripsi-singkat` | Satu branch per User Story. |
+| `db/skema-deskripsi-singkat` | Perancangan/perubahan skema database (Fase 2). |
 | `fix/deskripsi-singkat` | Perbaikan bug. |
 | `docs/deskripsi-singkat` | Perubahan dokumentasi saja. |
 | `chore/deskripsi-singkat` | Setup, dependensi, konfigurasi. |
 
-**Alur:** `feature/*` → merge ke `develop` → (saat Gate 3) `develop` → `main`.
+**Alur:** `feature/*` → merge ke `develop` → (saat Gate 4) `develop` → `main`.
 
 ### 4.2 Format Commit — Conventional Commits
 ```
@@ -207,6 +357,8 @@ Refs: US-003, FR-2
 ```
 
 **Type yang diizinkan:** `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`.
+
+**Scope yang disarankan:** `frontend`, `database`, `backend`, `deploy`, `docs`. Perubahan skema memakai scope `database`, contoh: `docs(database): tambah ERD dan relasi tasks–tags`.
 
 **Contoh:**
 ```
@@ -227,10 +379,10 @@ Refs: US-003, FR-3
 - Jangan menghapus branch/tag yang belum di-merge.
 
 ### 4.4 Versioning — Semantic Versioning (`MAJOR.MINOR.PATCH`)
-- `0.x.y` selama pengembangan; `1.0.0` saat **Gate 3** terpenuhi.
+- `0.x.y` selama pengembangan; `1.0.0` saat **Gate 4** terpenuhi.
 - `PATCH` = perbaikan bug; `MINOR` = fitur baru kompatibel; `MAJOR` = perubahan tidak kompatibel.
 - Setiap Gate wajib diberi **git tag** beranotasi:
-  - `v0.1.0-frontend` (Gate 1), `v0.2.0-backend` (Gate 2), `v1.0.0` (Gate 3).
+  - `v0.1.0-frontend` (Gate 1), `v0.2.0-database` (Gate 2), `v0.3.0-backend` (Gate 3), `v1.0.0` (Gate 4).
 - Setiap rilis/tag **wajib** tercermin di `CHANGELOG.md`.
 
 ### 4.5 Format `CHANGELOG.md` (Keep a Changelog)
@@ -307,6 +459,11 @@ Catat setiap keputusan penting (pemilihan library, struktur data, pola arsitektu
 - **Jawaban:** (diisi pemilik proyek)
 ```
 
+### 5.6 `docs/DATABASE.md` — Skema Database
+- Dibuat di Fase 2 dan menjadi acuan resmi untuk migration di Fase 3 (template ada di Fase 2).
+- **Setiap perubahan skema** (tabel, kolom, relasi, index) wajib memperbarui ERD, kamus data, matriks relasi, dan daftar index **dalam commit yang sama** dengan migration.
+- ERD ditulis dengan Mermaid agar versi dan diff-nya terlacak di Git.
+
 ---
 
 ## 6. Definition of Done (per User Story)
@@ -319,7 +476,8 @@ Sebuah User Story hanya boleh diberi status `DONE` jika **semua** poin berikut b
 - [ ] Tidak ada fitur/kode di luar PRD yang ikut ditambahkan.
 - [ ] Commit mengikuti format & mencantumkan `Refs:`.
 - [ ] `docs/WORKLOG.md` dan `docs/PROGRESS.md` sudah diperbarui.
-- [ ] `docs/API.md` / `docs/DECISIONS.md` / `README.md` diperbarui jika terdampak.
+- [ ] `docs/API.md` / `docs/DATABASE.md` / `docs/DECISIONS.md` / `README.md` diperbarui jika terdampak.
+- [ ] Untuk User Story yang menyentuh data: implementasi sesuai skema yang disetujui di `docs/DATABASE.md`.
 - [ ] Tidak ada secret, debug log, atau kode mati tertinggal.
 
 ---
@@ -358,7 +516,7 @@ Jika agent merasa ada hal di luar PRD yang **perlu** dilakukan (fitur tambahan, 
 ### 9.1 Awal sesi (checklist)
 1. Baca `AGENT_RULES.md`.
 2. Baca PRD di `tasks/`.
-3. Baca `docs/PROGRESS.md`, entri terakhir `docs/WORKLOG.md`, dan `docs/QUESTIONS.md`.
+3. Baca `docs/PROGRESS.md`, entri terakhir `docs/WORKLOG.md`, `docs/QUESTIONS.md`, dan (jika sudah ada) `docs/DATABASE.md`.
 4. Cek `git status` dan `git log -n 10` untuk memahami kondisi terakhir.
 5. Nyatakan: *fase saat ini*, *US yang akan dikerjakan*, dan *rencana singkat*.
 
@@ -397,7 +555,9 @@ Setiap selesai satu User Story atau satu Fase, agent melaporkan dengan format:
 | ✅ WAJIB | 🚫 DILARANG |
 |---|---|
 | Baca PRD sebelum mulai | Menambah fitur di luar PRD |
-| Urutan: Frontend → Backend → Deploy | Melompati fase / Gate |
+| Urutan: Frontend → Skema DB → Backend → Deploy | Melompati fase / Gate |
+| Skema DB lengkap (ERD + relasi + FK + index) & disetujui dulu | Menulis migration/backend sebelum skema `APPROVED` |
+| Migration identik dengan `docs/DATABASE.md` | Mengubah skema tanpa update dokumen & persetujuan |
 | Satu US per waktu, commit kecil | Commit besar & tidak deskriptif |
 | Conventional Commits + `Refs: US-xxx` | `git push --force` ke main/develop |
 | Update docs di commit yang sama | "Nanti saja dokumentasinya" |

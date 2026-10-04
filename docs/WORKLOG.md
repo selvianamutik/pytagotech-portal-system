@@ -724,6 +724,22 @@
 
 ---
 
+## 2026-10-05 04:00 — Chore — Sesuaikan repo dengan AGENT_RULES alur 4 fase
+
+- **Branch:** docs/sesuaikan-aturan-fase
+- **Yang dilakukan:**
+  - Membaca `AGENT_RULES.md` revisi pemilik: alur `Frontend → Skema Database → Backend → Deploy Ready` (Gate 0–4, tag `v0.2.0-database` / `v0.3.0-backend` / `v1.0.0`)
+  - `docs/PROGRESS.md`: tabel Gates → Gate 2 Skema, Gate 3 Backend, Gate 4 Deploy; fase berikutnya = Fase 2 Skema Database
+  - `docs/DEPLOYMENT.md`: referensi fase/gate → Fase 4 / Gate 3–4
+  - `docs/DECISIONS.md` (DEC-008): penghapusan scaffolding demo → sebelum Gate 4
+  - Scaffold kosong: `docs/DATABASE.md` (Status DRAFT, tanpa rancangan) + `database/schema.sql` (placeholder, bukan migration)
+  - Tidak mengubah `AGENT_RULES.md` (milik pemilik) dan tidak menyentuh entri WORKLOG lama
+- **Verifikasi:** tidak ada perubahan kode (docs + struktur saja); `git status` bersih setelah commit
+- **Catatan/Masalah:** Isi rancangan skema tetap dikerjakan di Fase 2 pada branch `db/*` + persetujuan tertulis.
+- **Langkah berikutnya:** Fase 2 — Skema Database (mulai dari US-003/FR-1: identifikasi entitas)
+
+---
+
 ## 2026-10-05 03:30 — Chore — Layout global portal (permintaan pemilik)
 
 - **Branch:** chore/portal-global-layout

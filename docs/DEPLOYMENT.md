@@ -1,7 +1,7 @@
 # DEPLOYMENT.md — Panduan Deploy
 
 > **Status:** Placeholder (Fase 0)  
-> Dokumen ini akan dilengkapi saat **Fase 3 — Deploy Ready** dimulai (Gate 2 terpenuhi).
+> Dokumen ini akan dilengkapi saat **Fase 4 — Deploy Ready** dimulai (Gate 3 terpenuhi).
 
 ---
 
@@ -35,10 +35,10 @@ Lihat [`.env.example`](../.env.example) untuk daftar lengkap.
 
 ## Rollback
 
-> _Akan didokumentasikan di Fase 3_
+> _Akan didokumentasikan di Fase 4_
 
 ---
 
 ## Checklist Pre-Deploy
 
-> _Akan didokumentasikan di Fase 3 (Gate 3)_
+> _Akan didokumentasikan di Fase 4 (Gate 4)_
