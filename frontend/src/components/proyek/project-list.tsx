@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { SearchIcon } from "lucide-react";
+import { DownloadIcon, SearchIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -18,6 +18,15 @@ import {
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
 import { listClients } from "@/services/clients";
+import {
+  getProductionDashboard,
+  type ProductionDashboardData,
+} from "@/services/production-dashboard";
+import {
+  buildExcelFile,
+  buildPdfFile,
+  downloadBlob,
+} from "@/services/production-export";
 import {
   canManageProjects,
   listProjectManagers,
@@ -48,13 +57,14 @@ export function ProgressBar({ value }: { value: number }) {
 }
 
 /**
- * Daftar proyek (US-020): pencarian + filter + progress otomatis.
- * Tombol buat/ubah hanya untuk PM dan Admin.
+ * Halaman Proyek gabungan (US-020 + US-026): KPI + deadline watch +
+ * daftar dengan pencarian/filter + ekspor Excel/PDF.
  */
 export function ProjectList() {
   const user = useAuthStore((state) => state.user);
   const [items, setItems] = useState<ProjectWithNames[]>([]);
   const [clients, setClients] = useState<{ id: string; companyName: string }[]>([]);
+  const [dashboard, setDashboard] = useState<ProductionDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -65,11 +75,19 @@ export function ProjectList() {
 
   useEffect(() => {
     let cancelled = false;
-    void listClients().then(({ data }) => {
-      if (!cancelled && data) {
-        setClients(data.map((client) => ({ id: client.id, companyName: client.companyName })));
+    void Promise.all([listClients(), getProductionDashboard({})]).then(
+      ([clientsResult, dashboardResult]) => {
+        if (!cancelled) {
+          setClients(
+            (clientsResult.data ?? []).map((client) => ({
+              id: client.id,
+              companyName: client.companyName,
+            }))
+          );
+          setDashboard(dashboardResult.data);
+        }
       }
-    });
+    );
     return () => {
       cancelled = true;
     };
@@ -93,26 +111,112 @@ export function ProjectList() {
     };
   }, [search, status, pmName, clientId]);
 
+  function handleExport(kind: "excel" | "pdf") {
+    if (!dashboard) {
+      return;
+    }
+    const file = kind === "excel" ? buildExcelFile(dashboard) : buildPdfFile(dashboard);
+    downloadBlob(file.blob, file.filename);
+  }
+
+  const metrics = dashboard
+    ? [
+        { label: "Total Proyek", value: String(dashboard.kpi.totalProjects) },
+        { label: "Proyek Aktif", value: String(dashboard.kpi.activeProjects) },
+        { label: "Task Selesai", value: String(dashboard.kpi.tasksDone) },
+        { label: "Task Berlangsung", value: String(dashboard.kpi.tasksInProgress) },
+        { label: "Task Blocked", value: String(dashboard.kpi.tasksBlocked) },
+      ]
+    : [];
+
   return (
     <main className="mx-auto w-full max-w-6xl space-y-4 px-4 py-6 sm:px-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium text-primary">Proyek</p>
-          <h1 className="mt-1 text-2xl font-bold">Daftar Proyek</h1>
+          <h1 className="mt-1 text-2xl font-bold">Proyek</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {items.length} proyek. Progress dihitung otomatis dari task.
+            Ringkasan eksekutif + daftar portofolio. Progress dihitung otomatis dari task.
           </p>
         </div>
-        {manageable ? (
-          <p className="text-xs text-muted-foreground">
-            Proyek baru dibuat dari handover Dikonfirmasi (US-019).
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!dashboard}
+            onClick={() => handleExport("excel")}
+          >
+            <DownloadIcon aria-hidden="true" /> Excel
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!dashboard}
+            onClick={() => handleExport("pdf")}
+          >
+            <DownloadIcon aria-hidden="true" /> PDF
+          </Button>
+        </div>
+      </div>
+
+      {manageable ? null : (
+        <p className="text-xs text-muted-foreground" role="note">
+          Hanya PM dan Admin yang dapat membuat/mengubah proyek. Proyek baru dibuat dari
+          handover Dikonfirmasi (US-019).
+        </p>
+      )}
+
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="KPI produksi">
+        {metrics.length === 0 ? (
+          <p className="text-sm text-muted-foreground sm:col-span-2 xl:col-span-5">
+            Memuat ringkasan...
           </p>
         ) : (
-          <p className="text-xs text-muted-foreground" role="note">
-            Hanya PM dan Admin yang dapat membuat/mengubah proyek.
-          </p>
+          metrics.map((metric) => (
+            <Card key={metric.label}>
+              <CardHeader className="pb-0">
+                <CardDescription>{metric.label}</CardDescription>
+                <CardTitle className="text-3xl font-bold">{metric.value}</CardTitle>
+              </CardHeader>
+            </Card>
+          ))
         )}
-      </div>
+      </section>
+
+      {dashboard && dashboard.deadlineWatch.length > 0 ? (
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle className="text-base">Mendekati / melewati deadline</CardTitle>
+            <CardDescription>≤ 7 hari atau sudah lewat, proyek belum selesai.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {dashboard.deadlineWatch.map((row) => (
+                <li
+                  key={row.projectId}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{row.projectName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Target {formatDate(row.targetDate)} · {row.pmName}
+                    </p>
+                  </div>
+                  <Badge variant={row.daysToDeadline < 0 ? "destructive" : "outline"}>
+                    {row.daysToDeadline < 0
+                      ? `Terlambat ${Math.abs(row.daysToDeadline)} hari`
+                      : row.daysToDeadline === 0
+                        ? "Hari ini"
+                        : `${row.daysToDeadline} hari lagi`}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-3 rounded-xl border bg-card p-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="space-y-2">
