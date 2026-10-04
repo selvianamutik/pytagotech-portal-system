@@ -8,12 +8,13 @@ import {
   DatabaseIcon,
   LayoutDashboardIcon,
   MegaphoneIcon,
-  SearchIcon,
   SettingsIcon,
   ShieldCheckIcon,
 } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { GlobalSearch } from "@/components/search/global-search";
+import { MyWorkSection } from "@/components/search/my-work-section";
 import { NotificationBell } from "@/components/collaboration/notification-bell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +34,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -157,12 +157,7 @@ export default async function Home() {
                 <ShieldCheckIcon className="size-5 text-primary" aria-hidden="true" />
               </div>
               <div className="relative hidden w-full max-w-md md:block">
-                <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  aria-label="Pencarian global"
-                  placeholder="Cari lead, klien, proyek, task, materi..."
-                  className="pl-8"
-                />
+                <GlobalSearch />
               </div>
             </div>
             <NotificationBell />
@@ -227,6 +222,8 @@ export default async function Home() {
               </Card>
             ))}
           </section>
+
+          <MyWorkSection />
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
             <Card id="proyek" className="border shadow-[0_1px_2px_rgba(26,25,24,0.03)]">

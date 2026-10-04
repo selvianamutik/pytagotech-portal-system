@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-039: KPI scorecard sosmed (6 KPI + target interim + verifikasi)
 - US-040: evaluasi strategi KIST (hipotesis wajib untuk Test)
 - US-042: SOP/panduan markdown + matriks RACI
+- US-044: pencarian global Ctrl+K + Tugas saya per role di beranda
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal
