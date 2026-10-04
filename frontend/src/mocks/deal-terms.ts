@@ -37,4 +37,22 @@ export const mockTerms: PaymentTerm[] = [
     value: 50,
     status: "Belum Ditagih",
   },
+  {
+    id: "TRM-005",
+    dealId: "HDV-003",
+    name: "DP 50%",
+    kind: "percent",
+    value: 50,
+    milestone: "Penandatanganan kesepakatan",
+    status: "Lunas",
+  },
+  {
+    id: "TRM-006",
+    dealId: "HDV-003",
+    name: "Pelunasan 50%",
+    kind: "percent",
+    value: 50,
+    dueDate: "2026-12-15",
+    status: "Belum Ditagih",
+  },
 ];

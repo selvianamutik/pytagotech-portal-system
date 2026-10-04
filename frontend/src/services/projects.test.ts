@@ -89,7 +89,7 @@ describe("createProjectFromHandover", () => {
     const detail = await getProject(created.data!.id);
     expect(detail.data?.handoverCode).toBe("PYT-2026-001");
     expect(detail.data?.clientName).toBe("PT Sinar Abadi Properti");
-    expect((await listProjects()).data).toHaveLength(1);
+    expect((await listProjects()).data).toHaveLength(3);
     expect((await getProject("PRJ-999")).error).toBe("Proyek tidak ditemukan.");
   });
 });

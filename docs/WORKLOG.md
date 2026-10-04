@@ -806,3 +806,17 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ (baru + 18 terkait) build ✅ browser ✅ (`/crm/leads` 200)
 - **Catatan/Masalah:** - (pemetaan: US-012, US-007)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 06:00 — Seed data demo proyek (permintaan pemilik)
+
+- **Branch:** feature/seed-demo-proyek
+- **Yang dilakukan:**
+  - Seed handover HDV-003/HDV-004 (Dikonfirmasi) + proyek PRJ-001 (Planning/Raka) / PRJ-002 (Active/Dinda) + termin HDV-003 seimbang; halaman `/proyek` kini terisi
+  - Pindah `mockProjects` ke `mocks/projects.ts` mengikuti pola modul lain
+  - Sesuaikan 4 file test terhadap jumlah seed (tanpa mengubah logika yang diuji)
+- **File berubah:** mocks/deals, mocks/projects, mocks/deal-terms, services/projects, services tests, docs
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (199/199) build ✅ browser ✅ (`/proyek` 200)
+- **Catatan/Masalah:** - (pemetaan: US-019, US-020)
+- **Langkah berikutnya:** Fase 2 — Skema Database

@@ -1,4 +1,5 @@
 import { mockUsers } from "@/mocks/auth";
+import { mockProjects } from "@/mocks/projects";
 import { listClients } from "@/services/clients";
 import { getDeal } from "@/services/deals";
 import { ensureBacklogFromHandover } from "@/services/features";
@@ -14,8 +15,6 @@ import type { ServiceResult } from "@/services/result";
  * Proyek hanya lahir dari handover Dikonfirmasi (gerbang US-017),
  * satu handover = satu proyek.
  */
-
-export const mockProjects: Project[] = [];
 
 let projectStore: Project[] = structuredClone(mockProjects);
 
