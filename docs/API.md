@@ -327,9 +327,10 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Dashboard Produksi
 
-> **Status:** Draft Fase 1 (US-026) — `services/production-dashboard.ts` +
-> `services/production-export.ts`. Halaman `/proyek/dashboard`.
-> Filter "divisi" menunggu Q-013. Fase 2: agregasi SQL.
+> **Status:** Draft Fase 1 (US-026, digabung ke `/proyek` atas permintaan pemilik) —
+> `services/production-dashboard.ts` + `services/production-export.ts`.
+> Tanpa filter (dihapus); KPI + deadline dihitung keseluruhan.
+> Fase 2: agregasi SQL.
 
 | Fungsi | Definisi |
 |--------|----------|

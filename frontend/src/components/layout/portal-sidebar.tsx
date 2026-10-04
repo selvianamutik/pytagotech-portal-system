@@ -52,8 +52,8 @@ export function PortalSidebar({ navigation }: { navigation: NavigationItem[] }) 
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
-  // Hanya tautan paling spesifik yang ditandai aktif (mis. /proyek/dashboard
-  // tidak ikut mengaktifkan /proyek).
+  // Hanya tautan paling spesifik yang ditandai aktif (mis. detail
+  // /proyek/PRJ-001 tetap mengaktifkan /proyek).
   const activeHref = navigation
     .map((item) => item.href)
     .filter((href) => isMatch(href))

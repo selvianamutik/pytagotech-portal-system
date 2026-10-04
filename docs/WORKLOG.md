@@ -833,3 +833,17 @@
 - **Verifikasi:** lint ✅ typecheck ✅ build ✅ browser ✅ (1 menu aktif per halaman)
 - **Catatan/Masalah:** - (pemetaan: US-020, US-026)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 07:00 — Fix — Gabung daftar + dashboard proyek (permintaan pemilik)
+
+- **Branch:** fix/gabung-proyek-dashboard
+- **Yang dilakukan:**
+  - Filter dashboard produksi dihapus; KPI + deadline watch + ekspor pindah ke halaman `/proyek` (tanpa filter, hitung keseluruhan)
+  - Route `/proyek/dashboard` dan komponen `production-dashboard` dihapus; nav "Dashboard Produksi" dihapus, "Daftar Proyek" → "Proyek"
+  - Catatan: `/proyek/dashboard` kini jatuh ke rute dinamis `[id]` (kartu "tidak ditemukan") — URL mati yang tidak ditautkan di mana pun
+- **File berubah:** components/proyek/project-list (+KPI/deadline/ekspor), hapus dashboard route + komponen, mocks/dashboard, docs/API
+- **Verifikasi:** lint ✅ typecheck ✅ build ✅ browser ✅ (KPI loading + nav tunggal)
+- **Catatan/Masalah:** - (pemetaan: US-020, US-026)
+- **Langkah berikutnya:** Fase 2 — Skema Database
