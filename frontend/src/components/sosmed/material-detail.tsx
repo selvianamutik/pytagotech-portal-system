@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { getMaterial } from "@/services/materials";
 import { ApprovalSection } from "@/components/sosmed/approval-section";
+import { DistributionSection } from "@/components/sosmed/distribution-section";
 import {
   releaseMaterial,
   scheduleMaterial,
@@ -160,6 +161,8 @@ export function MaterialDetail({ materialId }: { materialId: string }) {
       ) : null}
 
       <ApprovalSection materialId={material.id} onChanged={() => void refresh()} />
+
+      <DistributionSection materialId={material.id} />
 
       <Card>
         <CardHeader className="border-b">
