@@ -52,6 +52,8 @@ export interface Lead {
   status: LeadStatus;
   /** Tanggal follow-up berikutnya (YYYY-MM-DD, opsional, US-012). */
   nextFollowUp?: string;
+  /** Sumber lead (mis. "Sosmed/TikTok" dari konversi inquiry US-038). */
+  source?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -66,6 +68,7 @@ export interface CreateLeadInput {
   picName: string;
   status: LeadStatus;
   nextFollowUp?: string;
+  source?: string;
 }
 
 export type UpdateLeadInput = Partial<CreateLeadInput>;

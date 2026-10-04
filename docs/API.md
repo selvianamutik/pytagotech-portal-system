@@ -461,6 +461,18 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Inquiry & Handover WA
+
+> **Status:** Draft Fase 1 (US-038) — `services/inquiries.ts`.
+> Halaman `/sosmed/inquiry`. Ambang interim 15 mnt (resmi US-041).
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| SLA routing otomatis | Masuk → WA ≤ 15 mnt (FR-26) |
+| `convertInquiryToLead()` (FR-28) | Lead New + `source: Sosmed/<platform>`; inquiry → Handover Selesai + tertaut; anti ganda |
+
+---
+
 ## Modul: Assets
 
 > **Status:** Draft Fase 1 (US-034) — mock di `frontend/src/mocks/assets.ts`,

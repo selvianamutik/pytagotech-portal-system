@@ -658,3 +658,19 @@
 - **Acceptance Criteria:** 4/4 — interaksi ✅ tanggap + SLA ✅ % dashboard (koneksi US-039) ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-26 tetap TODO sampai backend. Ambang resmi US-041.
 - **Langkah berikutnya:** US-038 (Inquiry tracking)
+
+---
+
+## 2026-10-05 00:30 — US-038 — Inquiry tracking (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-038-inquiry
+- **Commit:** 8c84adb — feat(frontend): inquiry + Jadikan Lead US-038
+- **Yang dilakukan:**
+  - Inquiry (platform/brand/waktu) + routing SLA 15 mnt + 3 status + konversi ke lead CRM (`source` tercatat, anti ganda)
+  - `Lead.source` baru (opsional, non-destruktif); halaman `/sosmed/inquiry` + nav
+- **File berubah:** types/inquiry, types/lead, services/leads, services/inquiries(.test), components/sosmed/inquiry-manager, app/sosmed/inquiry, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (188/188) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 5/5 — inquiry ✅ routing SLA ✅ 3 status ✅ Jadikan Lead ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-28 tetap TODO sampai backend.
+- **Langkah berikutnya:** US-039 (KPI Scorecard Sosmed)
