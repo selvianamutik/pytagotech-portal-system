@@ -643,3 +643,18 @@
 - **Acceptance Criteria:** 4/4 — input ✅ net growth ✅ grafik ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-037 (Community & SLA)
+
+---
+
+## 2026-10-05 00:00 — US-037 — Community & SLA (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-037-komunitas
+- **Commit:** 72b17c7 — feat(frontend): community + SLA US-037
+- **Yang dilakukan:**
+  - Interaksi (kanal/platform/tipe/waktu) + tanggap otomatis + SLA 30 mnt + compliance + halaman `/sosmed/komunitas` + nav
+- **File berubah:** types/community, services/community(.test), components/sosmed/community-manager, app/sosmed/komunitas, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (185/185) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 4/4 — interaksi ✅ tanggap + SLA ✅ % dashboard (koneksi US-039) ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-26 tetap TODO sampai backend. Ambang resmi US-041.
+- **Langkah berikutnya:** US-038 (Inquiry tracking)

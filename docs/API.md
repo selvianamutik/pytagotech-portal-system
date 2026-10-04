@@ -450,7 +450,14 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Community & Inquiry
 
-> _Akan didokumentasikan saat US-037 dimulai_
+> **Status:** Draft Fase 1 — community di US-037 (`services/community.ts`);
+> inquiry menyusul US-038. Halaman `/sosmed/komunitas`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| Waktu tanggap otomatis | Menit masuk → dibalas (FR-26) |
+| SLA 30 menit | Interim (resmi US-041); `%` tercapai untuk dashboard |
+| `recordInteraction()` / `markInteractionReplied()` | Validasi kanal/platform/tipe + urutan waktu |
 
 ---
 
