@@ -240,7 +240,7 @@ export function PublicationCalendar() {
                 {(byDate.get(day) ?? []).map((entry) => (
                   <Link
                     key={entry.publicationId}
-                    href={`/sosmed/materi/${entry.materialId}`}
+                    href={`/sosmed/materi/${entry.materialId}?from=${encodeURIComponent("/sosmed/kalender")}`}
                     draggable={!entry.isLive}
                     onDragStart={(event) => {
                       event.dataTransfer.setData("text/plain", entry.publicationId);

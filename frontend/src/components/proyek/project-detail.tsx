@@ -27,7 +27,15 @@ import { PROJECT_STATUSES } from "@/types/project";
  * Detail proyek (US-019): info + tautan balik ke handover asal.
  * Task, fitur, dan timeline menyusul di US-021 s.d. US-025.
  */
-export function ProjectDetail({ projectId }: { projectId: string }) {
+export function ProjectDetail({
+  projectId,
+  backHref = "/handover",
+  backLabel = "Semua handover",
+}: {
+  projectId: string;
+  backHref?: string;
+  backLabel?: string;
+}) {
   const user = useAuthStore((state) => state.user);
   const [item, setItem] = useState<ProjectWithNames | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -113,8 +121,8 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6">
-      <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/handover" />}>
-        <ArrowLeftIcon aria-hidden="true" /> Semua handover
+      <Button variant="outline" size="sm" nativeButton={false} render={<Link href={backHref} />}>
+        <ArrowLeftIcon aria-hidden="true" /> {backLabel}
       </Button>
 
       <div>
@@ -152,7 +160,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
           <div>
             <p className="text-xs text-muted-foreground">Handover asal</p>
             <Link
-              href={`/handover/${project.handoverId}`}
+              href={`/handover/${project.handoverId}?from=${encodeURIComponent(`/proyek/${project.id}`)}`}
               className="font-mono text-sm text-primary underline-offset-4 hover:underline"
             >
               {project.handoverId} ({handoverCode})

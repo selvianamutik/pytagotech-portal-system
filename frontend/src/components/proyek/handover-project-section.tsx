@@ -42,7 +42,7 @@ export function HandoverProjectSection({
               {project.id} · {project.pmName} · {formatCurrency(project.value)}
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link href={`/proyek/${project.id}`} />}>
+          <Button type="button" variant="outline" size="sm" nativeButton={false} render={<Link href={`/proyek/${project.id}?from=${encodeURIComponent(`/handover/${handoverId}`)}`} />}>
             Buka proyek
           </Button>
         </CardContent>

@@ -26,7 +26,15 @@ import { isQualityGateComplete, QUALITY_GATE_ITEMS } from "@/types/material";
  * Detail materi: checklist quality gate, penjadwalan bergerbang,
  * dan rilis (US-029). Approval & revisi menyusul di US-030.
  */
-export function MaterialDetail({ materialId }: { materialId: string }) {
+export function MaterialDetail({
+  materialId,
+  backHref = "/sosmed/materi",
+  backLabel = "Database materi",
+}: {
+  materialId: string;
+  backHref?: string;
+  backLabel?: string;
+}) {
   const user = useAuthStore((state) => state.user);
   const [material, setMaterial] = useState<ContentMaterial | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -134,8 +142,8 @@ export function MaterialDetail({ materialId }: { materialId: string }) {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6">
-      <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/sosmed/materi" />}>
-        <ArrowLeftIcon aria-hidden="true" /> Database materi
+      <Button variant="outline" size="sm" nativeButton={false} render={<Link href={backHref} />}>
+        <ArrowLeftIcon aria-hidden="true" /> {backLabel}
       </Button>
 
       <div>

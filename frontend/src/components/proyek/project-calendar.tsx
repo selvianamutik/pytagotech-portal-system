@@ -166,7 +166,7 @@ export function ProjectCalendar({ projectId }: { projectId?: string }) {
           sub: `${feature.id} · fitur${feature.developer ? ` · ${feature.developer}` : ""}${projectId ? "" : projectShort(feature.projectId)}`,
           startDate: feature.scheduledStart as string,
           endDate: (feature.scheduledEnd ?? feature.scheduledStart) as string,
-          href: `/proyek/${feature.projectId}`,
+          href: `/proyek/${feature.projectId}?from=${encodeURIComponent(backPath)}`,
         });
       }
     }
