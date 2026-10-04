@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
+import { AssigneeSelect } from "@/components/proyek/assignee-select";
 import {
   convertFeatureToTask,
   createFeature,
@@ -284,17 +285,12 @@ export function FeatureBacklog({
                 onChange={setPriority}
                 options={FEATURE_PRIORITIES}
               />
-              <div className="space-y-2">
-                <label htmlFor="feature-dev" className="text-sm font-medium">
-                  Developer
-                </label>
-                <Input
-                  id="feature-dev"
-                  placeholder="Opsional — diisi saat penjadwalan"
-                  value={developer}
-                  onChange={(event) => setDeveloper(event.target.value)}
-                />
-              </div>
+              <AssigneeSelect
+                id="feature-dev"
+                label="Developer"
+                value={developer}
+                onChange={setDeveloper}
+              />
               <div className="space-y-2">
                 <label htmlFor="feature-estimate" className="text-sm font-medium">
                   Estimasi (hari)
