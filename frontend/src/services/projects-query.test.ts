@@ -60,8 +60,8 @@ describe("progress", () => {
     expect((await queryProjects({})).data?.[0]?.progress).toBe(0);
 
     await addTaskSummary({ projectId, title: "A", percent: 100 });
-    await addTaskSummary({ projectId, title: "B", percent: 50 });
-    await addTaskSummary({ projectId, title: "B-1", percent: 0, parentId: "TSK-002" });
+    const b = await addTaskSummary({ projectId, title: "B", percent: 50 });
+    await addTaskSummary({ projectId, title: "B-1", percent: 0, parentId: b.data!.id });
 
     // % induk dihitung dari sub-task: B = 0 → (100 + 0) / 2 = 50.
     expect((await queryProjects({})).data?.[0]?.progress).toBe(50);

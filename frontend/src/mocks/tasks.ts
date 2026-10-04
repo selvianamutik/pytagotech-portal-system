@@ -1,0 +1,53 @@
+import type { TaskSummary } from "@/types/task";
+
+/** Data mock task demo berjadwal (tanpa status Done/Blocked agar KPI test stabil). */
+export const mockTasks: TaskSummary[] = [
+  {
+    id: "TSK-001",
+    projectId: "PRJ-001",
+    title: "Desain homepage",
+    percent: 40,
+    startDate: "2026-09-28",
+    targetDate: "2026-10-08",
+    assignee: "Nabila",
+    isActive: true,
+    status: "In Progress",
+    notes: "Seed demo.",
+  },
+  {
+    id: "TSK-002",
+    projectId: "PRJ-001",
+    title: "Development katalog",
+    percent: 0,
+    startDate: "2026-10-06",
+    targetDate: "2026-10-16",
+    assignee: "Raka",
+    isActive: true,
+    status: "To Do",
+    notes: "Seed demo.",
+  },
+  {
+    id: "TSK-003",
+    projectId: "PRJ-002",
+    title: "Testing & UAT",
+    percent: 0,
+    startDate: "2026-10-12",
+    targetDate: "2026-10-20",
+    assignee: "Dimas (Freelance)",
+    isActive: true,
+    status: "To Do",
+    notes: "Seed demo.",
+  },
+  {
+    id: "TSK-004",
+    projectId: "PRJ-002",
+    title: "Copywriting landing",
+    percent: 80,
+    startDate: "2026-09-29",
+    targetDate: "2026-10-05",
+    assignee: "Ayu (Magang)",
+    isActive: true,
+    status: "Review",
+    notes: "Seed demo.",
+  },
+];

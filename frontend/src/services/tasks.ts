@@ -1,5 +1,6 @@
 import type { TaskInput, TaskStatus, TaskSummary } from "@/types/task";
 import { isTaskStatus } from "@/types/task";
+import { mockTasks } from "@/mocks/tasks";
 import { listDependencies } from "@/services/task-dependencies";
 import type { ServiceResult } from "@/services/result";
 
@@ -9,11 +10,11 @@ import type { ServiceResult } from "@/services/result";
  * lewat komponen US-006 (`entityType: "task"`).
  */
 
-let taskStore: TaskSummary[] = [];
+let taskStore: TaskSummary[] = structuredClone(mockTasks);
 
 /** Mengembalikan state mock ke awal — dipakai test dan demo. */
 export function resetMockTasks(): void {
-  taskStore = [];
+  taskStore = structuredClone(mockTasks);
 }
 
 function clampPercent(value: number): number {

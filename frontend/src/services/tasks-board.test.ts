@@ -35,8 +35,8 @@ describe("task CRUD", () => {
   });
 
   it("ubah field, pindah status, hapus beserta sub-task", async () => {
-    const parent = await addTaskSummary({ projectId: "PRJ-001", title: "Induk" });
-    await addTaskSummary({ projectId: "PRJ-001", title: "Anak", parentId: parent.data!.id });
+    const parent = await addTaskSummary({ projectId: "PRJ-900", title: "Induk" });
+    await addTaskSummary({ projectId: "PRJ-900", title: "Anak", parentId: parent.data!.id });
 
     const moved = await moveTaskSummaryStatus(parent.data!.id, "In Progress");
     expect(moved.data?.status).toBe("In Progress");
@@ -51,7 +51,7 @@ describe("task CRUD", () => {
     expect(updated.data?.percent).toBe(40);
 
     await deleteTaskSummary(parent.data!.id);
-    expect((await listTaskSummaries("PRJ-001")).data).toHaveLength(0);
+    expect((await listTaskSummaries("PRJ-900")).data).toHaveLength(0);
   });
 });
 
@@ -78,10 +78,14 @@ describe("effectiveTaskPercent", () => {
 
 describe("listAllTaskSummaries", () => {
   it("menggabungkan task lintas proyek", async () => {
-    await addTaskSummary({ projectId: "PRJ-001", title: "A" });
-    await addTaskSummary({ projectId: "PRJ-002", title: "B" });
+    await addTaskSummary({ projectId: "PRJ-901", title: "A" });
+    await addTaskSummary({ projectId: "PRJ-902", title: "B" });
 
     const { data } = await listAllTaskSummaries();
-    expect(data?.map((task) => task.projectId).sort()).toEqual(["PRJ-001", "PRJ-002"]);
+    const ids = (data ?? [])
+      .filter((task) => task.projectId === "PRJ-901" || task.projectId === "PRJ-902")
+      .map((task) => task.projectId)
+      .sort();
+    expect(ids).toEqual(["PRJ-901", "PRJ-902"]);
   });
 });

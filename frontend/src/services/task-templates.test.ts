@@ -60,7 +60,7 @@ describe("template CRUD", () => {
 
 describe("generateTasksForProject", () => {
   it("membuat task berurutan dari tanggal mulai", async () => {
-    const result = await generateTasksForProject("PRJ-001", "2026-10-05");
+    const result = await generateTasksForProject("PRJ-900", "2026-10-05");
 
     expect(result.error).toBeNull();
     expect(result.data).toHaveLength(4);
@@ -71,7 +71,7 @@ describe("generateTasksForProject", () => {
     });
     // 2 + 10 + 3 + 1 hari = selesai 2026-10-20.
     expect(result.data?.[3]?.targetDate).toBe("2026-10-20");
-    expect((await listTaskSummaries("PRJ-001")).data).toHaveLength(4);
+    expect((await listTaskSummaries("PRJ-900")).data).toHaveLength(4);
   });
 
   it("melewati template nonaktif", async () => {
@@ -82,7 +82,7 @@ describe("generateTasksForProject", () => {
       isActive: false,
     });
 
-    const result = await generateTasksForProject("PRJ-001", "2026-10-05");
+    const result = await generateTasksForProject("PRJ-900", "2026-10-05");
 
     expect(result.data).toHaveLength(3);
     expect(result.data?.map((task) => task.title)).not.toContain("Pengerjaan utama");
