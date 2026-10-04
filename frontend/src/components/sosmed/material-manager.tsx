@@ -219,6 +219,7 @@ export function MaterialManager() {
                       type="button"
                       variant="outline"
                       size="sm"
+                      nativeButton={false}
                       render={<Link href={`/sosmed/materi/${material.id}`} />}
                     >
                       Buka

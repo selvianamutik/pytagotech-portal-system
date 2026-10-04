@@ -37,7 +37,7 @@ export default function CollaborationDemoPage() {
             bell notifikasi atau halaman notifikasi.
           </p>
         </div>
-        <Button variant="outline" render={<Link href="/notifikasi" />}>
+        <Button variant="outline" nativeButton={false} render={<Link href="/notifikasi" />}>
           Buka notifikasi
         </Button>
       </div>

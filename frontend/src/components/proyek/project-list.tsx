@@ -302,6 +302,7 @@ export function ProjectList() {
                         type="button"
                         variant="outline"
                         size="sm"
+                        nativeButton={false}
                         render={<Link href={`/proyek/${project.id}`} />}
                       >
                         Buka

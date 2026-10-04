@@ -139,6 +139,7 @@ export function HandoverManager() {
                         type="button"
                         variant="outline"
                         size="sm"
+                        nativeButton={false}
                         render={<Link href={`/handover/${deal.id}`} />}
                       >
                         Buka

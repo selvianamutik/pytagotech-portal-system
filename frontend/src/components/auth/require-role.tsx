@@ -24,7 +24,7 @@ export function ForbiddenContent() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button render={<Link href="/" />}>Kembali ke beranda</Button>
+          <Button nativeButton={false} render={<Link href="/" />}>Kembali ke beranda</Button>
         </CardContent>
       </Card>
     </main>
@@ -64,7 +64,7 @@ export function RequireRole({ allowed, children }: RequireRoleProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button render={<Link href="/login" />}>Ke halaman masuk</Button>
+            <Button nativeButton={false} render={<Link href="/login" />}>Ke halaman masuk</Button>
           </CardContent>
         </Card>
       </main>
