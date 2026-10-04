@@ -113,7 +113,7 @@
   - Galeri verifikasi di `/demo/kolaborasi` me-mount komponen yang sama pada 4 tipe entitas; halaman `/notifikasi` adalah permukaan nyata (diakses dari bell header).
 - **Alternatif yang dipertimbangkan:** Autocomplete mention penuh (butuh popover + pencarian user — over-engineering untuk mock); menunda US-006 sampai host ada (melanggar urutan PRD).
 - **Alasan:** AC "dapat dipasang pada lead, task, fitur, dan konten" terverifikasi langsung; komponen tidak berubah saat host asli tiba.
-- **Konsekuensi:** `/demo/kolaborasi` adalah scaffolding — diganti host asli bertahap (US-012/022/030) dan dihapus sebelum Gate 3 bila sudah tak dipakai.
+- **Konsekuensi:** `/demo/kolaborasi` adalah scaffolding — diganti host asli bertahap (US-012/022/030) dan dihapus sebelum Gate 4 bila sudah tak dipakai.
 
 ---
 

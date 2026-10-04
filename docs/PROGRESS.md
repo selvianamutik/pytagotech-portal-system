@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-04  
-> **Fase saat ini:** Fase 1 — Frontend SELESAI (Gate 1 DONE, tag `v0.1.0-frontend`); berikutnya Fase 2 — Backend
+> **Fase saat ini:** Fase 1 — Frontend SELESAI (Gate 1 DONE, tag `v0.1.0-frontend`); berikutnya Fase 2 — Skema Database
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -143,8 +143,9 @@
 |------|-----------|--------|
 | Gate 0 | Fase 0 selesai: proyek jalan kosong, lint/typecheck lolos | DONE |
 | Gate 1 | Frontend selesai: semua UI dengan mock, kontrak API draft | DONE |
-| Gate 2 | Backend selesai: semua US & FR DONE, mock diganti API | TODO |
-| Gate 3 | Deploy Ready: build produksi bersih, dokumentasi lengkap | TODO |
+| Gate 2 | Skema Database selesai & disetujui (`DATABASE.md` + tag `v0.2.0-database`) | TODO |
+| Gate 3 | Backend selesai: semua US & FR DONE, mock diganti API | TODO |
+| Gate 4 | Deploy Ready: build produksi bersih, dokumentasi lengkap | TODO |
 
 ---
 
