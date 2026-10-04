@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Dialog aktivitas lead: ubah status langsung (6 status lain, tercatat di timeline)
 - Draf skema database Fase 2 (`docs/DATABASE.md`, Status DRAFT): 37 tabel + ERD + relasi + index, menunggu persetujuan
+- Revisi skema dari review: `team_members`, FK master_options, `lead_status_history`, DDL draf `database/schema.sql`
 - Seed demo: 2 handover Dikonfirmasi + 2 proyek + termin seimbang agar `/proyek` terisi
 - Gabung Daftar Proyek + Dashboard Produksi menjadi satu halaman `/proyek` (filter dashboard dihapus)
 - Kalender proyek per proyek + master data developer (internal/external) + dropdown assignee

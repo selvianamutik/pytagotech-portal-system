@@ -1013,3 +1013,19 @@
 - **Verifikasi:** review dokumen (tidak ada kode; lint/test tak terdampak)
 - **Catatan/Masalah:** BUTUH PERSETUJUAN TERTULIS pemilik (`APPROVED`) sebelum merge + tag `v0.2.0-database` + Fase 3
 - **Langkah berikutnya:** Review pemilik atas DATABASE.md
+
+---
+
+## 2026-10-05 14:00 — Fase 2 — Revisi skema dari review pemilik + DDL (menunggu APPROVED)
+
+- **Branch:** db/skema-database-awal (BELUM merge)
+- **Yang dilakukan:**
+  - Koreksi blocking (5): `developers` → `team_members` (+`profile_id` UNIQUE NULL, selaras ERD-matriks); dropdown US-005 → FK master via kolom generated; `brand` di growth/community (+UK); `deals.created_by/confirmed_by/at`; `lead_status_history` baru
+  - Koreksi sedang (6): clients nullable; CR `≠0` + sync ke projects (DEC-012); assignee materi → FK + status `Ditolak` + override_by FK; `material_platforms`; zona WIB; 7 index FK + 3 index baru
+  - Higiene (8): entity 5 tipe; kolom `status`; growth tanpa surrogate; inquiry 1:1; 4 relasi ERD; hapus baris holidays; seed service_hours + brief 5/5; LPAD tanpa batas
+  - `database/schema.sql`: DDL draf lengkap 42 tabel (tervalidasi parser: 42 tabel + 44 index) + ERD re-validasi Mermaid OK
+  - DEC-011 (master FK pattern), DEC-012 (sync CR→proyek)
+- **File berubah:** docs/DATABASE.md, database/schema.sql, docs/DECISIONS.md, docs/WORKLOG.md, CHANGELOG.md
+- **Verifikasi:** Mermaid parse OK; SQL parse OK (42 tabel/44 index; blok prosedural dicek manual)
+- **Catatan/Masalah:** TETAP BUTUH APPROVED tertulis sebelum merge/tag/Fase 3
+- **Langkah berikutnya:** Review + APPROVED pemilik

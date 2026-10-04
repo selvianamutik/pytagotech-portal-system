@@ -138,3 +138,27 @@
 - **Alternatif yang dipertimbangkan:** BIGINT auto-increment sebagai PK (lebih hemat, tapi bocor urutan dan tidak cocok untuk RLS multi-tenant di masa depan); display ID sebagai PK (rapuh terhadap perubahan format).
 - **Alasan:** UUID aman untuk relasi terdistribusi dan tidak menebak; display ID tetap pendek untuk UI sesuai PRD.
 - **Konsekuensi:** Semua FK bertipe UUID; migration Fase 3 wajib memakai tipe ini.
+
+---
+
+## DEC-011: Dropdown Master via Kolom Generated + FK Komposit
+
+- **Tanggal:** 2026-10-05
+- **Terkait:** US-005, FR-3
+- **Konteks:** Review pemilik: status/brand/platform hardcode CHECK bertentangan dengan US-005/FR-3.
+- **Keputusan:** Dropdown kelolaan Admin divalidasi DB via `<kolom>_category TEXT GENERATED ALWAYS AS ('<kategori>') STORED` + FK komposit ke `master_options(category, value)`. Status alur sistem tetap `TEXT + CHECK` (transisi dikunci service).
+- **Alternatif yang dipertimbangkan:** Validasi hanya di service (lemah — bypass via SQL langsung); tabel lookup per dropdown (tabel ×9, over-engineering).
+- **Alasan:** Satu tabel master + integritas di level DB tanpa ledakan tabel.
+- **Konsekuensi:** Setiap nilai baru wajib ada di `master_options` dulu (seed US-005).
+
+---
+
+## DEC-012: CR Disetujui Sinkron ke Proyek
+
+- **Tanggal:** 2026-10-05
+- **Terkait:** US-018, FR-14, FR-15
+- **Konteks:** Review pemilik: belum ada aturan sinkron CR → proyek.
+- **Keputusan:** CR yang Disetujui memperbarui `deals` + `deal_versions` + `projects.value_idr/target_date` agar warisan FR-15 tidak basi.
+- **Alternatif yang dipertimbangkan:** Hanya deals (proyek basi; melanggar semangat FR-15).
+- **Alasan:** Satu sumber kebenaran nilai/deadline lintas handover–proyek.
+- **Konsekuensi:** Service Fase 3 menerapkan ketiga tulis dalam satu transaksi.
