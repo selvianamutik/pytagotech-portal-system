@@ -937,3 +937,15 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (4 halaman pengaturan 200)
 - **Catatan/Masalah:** - (pemetaan: US-002)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 11:00 — Fix — PIC tampil di sel kalender kerja (laporan pemilik)
+
+- **Branch:** fix/kalender-pic
+- **Akar masalah:** sel kalender hanya menampilkan nama; PIC (assignee/developer) cuma ada di tooltip.
+- **Yang dilakukan:** baris kedua "👤 Nama" di tiap entri task & fitur (kalender global + per-proyek)
+- **File berubah:** components/proyek/project-calendar
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (`/kalender` 200)
+- **Catatan/Masalah:** - (pemetaan: US-025)
+- **Langkah berikutnya:** Fase 2 — Skema Database
