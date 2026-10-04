@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-029: quality gate pra-rilis (checklist, gerbang jadwal/rilis, override Admin)
 - US-030: approval & revisi materi (Rev, 3 keputusan, feedback wajib saat Ditolak)
 - US-031: distribusi Parent-Child (Single/Crosspost + rekonsiliasi)
+- US-032: kalender publikasi (filter, drag, Overdue/Kritis + ambang konfigurabel)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal

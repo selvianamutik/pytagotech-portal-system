@@ -565,3 +565,19 @@
 - **Acceptance Criteria:** 4/4 — 1 MAT banyak PUB ✅ pola ✅ rekonsiliasi ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-23 tetap TODO sampai backend.
 - **Langkah berikutnya:** US-032 (Kalender publikasi)
+
+---
+
+## 2026-10-04 21:30 — US-032 — Kalender publikasi (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-032-kalender
+- **Commit:** 105bfa3 — feat(frontend): kalender publikasi US-032
+- **Yang dilakukan:**
+  - `services/calendar.ts`: entri dari distribusi + 4 filter + urgensi + ambang Q-004 B (konfigurabel) + jadwal-ulang drag
+  - Kalender bulan/minggu + klik detail + indikator Overdue/Kritis + pengaturan ambang interim; halaman `/sosmed/kalender` + nav
+- **File berubah:** services/calendar(.test), components/sosmed/publication-calendar, app/sosmed/kalender, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (171/171) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 5/5 — bulan/minggu ✅ 4 filter ✅ klik + drag ✅ Overdue/Kritis ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** FR-24 tetap TODO sampai backend. Ambang penuh di Pengaturan US-041.
+- **Langkah berikutnya:** US-033 (Pelacakan rilis)

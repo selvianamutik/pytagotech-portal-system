@@ -409,6 +409,18 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Kalender Publikasi
+
+> **Status:** Draft Fase 1 (US-032) — `services/calendar.ts`.
+> Halaman `/sosmed/kalender`. Ambang Q-004 B (konfigurabel; penuh di US-041).
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| `getCalendarEntries(filter, now)` (FR-24) | Dari distribusi; filter brand/platform/approval/gate; urgensi ok/overdue/critical |
+| `reschedulePublication(id, date)` | Seret-jadwalkan ulang; ditolak bila sudah live |
+
+---
+
 ## Modul: Analytics
 
 > _Akan didokumentasikan saat US-035 dimulai_
