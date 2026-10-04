@@ -80,7 +80,7 @@
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
 | US-035 | Analytics performa posting | Frontend | DONE | 5/5 ✅ | 57f1440 |
-| US-036 | Pertumbuhan akun | Frontend | TODO | 0/4 | - |
+| US-036 | Pertumbuhan akun | Frontend | DONE | 4/4 ✅ | 31c6dc8 |
 | US-037 | Community management & SLA response time | Frontend | TODO | 0/4 | - |
 | US-038 | Inquiry tracking & handover WhatsApp | Frontend | TODO | 0/5 | - |
 | US-039 | Dashboard eksekutif Sosmed (KPI Scorecard) | Frontend | TODO | 0/4 | - |
