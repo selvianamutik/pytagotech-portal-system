@@ -885,3 +885,17 @@
 - **Verifikasi:** lint ✅ typecheck ✅ build ✅ browser ✅ (`/` 200; console perlu konfirmasi pemilik)
 - **Catatan/Masalah:** - (pemetaan: US-001)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 09:00 — Seed task & fitur berjadwal (kalender kosong, laporan pemilik)
+
+- **Branch:** feature/seed-jadwal-demo
+- **Yang dilakukan:**
+  - Akar masalah: store task/fitur mulai kosong → kalender/Gantt/board kosong. Seed 4 task + 3 fitur berjadwal (Okt 2026) untuk PRJ-001/PRJ-002
+  - Pindah store ke `mocks/tasks.ts` + `mocks/features.ts`; isolasi 5 test ke PRJ-900+ agar tak tergantung seed
+  - Test komponen kalender: universal menampilkan seed lintas proyek; mode per-proyek memfilter
+- **File berubah:** mocks/tasks, mocks/features, services/tasks, services/features, services tests, components/proyek/project-calendar(.test), docs
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (205/205) build ✅ browser ✅
+- **Catatan/Masalah:** - (pemetaan: US-022, US-023, US-025)
+- **Langkah berikutnya:** Fase 2 — Skema Database

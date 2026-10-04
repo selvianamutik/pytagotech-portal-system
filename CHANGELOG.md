@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gabung Daftar Proyek + Dashboard Produksi menjadi satu halaman `/proyek` (filter dashboard dihapus)
 - Kalender proyek per proyek + master data developer (internal/external) + dropdown assignee
 - Kalender Kerja universal (`/kalender`): tracking semua task + fitur lintas proyek
+- Seed 4 task + 3 fitur berjadwal agar kalender/Gantt/board demo terisi
 - Perbaiki warning Base UI: `nativeButton={false}` pada tombol bermuatan link/label
 
 ### Changed

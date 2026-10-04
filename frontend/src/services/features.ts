@@ -1,4 +1,5 @@
 import { getDeal } from "@/services/deals";
+import { mockFeatures } from "@/mocks/features";
 import { addTaskSummary } from "@/services/tasks";
 import type { FeatureInput, ProjectFeature } from "@/types/feature";
 import { isFeaturePriority } from "@/types/feature";
@@ -9,11 +10,11 @@ import type { ServiceResult } from "@/services/result";
  * saat proyek dibuat (idempoten); fitur dapat diubah menjadi task.
  */
 
-let featureStore: ProjectFeature[] = [];
+let featureStore: ProjectFeature[] = structuredClone(mockFeatures);
 
 /** Mengembalikan state mock ke awal — dipakai test dan demo. */
 export function resetMockFeatures(): void {
-  featureStore = [];
+  featureStore = structuredClone(mockFeatures);
 }
 
 /** Estimasi default impor handover — PM menyesuaikan (lihat US-024). */
