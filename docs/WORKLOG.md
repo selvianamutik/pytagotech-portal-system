@@ -899,3 +899,15 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ (205/205) build ✅ browser ✅
 - **Catatan/Masalah:** - (pemetaan: US-022, US-023, US-025)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 09:30 — Fix — Kembali ke halaman asal dari Task Board (laporan pemilik)
+
+- **Branch:** fix/back-dari-task
+- **Yang dilakukan:**
+  - Tautan task di kalender membawa `?from=` (kalender global/per-proyek); tombol kembali memakai asal bila valid, jika tidak ke detail proyek
+- **File berubah:** components/proyek/project-calendar, app/proyek/[id]/tasks
+- **Verifikasi:** lint ✅ typecheck ✅ build ✅ browser ✅ (`?from=/kalender` → "Kembali" ke `/kalender`; tanpa param → "Detail proyek")
+- **Catatan/Masalah:** - (pemetaan: US-022, US-025)
+- **Langkah berikutnya:** Fase 2 — Skema Database
