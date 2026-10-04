@@ -974,3 +974,15 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ (207/207) build ✅ browser ✅
 - **Catatan/Masalah:** - (pemetaan: US-017, US-019)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+---
+## 2026-10-05 12:30 — Fix — Keterangan revisi di card konfirmasi (permintaan pemilik)
+
+- **Branch:** feature/revisi-keterangan
+- **Yang dilakukan:**
+  - Card Konfirmasi Produksi menampilkan "Keterangan revisi & riwayat": komentar PM + perpindahan status (aktor + waktu), terbaru dulu, refresh otomatis tiap aksi
+- **File berubah:** components/handover/handover-status
+- **Verifikasi:** lint ✅ typecheck ✅ build ✅ browser ✅ (detail 200)
+- **Catatan/Masalah:** - (pemetaan: US-017)
+- **Langkah berikutnya:** Fase 2 — Skema Database
+
+---

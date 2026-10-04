@@ -1,12 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { listAudit } from "@/services/audit";
+import { listComments } from "@/services/collaboration";
 import { transitionDealStatus } from "@/services/deal-workflow";
 import { useAuthStore } from "@/store/auth";
+import { formatDateTime } from "@/lib/utils";
 import type { HandoverStatus } from "@/types/deal";
+
+interface HistoryItem {
+  key: string;
+  actor: string;
+  title: string;
+  detail: string;
+  createdAt: string;
+}
+
+function buildHistory(
+  comments: { id: string; authorName: string; body: string; createdAt: string }[],
+  audits: { id: string; action: string; actorName: string; oldValue: string | null; newValue: string | null; createdAt: string }[]
+): HistoryItem[] {
+  return [
+    ...comments.map((item) => ({
+      key: `cmt-${item.id}`,
+      actor: item.authorName,
+      title: "Komentar",
+      detail: item.body,
+      createdAt: item.createdAt,
+    })),
+    ...audits
+      .filter((entry) => entry.action === "deal.status")
+      .map((entry) => ({
+        key: `audit-${entry.id}`,
+        actor: entry.actorName,
+        title: `Status: ${entry.oldValue} → ${entry.newValue}`,
+        detail: "",
+        createdAt: entry.createdAt,
+      })),
+  ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
 
 /**
  * Aksi alur status handover (US-017, FR-13).
@@ -26,6 +61,29 @@ export function HandoverStatusActions({
   const [comment, setComment] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+
+  async function refreshHistory() {
+    const [{ data: comments }, { data: audits }] = await Promise.all([
+      listComments("deal", dealId),
+      listAudit(dealId),
+    ]);
+    setHistory(buildHistory(comments ?? [], audits ?? []));
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([listComments("deal", dealId), listAudit(dealId)]).then(
+      ([commentResult, auditResult]) => {
+        if (!cancelled) {
+          setHistory(buildHistory(commentResult.data ?? [], auditResult.data ?? []));
+        }
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [dealId]);
 
   const roles = user?.roles ?? ["Sales / Marketing"];
   const actor = {
@@ -51,6 +109,7 @@ export function HandoverStatusActions({
       return;
     }
     setComment("");
+    await refreshHistory();
     onChanged();
   }
 
@@ -126,6 +185,28 @@ export function HandoverStatusActions({
           <p role="alert" className="text-sm text-destructive">
             {error}
           </p>
+        ) : null}
+
+        {history.length > 0 ? (
+          <div className="space-y-2 border-t pt-3">
+            <p className="text-sm font-medium">Keterangan revisi & riwayat</p>
+            <ul className="max-h-48 space-y-3 overflow-y-auto">
+              {history.map((item) => (
+                <li key={item.key} className="text-sm">
+                  <p>
+                    <span className="font-medium">{item.actor}</span>{" "}
+                    <span className="text-muted-foreground">{item.title}</span>
+                  </p>
+                  {item.detail ? (
+                    <p className="mt-0.5 leading-6">{item.detail}</p>
+                  ) : null}
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {formatDateTime(item.createdAt)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
         ) : null}
       </CardContent>
     </Card>
