@@ -424,7 +424,15 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Analytics
 
-> _Akan didokumentasikan saat US-035 dimulai_
+> **Status:** Draft Fase 1 (US-035) — `services/metrics.ts`, tipe `types/metric.ts`.
+> Halaman `/sosmed/analitik`. Rumus Q-002 C + kunci Q-007 B.
+> Fase 2: tabel `post_metrics`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| ER otomatis | `(Likes + Comments + Shares + Saves) ÷ Reach × 100%` (tooltip) |
+| `recordMetric(pubId, input, by)` | 7 angka ≥ 0; dedup satu Final per publikasi |
+| `updateMetric()` / `deleteMetric()` | Final terkunci kecuali Super Admin / Executive / Leader |
 
 ---
 
