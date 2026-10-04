@@ -20,7 +20,15 @@ import { formatCurrency, formatDate } from "@/lib/utils";
  * Detail deal handover: info + fitur + termin (US-016).
  * Aksi status (US-017) dan change request (US-018) menyusul di halaman ini.
  */
-export function HandoverDetail({ dealId }: { dealId: string }) {
+export function HandoverDetail({
+  dealId,
+  backHref = "/handover",
+  backLabel = "Semua handover",
+}: {
+  dealId: string;
+  backHref?: string;
+  backLabel?: string;
+}) {
   const [item, setItem] = useState<DealWithClient | null>(null);
   const [clients, setClients] = useState<{ id: string; companyName: string }[]>([]);
   const [notFound, setNotFound] = useState(false);
@@ -92,8 +100,8 @@ export function HandoverDetail({ dealId }: { dealId: string }) {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6">
-      <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/handover" />}>
-        <ArrowLeftIcon aria-hidden="true" /> Semua handover
+      <Button variant="outline" size="sm" nativeButton={false} render={<Link href={backHref} />}>
+        <ArrowLeftIcon aria-hidden="true" /> {backLabel}
       </Button>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

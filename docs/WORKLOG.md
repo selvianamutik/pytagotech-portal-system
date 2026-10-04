@@ -911,3 +911,17 @@
 - **Verifikasi:** lint ✅ typecheck ✅ build ✅ browser ✅ (`?from=/kalender` → "Kembali" ke `/kalender`; tanpa param → "Detail proyek")
 - **Catatan/Masalah:** - (pemetaan: US-022, US-025)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 10:00 — Fix — Kembali ke halaman asal di semua detail (permintaan pemilik)
+
+- **Branch:** fix/back-semua-halaman
+- **Yang dilakukan:**
+  - Helper `lib/back-link.ts` (validasi path internal) + `?from=` di semua tautan silang: kalender→task/board, kalender→detail, handover↔proyek, materi detail
+  - Tombol kembali: "Kembali" ke asal bila valid, jika tidak label + tujuan default lama
+  - Berlaku: Task Board, detail proyek/handover/materi (Gantt/kalender per-proyek hanya dari detail — sudah benar)
+- **File berubah:** lib/back-link(+test), 3 page + 3 komponen detail, 2 kalender, handover-project-section
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (payload "Kembali" di 3 detail)
+- **Catatan/Masalah:** - (pemetaan: US-022, US-025, US-019, US-015, US-030)
+- **Langkah berikutnya:** Fase 2 — Skema Database
