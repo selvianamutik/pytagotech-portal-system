@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getMaterial } from "@/services/materials";
+import { ApprovalSection } from "@/components/sosmed/approval-section";
 import {
   releaseMaterial,
   scheduleMaterial,
@@ -158,9 +159,11 @@ export function MaterialDetail({ materialId }: { materialId: string }) {
         </p>
       ) : null}
 
+      <ApprovalSection materialId={material.id} onChanged={() => void refresh()} />
+
       <Card>
         <CardHeader className="border-b">
-          <CardTitle className="text-base">Quality gate pra-rilis</CardTitle>
+          <CardTitle className="text-base">Jadwal & rilis</CardTitle>
           <CardDescription>
             Materi tidak dapat dijadwalkan/dirilis bila belum lengkap — kecuali
             Admin beralasan.
@@ -197,8 +200,7 @@ export function MaterialDetail({ materialId }: { materialId: string }) {
 
       <Card>
         <CardHeader className="border-b">
-          <CardTitle className="text-base">Jadwal & rilis</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-base">Jadwal & rilis</CardTitle>          <CardDescription>
             Saat ini: {material.scheduleDate ? formatDate(material.scheduleDate) : "belum dijadwalkan"}
             {material.releaseTime ? ` ${material.releaseTime}` : ""}. Penjadwalan butuh
             status Disetujui (US-030).

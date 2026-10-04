@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-027: content planner (skor brief otomatis, ambang 5/5)
 - US-028: database materi (ID otomatis, dari ide Disetujui)
 - US-029: quality gate pra-rilis (checklist, gerbang jadwal/rilis, override Admin)
+- US-030: approval & revisi materi (Rev, 3 keputusan, feedback wajib saat Ditolak)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal

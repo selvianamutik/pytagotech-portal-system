@@ -379,6 +379,7 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 |--------|---------------|
 | `listMaterials()` / `getMaterial()` / `createMaterial()` / `saveMaterial()` | ID MAT-xxxx otomatis; status awal Draf; jam HH:MM |
 | `createMaterialFromIdea(ideaId)` | Hanya ide Disetujui/Siap Produksi |
+| `submitReview(materialId, {decision, reviewer, feedback?, evidenceLink?})` (US-030) | Rev 0,1,...; feedback wajib saat Ditolak; Disetujui → status Disetujui; Ditolak → Draf |
 
 ---
 

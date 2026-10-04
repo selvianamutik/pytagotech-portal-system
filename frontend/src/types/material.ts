@@ -47,6 +47,8 @@ export interface ContentMaterial {
   qualityGate: Record<QualityGateItem, boolean>;
   /** Pengecualian Admin atas gate (US-029). */
   gateOverride?: { by: string; reason: string };
+  /** Riwayat review (US-030). */
+  revisions: MaterialRevision[];
   createdAt: string;
 }
 
@@ -67,4 +69,29 @@ export function isMaterialStatus(value: string): value is MaterialStatus {
 
 export function isQualityGateComplete(gate: Record<QualityGateItem, boolean>): boolean {
   return (Object.keys(gate) as QualityGateItem[]).every((item) => gate[item]);
+}
+
+/** Keputusan review materi (US-030). */
+export const APPROVAL_DECISIONS = [
+  "Disetujui Tanpa Revisi",
+  "Disetujui dengan Revisi Minor",
+  "Ditolak",
+] as const;
+
+export type ApprovalDecision = (typeof APPROVAL_DECISIONS)[number];
+
+/** Satu versi review: Rev 0, Rev 1, dst. */
+export interface MaterialRevision {
+  version: number;
+  reviewer: string;
+  decision: ApprovalDecision;
+  /** Umpan balik — wajib bila Ditolak. */
+  feedback: string;
+  /** Link bukti penyelesaian revisi. */
+  evidenceLink?: string;
+  createdAt: string;
+}
+
+export function isApprovalDecision(value: string): value is ApprovalDecision {
+  return (APPROVAL_DECISIONS as readonly string[]).includes(value);
 }

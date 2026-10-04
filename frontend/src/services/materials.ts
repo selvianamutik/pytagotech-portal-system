@@ -16,6 +16,14 @@ export function resetMockMaterials(): void {
   materialStore = structuredClone(mockMaterials);
 }
 
+function cloneMaterial(material: ContentMaterial): ContentMaterial {
+  return {
+    ...material,
+    qualityGate: { ...material.qualityGate },
+    revisions: material.revisions.map((revision) => ({ ...revision })),
+  };
+}
+
 const EMPTY_GATE: ContentMaterial["qualityGate"] = {
   "rasio visual": false,
   "lisensi audio": false,
@@ -44,7 +52,7 @@ export async function listMaterials(): Promise<ServiceResult<ContentMaterial[]>>
   return {
     data: [...materialStore]
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map((material) => ({ ...material, qualityGate: { ...material.qualityGate } })),
+      .map((material) => cloneMaterial(material)),
     error: null,
   };
 }
@@ -56,7 +64,7 @@ export async function getMaterial(
   if (!material) {
     return { data: null, error: "Materi tidak ditemukan." };
   }
-  return { data: { ...material, qualityGate: { ...material.qualityGate } }, error: null };
+  return { data: cloneMaterial(material), error: null };
 }
 
 export async function createMaterial(
@@ -79,6 +87,7 @@ export async function createMaterial(
     designer: input.designer.trim(),
     videoEditor: input.videoEditor.trim(),
     qualityGate: { ...EMPTY_GATE },
+    revisions: [],
     createdAt: now,
   };
   materialStore.push(material);
