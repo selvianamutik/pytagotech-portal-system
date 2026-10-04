@@ -24,6 +24,7 @@ export const dashboardSnapshot: DashboardSnapshot = {
     { label: "Template Task", module: "Pengaturan", href: "/pengaturan/template-task", roles: ["Super Admin"] },
     { label: "Task Board", module: "Proyek", href: "#proyek", badge: 18, roles: ["Project Manager", "Developer"] },
     { label: "Content Planner", module: "Sosmed", href: "/sosmed/planner", badge: 9, roles: ["Social Media Specialist", "Executive / Leader"] },
+    { label: "Produksi Konten", module: "Sosmed", href: "/sosmed/materi", roles: ["Social Media Specialist", "Executive / Leader"] },
     { label: "Pengguna", module: "Pengaturan", href: "/pengaturan/pengguna", roles: ["Super Admin"] },
     { label: "Master Data", module: "Pengaturan", href: "#pengaturan", roles: ["Super Admin"] },
   ],

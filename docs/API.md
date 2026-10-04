@@ -371,7 +371,14 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Content Materials
 
-> _Akan didokumentasikan saat US-028 dimulai_
+> **Status:** Draft Fase 1 (US-028) — mock di `frontend/src/mocks/materials.ts`,
+> diakses via `frontend/src/services/materials.ts`. Halaman `/sosmed/materi`.
+> Fase 2: tabel `content_materials`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| `listMaterials()` / `getMaterial()` / `createMaterial()` / `saveMaterial()` | ID MAT-xxxx otomatis; status awal Draf; jam HH:MM |
+| `createMaterialFromIdea(ideaId)` | Hanya ide Disetujui/Siap Produksi |
 
 ---
 
