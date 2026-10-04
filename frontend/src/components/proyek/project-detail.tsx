@@ -113,7 +113,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6">
-      <Button variant="outline" size="sm" render={<Link href="/handover" />}>
+      <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/handover" />}>
         <ArrowLeftIcon aria-hidden="true" /> Semua handover
       </Button>
 
@@ -179,15 +179,15 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
       <FeatureScheduleSection projectId={project.id} />
 
       <div>
-        <Button type="button" render={<Link href={`/proyek/${project.id}/tasks`} />}>
+        <Button type="button" nativeButton={false} render={<Link href={`/proyek/${project.id}/tasks`} />}>
           Buka Task Board
         </Button>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" render={<Link href={`/proyek/${project.id}/gantt`} />}>
+        <Button type="button" variant="outline" nativeButton={false} render={<Link href={`/proyek/${project.id}/gantt`} />}>
           Buka Gantt Chart
         </Button>
-        <Button type="button" variant="outline" render={<Link href={`/proyek/${project.id}/kalender`} />}>
+        <Button type="button" variant="outline" nativeButton={false} render={<Link href={`/proyek/${project.id}/kalender`} />}>
           Buka Kalender
         </Button>
       </div>

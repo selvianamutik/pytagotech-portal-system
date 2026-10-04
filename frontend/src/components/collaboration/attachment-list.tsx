@@ -143,6 +143,7 @@ export function AttachmentList({ entityType, entityId }: AttachmentListProps) {
             variant="outline"
             size="sm"
             disabled={pending}
+            nativeButton={false}
             render={
               <label htmlFor={inputId} className="cursor-pointer" />
             }

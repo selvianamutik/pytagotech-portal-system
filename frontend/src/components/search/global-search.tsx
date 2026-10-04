@@ -114,6 +114,7 @@ export function GlobalSearch() {
                           type="button"
                           variant="ghost"
                           className="h-auto w-full justify-start py-2"
+                          nativeButton={false}
                           render={
                             <Link href={hit.href} onClick={() => setOpen(false)} />
                           }

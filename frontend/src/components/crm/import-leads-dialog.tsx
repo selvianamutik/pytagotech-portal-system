@@ -108,6 +108,7 @@ export function ImportLeadsDialog({
                 type="button"
                 variant="outline"
                 size="sm"
+                nativeButton={false}
                 render={<label htmlFor="lead-csv-file" className="cursor-pointer" />}
               >
                 <UploadIcon aria-hidden="true" /> Pilih file CSV

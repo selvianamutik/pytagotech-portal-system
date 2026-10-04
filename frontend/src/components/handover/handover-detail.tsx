@@ -92,7 +92,7 @@ export function HandoverDetail({ dealId }: { dealId: string }) {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6">
-      <Button variant="outline" size="sm" render={<Link href="/handover" />}>
+      <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/handover" />}>
         <ArrowLeftIcon aria-hidden="true" /> Semua handover
       </Button>
 

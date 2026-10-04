@@ -134,7 +134,7 @@ export function MaterialDetail({ materialId }: { materialId: string }) {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6">
-      <Button variant="outline" size="sm" render={<Link href="/sosmed/materi" />}>
+      <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/sosmed/materi" />}>
         <ArrowLeftIcon aria-hidden="true" /> Database materi
       </Button>
 

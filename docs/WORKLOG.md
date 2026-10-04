@@ -873,3 +873,15 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (`/kalender` 200)
 - **Catatan/Masalah:** - (pemetaan: US-025)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 08:30 — Fix — Warning Base UI nativeButton (laporan browser)
+
+- **Branch:** fix/button-semantics
+- **Yang dilakukan:**
+  - Seluruh `Button render={<Link>/<label>}` (20 titik) diberi `nativeButton={false}` agar tidak merender semantik button palsu
+- **File berubah:** 15 file komponen + halaman (auth, collaboration, crm, handover, proyek, sosmed, search, demo)
+- **Verifikasi:** lint ✅ typecheck ✅ build ✅ browser ✅ (`/` 200; console perlu konfirmasi pemilik)
+- **Catatan/Masalah:** - (pemetaan: US-001)
+- **Langkah berikutnya:** Fase 2 — Skema Database

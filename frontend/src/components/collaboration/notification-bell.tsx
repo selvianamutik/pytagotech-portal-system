@@ -23,6 +23,7 @@ export function NotificationBell() {
     <Button
       variant="outline"
       size="icon"
+      nativeButton={false}
       aria-label={
         unreadCount > 0
           ? `Buka notifikasi (${unreadCount} belum dibaca)`
