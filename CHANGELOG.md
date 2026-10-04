@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Task Board kembali ke halaman asal (`?from=`) bila datang dari kalender
 - Semua halaman detail kembali ke halaman asal (`?from=` tervalidasi)
 - PIC pelaksana tampil di sel kalender kerja
+- Kartu Ubah proyek fixed di bawah layar saat mode edit
 - Perbaiki guard role yang macet di "Memeriksa akses" (guard kini memicu muat sesi)
 - Perbaiki warning Base UI: `nativeButton={false}` pada tombol bermuatan link/label
 

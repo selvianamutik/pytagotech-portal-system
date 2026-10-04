@@ -201,11 +201,11 @@ export function ProjectDetail({
       </div>
 
       {editing ? (
-        <Card>
+        <Card className="fixed inset-x-4 bottom-4 z-30 shadow-xl sm:inset-x-6 xl:left-[19rem]">
           <CardHeader className="border-b">
             <CardTitle className="text-base">Ubah proyek</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-h-[70vh] overflow-y-auto">
             <form onSubmit={handleSave} className="grid gap-4 sm:grid-cols-2">
               <FormSelect
                 id="project-edit-status"
@@ -264,6 +264,7 @@ export function ProjectDetail({
           </CardContent>
         </Card>
       ) : null}
+      {editing ? <div aria-hidden="true" className="h-80" /> : null}
     </main>
   );
 }
