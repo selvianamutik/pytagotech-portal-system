@@ -820,3 +820,16 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ (199/199) build ✅ browser ✅ (`/proyek` 200)
 - **Catatan/Masalah:** - (pemetaan: US-019, US-020)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 06:30 — Fix — Menu aktif ganda + reset filter dashboard (laporan pemilik)
+
+- **Branch:** fix/dashboard-produksi
+- **Yang dilakukan:**
+  - Sidebar: hanya tautan paling spesifik yang aktif (`/proyek/dashboard` tidak lagi ikut mengaktifkan `/proyek`)
+  - Dashboard produksi: tombol "Reset filter" muncul saat ada filter aktif
+- **File berubah:** components/layout/portal-sidebar, components/proyek/production-dashboard
+- **Verifikasi:** lint ✅ typecheck ✅ build ✅ browser ✅ (1 menu aktif per halaman)
+- **Catatan/Masalah:** - (pemetaan: US-020, US-026)
+- **Langkah berikutnya:** Fase 2 — Skema Database

@@ -42,6 +42,23 @@ const moduleIcons: Record<PortalModule, ComponentType<{ className?: string }>> =
 export function PortalSidebar({ navigation }: { navigation: NavigationItem[] }) {
   const pathname = usePathname();
 
+  function isMatch(href: string): boolean {
+    if (href === "/") {
+      return pathname === "/";
+    }
+    if (href.startsWith("#")) {
+      return false;
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
+  // Hanya tautan paling spesifik yang ditandai aktif (mis. /proyek/dashboard
+  // tidak ikut mengaktifkan /proyek).
+  const activeHref = navigation
+    .map((item) => item.href)
+    .filter((href) => isMatch(href))
+    .sort((a, b) => b.length - a.length)[0];
+
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-72 border-r bg-sidebar xl:flex xl:flex-col">
       <div className="flex h-16 items-center gap-3 border-b px-5">
@@ -67,11 +84,7 @@ export function PortalSidebar({ navigation }: { navigation: NavigationItem[] }) 
               </div>
               <div className="space-y-1">
                 {items.map((item) => {
-                  const active =
-                    item.href === "/"
-                      ? pathname === "/"
-                      : pathname === item.href || pathname.startsWith(`${item.href}/`);
-                  return (
+                  const active = item.href === activeHref;                  return (
                     <Link
                       key={item.href}
                       href={item.href}
