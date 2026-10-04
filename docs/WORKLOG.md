@@ -781,3 +781,15 @@
 - **Acceptance Criteria:** 4/4 — pencarian ✅ Tugas saya ✅ hak akses (paritas signature RLS) ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-31 tetap TODO sampai backend. Seluruh 39 US Frontend DONE.
 - **Langkah berikutnya:** Sweep verifikasi akhir + Gate 1 (Frontend Selesai)
+
+---
+
+## 2026-10-05 04:30 — Koreksi atribusi AGENT_RULES.md
+
+- **Yang terjadi:** Revisi `AGENT_RULES.md` oleh pemilik (alur 4 fase) masih berupa perubahan
+  working-tree yang belum di-commit saat sesi penyesuaian berjalan, sehingga ikut
+  ter-commit dalam `e37e818` (docs: sesuaikan repo dengan alur 4 fase) atas nama agent.
+- **Koreksi:** Isi revisi benar milik pemilik dan tetap dipertahankan; agent tidak mengubah
+  isi aturan — hanya penyesuaian repo (PROGRESS, DEPLOYMENT, DECISIONS, scaffold DATABASE).
+  Dicatat di sini sesuai kewajiban lapor pelanggaran proses.
+- **Langkah berikutnya:** Fase 2 — Skema Database
