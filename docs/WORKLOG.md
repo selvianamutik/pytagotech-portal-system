@@ -949,3 +949,15 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (`/kalender` 200)
 - **Catatan/Masalah:** - (pemetaan: US-025)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 11:30 — Fix — Kartu Ubah proyek fixed bawah layar (permintaan pemilik)
+
+- **Branch:** fix/ubah-proyek-fixed
+- **Yang dilakukan:**
+  - Kartu "Ubah proyek" mode edit menjadi fixed di bawah viewport (`xl` menghindar sidebar) + konten aman scroll + spacer bawah
+- **File berubah:** components/proyek/project-detail
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (detail 200; posisi fixed perlu cek visual pemilik)
+- **Catatan/Masalah:** - (pemetaan: US-020)
+- **Langkah berikutnya:** Fase 2 — Skema Database
