@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -187,6 +188,7 @@ export function MaterialManager() {
                 <TableHead>Status</TableHead>
                 <TableHead>Jadwal</TableHead>
                 <TableHead>Tim</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -211,6 +213,16 @@ export function MaterialManager() {
                     {[material.copywriter && `CW: ${material.copywriter}`, material.designer && `GD: ${material.designer}`, material.videoEditor && `VE: ${material.videoEditor}`]
                       .filter(Boolean)
                       .join(" · ") || "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      render={<Link href={`/sosmed/materi/${material.id}`} />}
+                    >
+                      Buka
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

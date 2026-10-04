@@ -516,3 +516,19 @@
 - **Acceptance Criteria:** 4/4 — materi induk ✅ penugasan ✅ dari ide ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-029 (Quality gate)
+
+---
+
+## 2026-10-04 20:00 — US-029 — Quality gate (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-029-quality-gate
+- **Commit:** 10b1121 — feat(frontend): quality gate pra-rilis US-029
+- **Yang dilakukan:**
+  - `services/quality-gate.ts`: checklist 5 item + gerbang jadwal/rilis + pengecualian Admin beralasan
+  - Halaman detail `/sosmed/materi/[id]` (gate, jadwal, rilis); tabel materi menaut ke detail
+- **File berubah:** services/quality-gate(.test), components/sosmed/material-detail, app/sosmed/materi/[id], components/sosmed/material-manager, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (160/160) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 3/3 — checklist ✅ gerbang jadwal/rilis ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** -
+- **Langkah berikutnya:** US-030 (Approval & revisi)
