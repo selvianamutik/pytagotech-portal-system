@@ -628,3 +628,18 @@
 - **Acceptance Criteria:** 5/5 — 7 metrik ✅ ER + rumus ✅ snapshot ✅ dedup + kunci ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** FR-25 tetap TODO sampai backend.
 - **Langkah berikutnya:** US-036 (Pertumbuhan akun)
+
+---
+
+## 2026-10-04 23:30 — US-036 — Pertumbuhan akun (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-036-pertumbuhan
+- **Commit:** 31c6dc8 — feat(frontend): pertumbuhan akun US-036
+- **Yang dilakukan:**
+  - Net Growth otomatis + CRUD bulanan per platform (unik) + grafik tren CSS + halaman `/sosmed/pertumbuhan` + nav
+- **File berubah:** types/growth, services/growth(.test), components/sosmed/growth-manager, app/sosmed/pertumbuhan, mocks/dashboard, docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (182/182) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 4/4 — input ✅ net growth ✅ grafik ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** -
+- **Langkah berikutnya:** US-037 (Community & SLA)

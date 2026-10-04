@@ -436,6 +436,18 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Pertumbuhan Akun
+
+> **Status:** Draft Fase 1 (US-036) — `services/growth.ts`.
+> Halaman `/sosmed/pertumbuhan`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| Net Growth otomatis | `(Masuk − Unfollows) ÷ Awal × 100%` (tooltip + grafik) |
+| `recordGrowth()` | Per platform per bulan (unik); grafik tren CSS |
+
+---
+
 ## Modul: Community & Inquiry
 
 > _Akan didokumentasikan saat US-037 dimulai_
