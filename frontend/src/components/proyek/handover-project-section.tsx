@@ -29,6 +29,11 @@ export function HandoverProjectSection({
   const [dialogOpen, setDialogOpen] = useState(false);
   const manageable = canManageProjects(user);
 
+  // Seluruh seksi proyek disembunyikan untuk non-PM/Admin (permintaan pemilik).
+  if (!manageable) {
+    return null;
+  }
+
   if (project) {
     return (
       <Card>
@@ -57,19 +62,6 @@ export function HandoverProjectSection({
           <CardTitle className="text-base">Proyek</CardTitle>
           <CardDescription>
             Tombol “Buat Proyek” muncul setelah handover Dikonfirmasi Produksi.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
-  if (!manageable) {
-    return (
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle className="text-base">Proyek</CardTitle>
-          <CardDescription>
-            Hanya PM dan Admin yang dapat membuat proyek dari handover ini.
           </CardDescription>
         </CardHeader>
       </Card>
