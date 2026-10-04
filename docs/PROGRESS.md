@@ -64,7 +64,7 @@
 
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
-| US-027 | Content Planner | Frontend | TODO | 0/5 | - |
+| US-027 | Content Planner | Frontend | DONE | 5/5 ✅ | dee11fe |
 | US-028 | Database Produksi Konten | Frontend | TODO | 0/4 | - |
 | US-029 | Quality gate pra-rilis | Frontend | TODO | 0/3 | - |
 | US-030 | Alur approval & riwayat revisi | Frontend | TODO | 0/5 | - |
