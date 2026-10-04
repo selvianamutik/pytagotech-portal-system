@@ -4,6 +4,7 @@ import {
   addTaskSummary,
   deleteTaskSummary,
   effectiveTaskPercent,
+  listAllTaskSummaries,
   listTaskSummaries,
   moveTaskSummaryStatus,
   resetMockTasks,
@@ -72,5 +73,15 @@ describe("effectiveTaskPercent", () => {
     // C = 100 (dari G), P = 100.
     const { data } = await listTaskSummaries("PRJ-001");
     expect(effectiveTaskPercent(parent.data!, data ?? [])).toBe(100);
+  });
+});
+
+describe("listAllTaskSummaries", () => {
+  it("menggabungkan task lintas proyek", async () => {
+    await addTaskSummary({ projectId: "PRJ-001", title: "A" });
+    await addTaskSummary({ projectId: "PRJ-002", title: "B" });
+
+    const { data } = await listAllTaskSummaries();
+    expect(data?.map((task) => task.projectId).sort()).toEqual(["PRJ-001", "PRJ-002"]);
   });
 });

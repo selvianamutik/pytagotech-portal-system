@@ -20,6 +20,7 @@ export const dashboardSnapshot: DashboardSnapshot = {
     { label: "Deal Handover", module: "Klien & Handover", href: "/handover", badge: 7, roles: ["Sales / Marketing", "Project Manager"] },
     { label: "Master Klien", module: "Klien & Handover", href: "/klien", roles: ["Sales / Marketing", "Project Manager"] },
     { label: "Proyek", module: "Proyek", href: "/proyek", roles: ["Project Manager", "Developer", "Executive / Leader"] },
+    { label: "Kalender Kerja", module: "Proyek", href: "/kalender", roles: ["Project Manager", "Developer", "Executive / Leader"] },
     { label: "Template Task", module: "Pengaturan", href: "/pengaturan/template-task", roles: ["Super Admin"] },
     { label: "Developer", module: "Pengaturan", href: "/pengaturan/developer", roles: ["Super Admin"] },
     { label: "Task Board", module: "Proyek", href: "#proyek", badge: 18, roles: ["Project Manager", "Developer"] },
