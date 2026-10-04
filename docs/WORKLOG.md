@@ -847,3 +847,16 @@
 - **Verifikasi:** lint ✅ typecheck ✅ build ✅ browser ✅ (KPI loading + nav tunggal)
 - **Catatan/Masalah:** - (pemetaan: US-020, US-026)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 07:30 — Kalender proyek + master developer (permintaan pemilik)
+
+- **Branch:** feature/proyek-kalender-developer
+- **Yang dilakukan:**
+  - Kalender proyek per proyek (bulan/minggu, task + fitur, klik, seret jadwal ulang) + halaman `/proyek/[id]/kalender` + tombol di detail
+  - Master data developer (nama + internal/external, bibit termasuk freelance & magang) + halaman `/pengaturan/developer` (Admin) + dropdown assignee di task board & backlog fitur
+- **File berubah:** components/proyek (project-calendar, developer-manager, assignee-select, task-board, feature-backlog, detail), app kalender + developer, types/mocks/services developers(.test), mocks/dashboard, docs
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (201/201) build ✅ browser ✅ (2 halaman 200)
+- **Catatan/Masalah:** - (pemetaan: US-025/022, US-005/FR-3)
+- **Langkah berikutnya:** Fase 2 — Skema Database

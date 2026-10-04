@@ -297,6 +297,7 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 | `getProjectProgress(projectId)` | Rata-rata task atas yang aktif |
 | `setTaskSummaryActive()` / `deleteTaskSummary()` | PM nonaktifkan/hapus hasil generate |
 | Task penuh (US-022, FR-17) | `addTaskSummary` (semua field) / `updateTaskSummary` / `moveTaskSummaryStatus` (Kanban) / `effectiveTaskPercent` (induk dari sub-task); komentar + lampiran via US-006 (`entityType: "task"`) |
+| Master developer (permintaan pemilik) | CRUD nama + internal/external; dropdown assignee task & fitur (`/pengaturan/developer`, Admin) |
 
 ---
 
@@ -322,6 +323,7 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 |--------|---------------|
 | `moveTaskDates(taskId, newStart)` (FR-19) | Geser rentang + kaskade successor FS yang tertabrak |
 | `addDependency()` / `removeDependency()` | FS saja; tolak siklus/duplikat/refleksif |
+| Kalender proyek (permintaan pemilik) | Bulan/minggu task + fitur per proyek; klik; seret (task via move, fitur via override) |
 
 ---
 
