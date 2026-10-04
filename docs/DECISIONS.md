@@ -126,3 +126,15 @@
 - **Alternatif yang dipertimbangkan:** CSV saja (tidak memenuhi "Excel"), print-to-PDF browser (tidak memenuhi "ekspor PDF" sebagai file).
 - **Alasan:** Dua AC terpenuhi langsung dengan API kecil; builder terisolasi di `services/production-export.ts` sehingga mudah diganti.
 - **Konsekuensi:** Ukuran bundle bertambah; audit `pnpm audit` dicatat di Fase 3.
+
+---
+
+## DEC-010: Strategi Primary Key — UUID + Display ID Trigger
+
+- **Tanggal:** 2026-10-05
+- **Terkait:** Semua US/FR (Fase 2)
+- **Konteks:** AGENT_RULES mewajibkan satu strategi PK konsisten (Fase 2 Langkah 3).
+- **Keputusan:** PK semua tabel = UUID v4 (`gen_random_uuid()`); ID ramah-user (`LEAD-xxx`, `MAT-xxxx`, …) sebagai kolom `display_id TEXT UNIQUE` yang diisi trigger + sequence (meneruskan DEC-006).
+- **Alternatif yang dipertimbangkan:** BIGINT auto-increment sebagai PK (lebih hemat, tapi bocor urutan dan tidak cocok untuk RLS multi-tenant di masa depan); display ID sebagai PK (rapuh terhadap perubahan format).
+- **Alasan:** UUID aman untuk relasi terdistribusi dan tidak menebak; display ID tetap pendek untuk UI sesuai PRD.
+- **Konsekuensi:** Semua FK bertipe UUID; migration Fase 3 wajib memakai tipe ini.

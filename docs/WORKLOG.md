@@ -998,3 +998,18 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (`/proyek/board` 200)
 - **Catatan/Masalah:** - (pemetaan: US-022)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 13:00 — Fase 2 — Draf skema database selesai (menunggu review)
+
+- **Branch:** db/skema-database-awal (BELUM merge — menunggu APPROVED per Gate 2)
+- **Yang dilakukan:**
+  - `docs/DATABASE.md` lengkap: 37 tabel + ERD Mermaid + kamus + matriks relasi (ON DELETE/UPDATE) + index + keterlacakan + walkthrough 44 US + seed
+  - Normalisasi 3NF (junction: user_roles, task_dependencies, idea_platforms, material_assets); polimorfik komentar/lampiran tanpa FK (terdokumentasi)
+  - Partial unique index untuk dedup KPI Final; trigger display ID (DEC-006/010)
+  - DEC-010: PK UUID + display ID trigger
+- **File berubah:** docs/DATABASE.md, docs/DECISIONS.md, docs/PROGRESS.md, CHANGELOG.md, docs/WORKLOG.md
+- **Verifikasi:** review dokumen (tidak ada kode; lint/test tak terdampak)
+- **Catatan/Masalah:** BUTUH PERSETUJUAN TERTULIS pemilik (`APPROVED`) sebelum merge + tag `v0.2.0-database` + Fase 3
+- **Langkah berikutnya:** Review pemilik atas DATABASE.md

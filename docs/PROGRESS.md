@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-04  
-> **Fase saat ini:** Fase 1 — Frontend SELESAI (Gate 1 DONE, tag `v0.1.0-frontend`); berikutnya Fase 2 — Skema Database
+> **Fase saat ini:** Fase 2 — Skema Database (`docs/DATABASE.md` DRAFT di branch `db/skema-database-awal`, menunggu review pemilik)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
