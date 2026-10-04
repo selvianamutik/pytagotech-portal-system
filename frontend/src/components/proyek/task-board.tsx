@@ -26,6 +26,7 @@ import {
 import { AttachmentList } from "@/components/collaboration/attachment-list";
 import { CommentSection } from "@/components/collaboration/comment-section";
 import { FormSelect } from "@/components/crm/lead-table";
+import { AssigneeSelect } from "@/components/proyek/assignee-select";
 import {
   addTaskSummary,
   deleteTaskSummary,
@@ -364,17 +365,12 @@ export function TaskBoard({ projectId }: { projectId: string }) {
               </label>
               <Input id="task-title" value={title} onChange={(event) => setTitle(event.target.value)} required />
             </div>
-            <div className="space-y-2">
-              <label htmlFor="task-assignee" className="text-sm font-medium">
-                Penanggung jawab
-              </label>
-              <Input
-                id="task-assignee"
-                placeholder="Nama developer"
-                value={assignee}
-                onChange={(event) => setAssignee(event.target.value)}
-              />
-            </div>
+            <AssigneeSelect
+              id="task-assignee"
+              label="Penanggung jawab"
+              value={assignee}
+              onChange={setAssignee}
+            />
             <FormSelect
               id="task-status"
               label="Status"
