@@ -8,6 +8,7 @@
 -- =====================================================================
 
 CREATE EXTENSION IF NOT EXISTS citext;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- ---------- Fungsi utilitas ----------
 
@@ -20,16 +21,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Display ID berpola: prefix + sequence per tabel, padding minimum 3 digit
+-- Display ID berpola: prefix + sequence per tabel, padding LAR minimum
 -- (tumbuh tanpa batas atas: LPAD hanya menjamin lebar minimum).
+-- MAT-xxxx dan PUB-xxxx memakai lebar 4 sesuai PRD; lainnya 3.
 CREATE OR REPLACE FUNCTION set_display_id()
 RETURNS trigger AS $$
 DECLARE
   seq_name text := TG_ARGV[0];
   prefix text := TG_ARGV[1];
+  min_width integer := TG_ARGV[2]::integer;
 BEGIN
   IF NEW.display_id IS NULL OR NEW.display_id = '' THEN
-    NEW.display_id := prefix || LPAD(nextval(seq_name)::text, 3, '0');
+    NEW.display_id := prefix || LPAD(nextval(seq_name)::text, min_width, '0');
   END IF;
   RETURN NEW;
 END;
@@ -110,6 +113,7 @@ CREATE TABLE leads (
   FOREIGN KEY (status_category, status) REFERENCES master_options (category, value)
 );
 CREATE INDEX leads_status_idx ON leads (status);
+CREATE INDEX leads_company_trgm_idx ON leads USING gin (company_name gin_trgm_ops);
 CREATE INDEX leads_pic_idx ON leads (pic_id);
 CREATE INDEX leads_industry_idx ON leads (industry);
 CREATE INDEX leads_contact_date_idx ON leads (contact_date);
@@ -158,7 +162,7 @@ CREATE TABLE clients (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX clients_company_idx ON clients (company_name);
+CREATE INDEX clients_company_idx ON clients USING gin (company_name gin_trgm_ops);
 
 CREATE TABLE deals (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -178,10 +182,15 @@ CREATE TABLE deals (
   confirmed_by uuid REFERENCES team_members (id) ON DELETE SET NULL ON UPDATE CASCADE,
   confirmed_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  -- Pasangan (id, client_id) untuk FK komposit projects(handover_id, client_id):
+  -- menjamin klien proyek SELALU sama dengan klien handover-nya.
+  UNIQUE (id, client_id)
 );
 CREATE INDEX deals_status_idx ON deals (status);
 CREATE INDEX deals_client_idx ON deals (client_id);
+CREATE INDEX deals_created_by_idx ON deals (created_by);
+CREATE INDEX deals_confirmed_by_idx ON deals (confirmed_by);
 
 CREATE TABLE deal_features (
   deal_id uuid NOT NULL REFERENCES deals (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -247,11 +256,14 @@ CREATE TABLE projects (
   value_idr bigint NOT NULL CHECK (value_idr > 0),
   status text NOT NULL DEFAULT 'Planning'
     CHECK (status IN ('Planning', 'Active', 'On Hold', 'Completed', 'Cancelled')),
-  handover_id uuid NOT NULL UNIQUE REFERENCES deals (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  handover_id uuid NOT NULL UNIQUE,
   archived_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT project_dates CHECK (start_date <= target_date)
+  CONSTRAINT project_dates CHECK (start_date <= target_date),
+  -- FK komposit: klien proyek DIJAMIN sama dengan klien handover-nya.
+  FOREIGN KEY (handover_id, client_id) REFERENCES deals (id, client_id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
 );
 CREATE INDEX projects_status_idx ON projects (status);
 CREATE INDEX projects_pm_idx ON projects (pm_id);
@@ -282,13 +294,14 @@ CREATE TABLE tasks (
   link text,
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT tasks_dates CHECK (start_date IS NULL OR target_date IS NULL OR start_date <= target_date)
 );
 CREATE INDEX tasks_project_idx ON tasks (project_id);
 CREATE INDEX tasks_status_idx ON tasks (status);
 CREATE INDEX tasks_parent_idx ON tasks (parent_id);
 CREATE INDEX tasks_assignee_idx ON tasks (assignee_id);
-CREATE INDEX tasks_title_idx ON tasks (title);
+CREATE INDEX tasks_title_idx ON tasks USING gin (title gin_trgm_ops);
 
 CREATE TABLE task_dependencies (
   predecessor_id uuid NOT NULL REFERENCES tasks (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -319,7 +332,11 @@ CREATE TABLE features (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   FOREIGN KEY (category_key, category) REFERENCES master_options (category, value),
-  FOREIGN KEY (priority_key, priority) REFERENCES master_options (category, value)
+  FOREIGN KEY (priority_key, priority) REFERENCES master_options (category, value),
+  CONSTRAINT feature_override_reason CHECK (
+    (override_start IS NULL AND override_end IS NULL)
+    OR (override_reason IS NOT NULL AND char_length(override_reason) > 0)
+  )
 );
 CREATE INDEX features_project_idx ON features (project_id);
 CREATE INDEX features_developer_idx ON features (developer_id);
@@ -392,11 +409,17 @@ CREATE TABLE content_materials (
   archived_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  FOREIGN KEY (brand_key, brand) REFERENCES master_options (category, value)
+  FOREIGN KEY (brand_key, brand) REFERENCES master_options (category, value),
+  CONSTRAINT gate_override_pair CHECK (
+    (gate_override_by IS NULL) = (gate_override_reason IS NULL)
+  )
 );
 CREATE INDEX content_materials_idea_idx ON content_materials (idea_id);
 CREATE INDEX content_materials_brand_idx ON content_materials (brand);
 CREATE INDEX content_materials_status_idx ON content_materials (status);
+CREATE INDEX content_materials_copywriter_idx ON content_materials (copywriter_id);
+CREATE INDEX content_materials_designer_idx ON content_materials (designer_id);
+CREATE INDEX content_materials_video_editor_idx ON content_materials (video_editor_id);
 
 CREATE TABLE material_platforms (
   material_id uuid NOT NULL REFERENCES content_materials (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -417,7 +440,8 @@ CREATE TABLE content_revisions (
   feedback text,
   evidence_link text,
   created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (material_id, version)
+  UNIQUE (material_id, version),
+  CONSTRAINT revision_feedback CHECK (decision <> 'Ditolak' OR (feedback IS NOT NULL AND char_length(feedback) > 0))
 );
 
 CREATE TABLE publications (
@@ -449,8 +473,7 @@ CREATE TABLE post_metrics (
   saves bigint NOT NULL DEFAULT 0 CHECK (saves >= 0),
   snapshot text NOT NULL DEFAULT 'Monitoring' CHECK (snapshot IN ('Monitoring', 'Final')),
   recorded_by uuid REFERENCES team_members (id) ON DELETE SET NULL ON UPDATE CASCADE,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (publication_id, snapshot)
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 -- Dedup KPI Final: hanya satu Final per publikasi (Monitoring boleh banyak).
 CREATE UNIQUE INDEX post_metrics_final_uniq
@@ -478,7 +501,7 @@ CREATE TABLE community_interactions (
   channel text NOT NULL CHECK (channel IN ('komentar', 'DM')),
   platform text NOT NULL,
   platform_key text GENERATED ALWAYS AS ('platform') STORED,
-  brand text NOT NULL DEFAULT 'Pytagotech',
+  brand text NOT NULL,
   brand_key text GENERATED ALWAYS AS ('brand') STORED,
   type text NOT NULL
     CHECK (type IN ('Konsultasi Teknis', 'Pertanyaan Layanan', 'Komplain', 'Spam')),
@@ -487,9 +510,11 @@ CREATE TABLE community_interactions (
   handler_id uuid REFERENCES team_members (id) ON DELETE SET NULL ON UPDATE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now(),
   FOREIGN KEY (platform_key, platform) REFERENCES master_options (category, value),
-  FOREIGN KEY (brand_key, brand) REFERENCES master_options (category, value)
+  FOREIGN KEY (brand_key, brand) REFERENCES master_options (category, value),
+  CONSTRAINT replied_after_received CHECK (replied_at IS NULL OR replied_at >= received_at)
 );
 CREATE INDEX community_received_idx ON community_interactions (received_at);
+CREATE INDEX community_handler_idx ON community_interactions (handler_id);
 
 CREATE TABLE inquiries (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -506,10 +531,11 @@ CREATE TABLE inquiries (
   handler_id uuid REFERENCES team_members (id) ON DELETE SET NULL ON UPDATE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now(),
   FOREIGN KEY (platform_key, platform) REFERENCES master_options (category, value),
-  FOREIGN KEY (brand_key, brand) REFERENCES master_options (category, value)
+  FOREIGN KEY (brand_key, brand) REFERENCES master_options (category, value),
+  CONSTRAINT routed_after_received CHECK (routed_at IS NULL OR routed_at >= received_at)
 );
 CREATE INDEX inquiries_status_idx ON inquiries (status);
-CREATE INDEX inquiries_lead_idx ON inquiries (lead_id);
+CREATE INDEX inquiries_handler_idx ON inquiries (handler_id);
 
 CREATE TABLE assets (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -536,7 +562,8 @@ CREATE TABLE strategy_evaluations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   display_id text NOT NULL UNIQUE,
   category text NOT NULL CHECK (category IN ('Keep', 'Improve', 'Stop', 'Test')),
-  pillar text NOT NULL CHECK (char_length(pillar) > 0),
+  pillar text NOT NULL,
+  pillar_key text GENERATED ALWAYS AS ('pillar') STORED,
   format text,
   brand text NOT NULL,
   brand_key text GENERATED ALWAYS AS ('brand') STORED,
@@ -549,7 +576,9 @@ CREATE TABLE strategy_evaluations (
   business_impact text,
   result text,
   created_at timestamptz NOT NULL DEFAULT now(),
-  FOREIGN KEY (brand_key, brand) REFERENCES master_options (category, value)
+  FOREIGN KEY (brand_key, brand) REFERENCES master_options (category, value),
+  FOREIGN KEY (pillar_key, pillar) REFERENCES master_options (category, value),
+  CONSTRAINT test_hypothesis CHECK (category <> 'Test' OR (hypothesis IS NOT NULL AND char_length(hypothesis) > 0))
 );
 
 -- ---------- Lintas modul ----------
@@ -557,17 +586,21 @@ CREATE TABLE strategy_evaluations (
 CREATE TABLE comments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_type text NOT NULL CHECK (entity_type IN ('lead', 'task', 'fitur', 'konten', 'deal')),
-  entity_id text NOT NULL,
+  -- entity_id = UUID entitas tujuan (lead→leads, task→tasks, fitur→features,
+  -- konten→content_materials, deal→deals); tanpa FK karena polimorfik.
+  entity_id uuid NOT NULL,
   author_id uuid REFERENCES team_members (id) ON DELETE SET NULL ON UPDATE CASCADE,
   body varchar(2000) NOT NULL CHECK (char_length(body) > 0 AND char_length(body) <= 2000),
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX comments_entity_idx ON comments (entity_type, entity_id);
+CREATE INDEX comments_author_idx ON comments (author_id);
 
 CREATE TABLE attachments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_type text NOT NULL CHECK (entity_type IN ('lead', 'task', 'fitur', 'konten', 'deal')),
-  entity_id text NOT NULL,
+  -- Sama seperti comments: UUID entitas tujuan, tanpa FK (polimorfik).
+  entity_id uuid NOT NULL,
   file_name text NOT NULL,
   file_size_bytes bigint NOT NULL CHECK (file_size_bytes > 0),
   mime_type text NOT NULL,
@@ -598,13 +631,15 @@ CREATE TABLE audit_logs (
   action text NOT NULL,
   entity_type text NOT NULL,
   entity_id text NOT NULL,
-  old_value text,
-  new_value text,
+  old_value jsonb,
+  new_value jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX audit_logs_entity_idx ON audit_logs (entity_type, entity_id);
 CREATE INDEX audit_logs_created_idx ON audit_logs (created_at);
 -- Append-only ditegakkan di Fase 3: REVOKE UPDATE, DELETE ON audit_logs FROM authenticated.
+-- jsonb (bukan text) agar trigger audit generik mudah ditulis dan bisa di-query
+-- (mis. new_value->>'status').
 
 CREATE TABLE settings (
   key text PRIMARY KEY,
@@ -629,31 +664,31 @@ CREATE TABLE raci_matrix (
 -- ---------- Trigger display_id ----------
 
 CREATE TRIGGER trg_leads_display BEFORE INSERT ON leads
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_lead_no', 'LEAD-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_lead_no', 'LEAD-', '3');
 CREATE TRIGGER trg_clients_display BEFORE INSERT ON clients
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_client_no', 'KLI-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_client_no', 'KLI-', '3');
 CREATE TRIGGER trg_deals_display BEFORE INSERT ON deals
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_deal_no', 'HDV-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_deal_no', 'HDV-', '3');
 CREATE TRIGGER trg_cr_display BEFORE INSERT ON change_requests
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_cr_no', 'CR-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_cr_no', 'CR-', '3');
 CREATE TRIGGER trg_projects_display BEFORE INSERT ON projects
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_project_no', 'PRJ-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_project_no', 'PRJ-', '3');
 CREATE TRIGGER trg_tasks_display BEFORE INSERT ON tasks
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_task_no', 'TSK-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_task_no', 'TSK-', '3');
 CREATE TRIGGER trg_features_display BEFORE INSERT ON features
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_feature_no', 'FIT-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_feature_no', 'FIT-', '3');
 CREATE TRIGGER trg_ideas_display BEFORE INSERT ON content_ideas
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_idea_no', 'IDE-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_idea_no', 'IDE-', '3');
 CREATE TRIGGER trg_materials_display BEFORE INSERT ON content_materials
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_material_no', 'MAT-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_material_no', 'MAT-', '4');
 CREATE TRIGGER trg_pubs_display BEFORE INSERT ON publications
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_pub_no', 'PUB-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_pub_no', 'PUB-', '4');
 CREATE TRIGGER trg_inquiries_display BEFORE INSERT ON inquiries
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_inquiry_no', 'INQ-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_inquiry_no', 'INQ-', '3');
 CREATE TRIGGER trg_assets_display BEFORE INSERT ON assets
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_asset_no', 'AST-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_asset_no', 'AST-', '3');
 CREATE TRIGGER trg_evaluations_display BEFORE INSERT ON strategy_evaluations
-  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_evaluation_no', 'EVL-');
+  FOR EACH ROW EXECUTE FUNCTION set_display_id('seq_evaluation_no', 'EVL-', '3');
 
 -- ---------- Trigger updated_at ----------
 
@@ -683,3 +718,50 @@ CREATE TRIGGER trg_assets_updated BEFORE UPDATE ON assets
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_guides_updated BEFORE UPDATE ON guides
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ---------- Row Level Security (deny-all; policies menyusul Fase 3/US-003) ----------
+-- Tanpa policy, akses via anon/authenticated key DITOLAK di semua tabel.
+
+ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE master_options ENABLE ROW LEVEL SECURITY;
+ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lead_interests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lead_status_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lead_activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deal_features ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deal_payment_terms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deal_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE change_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task_dependencies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE features ENABLE ROW LEVEL SECURITY;
+ALTER TABLE developer_capacity ENABLE ROW LEVEL SECURITY;
+ALTER TABLE holidays ENABLE ROW LEVEL SECURITY;
+ALTER TABLE content_ideas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE idea_platforms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE content_materials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE material_platforms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE content_revisions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE publications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE post_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE account_growth ENABLE ROW LEVEL SECURITY;
+ALTER TABLE community_interactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE material_assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE strategy_evaluations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attachments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE guides ENABLE ROW LEVEL SECURITY;
+ALTER TABLE raci_matrix ENABLE ROW LEVEL SECURITY;
+

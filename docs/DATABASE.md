@@ -5,13 +5,15 @@
 >
 > Sumber: PRD (US/FR) → kontrak `frontend/src/types/` + mock → draf `docs/API.md`.
 > Display ID (`LEAD-xxx`, `MAT-xxxx`, `PUB-xxxx`, …) = kolom `display_id TEXT UNIQUE NOT NULL`
-> yang diisi trigger + sequence via `LPAD(nextval(...)::text, 3, '0')` — padding **minimum**
-> 3 digit, tumbuh tanpa batas atas (tidak terbentur setelah 999). **Bukan** PK. Uang = `BIGINT` (IDR).
+> yang diisi trigger + sequence via `LPAD(nextval(...)::text, lebar, '0')` — padding **minimum**
+> (lebar 3, kecuali MAT/PUB = 4 sesuai PRD), tumbuh tanpa batas atas. **Bukan** PK. Uang = `BIGINT` (IDR).
 > Dropdown kelolaan Admin (US-005/FR-3) memakai FK ke `master_options` lewat kolom generated
 > (lihat §2.0); status alur sistem (deal, proyek, task, termin, CR, publikasi) tetap `TEXT + CHECK`
 > karena transisinya dikunci service, bukan opsi bebas. Enum lain yang Prestasi-sistem
 > (`employment`, `funnel`, `readiness`, dsb.) juga `TEXT + CHECK` dengan alasan yang sama.
 > `created_at`/`updated_at` di semua tabel utama (default `now()`; `updated_at` via trigger).
+> RLS aktif deny-all di semua tabel (`ENABLE ROW LEVEL SECURITY` tanpa policy);
+> policies menyusul Fase 3 (US-003).
 > Soft-archive (`archived_at`) **hanya** di `leads`, `projects`, `content_materials` (US-043).
 
 ---
@@ -43,7 +45,7 @@ erDiagram
     LEADS ||--o{ LEAD_ACTIVITIES : ""
     LEADS ||--o{ LEAD_STATUS_HISTORY : ""
     LEADS ||--o{ CLIENTS : "dikonversi"
-    LEADS ||--o| INQUIRIES : "dikonversi"
+    INQUIRIES ||--o| LEADS : "dikonversi"
     CLIENTS ||--o{ DEALS : "memiliki"
     CLIENTS ||--o{ PROJECTS : "memiliki"
     DEALS ||--|| PROJECTS : "menjadi"
@@ -531,10 +533,11 @@ erDiagram
 | projects.code | text | NO | - | UK (disalin dari deals) | FR-11 | US-019 |
 | projects.pm_id | uuid | NO | - | FK → team_members.id, RESTRICT | Satu PM (Q-001 A) | US-019 |
 | projects.status | text | NO | 'Planning' | CHECK 5 status | - | US-019 |
-| projects.handover_id | uuid | NO | - | UK + FK → deals.id, RESTRICT | 1:1; lindungi handover | US-019, FR-15 |
+| projects.handover_id | uuid | NO | - | UK + FK komposit (handover_id, client_id) → deals(id, client_id), RESTRICT | 1:1 + jamin klien sama; lindungi handover | US-019, FR-15 |
 | projects.archived_at | timestamptz | YES | - | - | Soft archive | US-043 |
 | task_templates.(name) | text | NO | - | UK | Seed menunggu Q-005 | US-021 |
 | tasks.status | text | NO | 'To Do' | CHECK 5 status | - | US-022 |
+| tasks.start_date / target_date | date | YES | - | CHECK mulai ≤ selesai (DB) | - | US-022 |
 | tasks.percent | integer | NO | 0 | CHECK 0–100 | Induk = rata-rata anak (service) | US-022, FR-17 |
 | tasks.parent_id | uuid | YES | - | FK → tasks.id (self), CASCADE | Sub-task; hapus induk hapus anak | US-022 |
 | tasks.assignee_id | uuid | YES | - | FK → team_members.id, SET NULL | Dari master (dulu teks bebas) | US-022 |
@@ -542,7 +545,7 @@ erDiagram
 | features.priority | text | NO | 'Medium' | FK master (`priority`) | - | US-023 |
 | features.category | text | NO | - | FK master (`feature_category`) | Kandidat US-005 | US-023 |
 | features.task_id | uuid | YES | - | FK → tasks.id, SET NULL | Hasil konversi fitur→task | US-023 |
-| features.scheduled_* / override_* | date/text | YES | - | override wajib beralasan bila diisi | US-024 | US-024, FR-18 |
+| features.scheduled_* / override_* | date/text | YES | - | CHECK override bertanggal wajib beralasan (DB) | US-024 | US-024, FR-18 |
 | features.developer_id | uuid | YES | - | FK → team_members.id, SET NULL | Dari master | US-023 |
 | developer_capacity.hours_per_day | integer | NO | 8 | CHECK 1–24 | - | US-024 |
 | holidays.day | date | NO | - | PK (UK) | Sabtu/Minggu implisit libur | US-024 |
@@ -563,37 +566,39 @@ erDiagram
 | content_materials.designer_id | uuid | YES | - | FK → team_members.id, SET NULL | - | US-028 |
 | content_materials.video_editor_id | uuid | YES | - | FK → team_members.id, SET NULL | - | US-028 |
 | content_materials.gate_* | boolean | NO | false | 5 kolom | Quality gate (US-029) | US-029 |
-| content_materials.gate_override_by | uuid | YES | - | FK → team_members.id, SET NULL | Admin pengecualian | US-029 |
+| content_materials.gate_override_by | uuid | YES | - | FK → team_members.id, SET NULL; CHECK berpasangan dengan reason (DB) | Admin pengecualian | US-029 |
 | content_materials.archived_at | timestamptz | YES | - | - | Soft archive | US-043 |
 | material_platforms.(material_id, platform) | - | NO | - | PK komposit; FK CASCADE; platform FK master | Target distribusi level materi (rekonsiliasi tanpa ide) | US-031 |
 | content_revisions.(material_id, version) | - | YES* | - | UK komposit; FK CASCADE | *id UUID PK + UK komposit; Rev 0,1… | US-030 |
-| content_revisions.feedback | text | YES | - | Wajib bila Ditolak (service) | - | US-030 |
+| content_revisions.feedback | text | YES | - | CHECK wajib bila Ditolak (DB) | - | US-030 |
 | publications.display_id | text | NO | trigger | UK, pola `PUB-xxxx` | - | US-031 |
 | publications.platform | text | NO | - | FK master (`platform`) | 1 platform = 1 PUB per materi | US-031 |
 | post_metrics.* | bigint | NO | 0 | CHECK ≥ 0 | 7 angka | US-035 |
 | post_metrics.snapshot | text | NO | 'Monitoring' | CHECK 2 nilai | Dedup Final via partial UK | US-035, FR-25 |
 | account_growth.(platform, brand, month) | - | NO | - | PK komposit (tanpa surrogate) | 1 baris/platform/brand/bulan; brand FK master | US-036 |
-| community_interactions.brand | text | NO | 'Pytagotech' | FK master (`brand`) | Satu platform punya akun per brand | US-037 |
-| community_interactions.replied_at | timestamptz | YES | - | ≥ received_at (service) | SLA 30 mnt dihitung (WIB) | US-037, FR-26 |
+| community_interactions.brand | text | NO | - | FK master (`brand`) | Satu platform punya akun per brand; tanpa default (wajib diisi eksplisit) | US-037 |
+| community_interactions.replied_at | timestamptz | YES | - | CHECK ≥ received_at (DB) | SLA 30 mnt dihitung (WIB) | US-037, FR-26 |
 | community_interactions.handler_id | uuid | YES | - | FK → team_members.id, SET NULL | - | US-037 |
 | inquiries.platform / .brand | text | NO | - | FK master | - | US-038 |
-| inquiries.routed_at | timestamptz | YES | - | ≥ received_at | SLA routing 15 mnt (WIB) | US-038, FR-26 |
+| inquiries.routed_at | timestamptz | YES | - | CHECK ≥ received_at (DB) | SLA routing 15 mnt (WIB) | US-038, FR-26 |
 | inquiries.lead_id | uuid | YES | - | UK + FK → leads.id, SET NULL | 1:1 hasil konversi (FR-28) | US-038 |
 | inquiries.handler_id | uuid | YES | - | FK → team_members.id, SET NULL | - | US-038 |
 | assets.license_expiry | date | YES | - | - | NULL = tanpa batas; warning 30 hari | US-034, FR-27 |
 | material_assets.(material_id, asset_id) | - | NO | - | PK komposit; FK CASCADE | Tautan aset (FR-27) | US-034 |
 | strategy_evaluations.brand | text | NO | - | FK master (`brand`) | - | US-040 |
-| strategy_evaluations.hypothesis | text | YES | - | Wajib bila Test (service) | FR-29 | US-040 |
+| strategy_evaluations.pillar | text | NO | - | FK master (`pillar`); `format` tetap teks bebas (tak ada daftar kanonis di PRD) | Join/filter selaras ide | US-040 |
+| strategy_evaluations.hypothesis | text | YES | - | CHECK wajib bila Test (DB) | FR-29 | US-040 |
 
 ### 2.6 Lintas modul
 
 | Kolom | Tipe | Null | Default | Constraint | Keterangan | Ref PRD |
 |-------|------|------|---------|------------|------------|---------|
-| comments.(entity_type, entity_id) | text | NO | - | CHECK = 5 tipe kode (`lead,task,fitur,konten,deal`); **tanpa FK** (polimorfik) | Selaras `CollaborableEntityType` frontend | US-006, FR-4 |
+| comments.(entity_type, entity_id) | uuid (id) | NO | - | CHECK = 5 tipe kode (`lead,task,fitur,konten,deal`); entity_id UUID **tanpa FK** (polimorfik); `konten` = content_materials | Selaras `CollaborableEntityType` frontend | US-006, FR-4 |
 | comments.body | varchar(2000) | NO | - | CHECK length | - | US-006 |
-| attachments.(entity_type, entity_id) | text | NO | - | CHECK 5 tipe; tanpa FK | Batas ukuran di service/env | US-006 |
+| attachments.(entity_type, entity_id) | uuid (id) | NO | - | CHECK 5 tipe; entity_id UUID tanpa FK | Batas ukuran di service/env; `konten` = content_materials | US-006 |
 | attachments.storage_path | text | NO | - | - | Supabase Storage privat | US-006 |
 | notifications.recipient_id | uuid | YES | - | FK → profiles.id, CASCADE | Inbox per user | US-006 |
+| audit_logs.old_value / new_value | jsonb | YES | - | Query-able (`new_value->>'status'`); trigger generik Fase 3 | US-004, FR-2 |
 | audit_logs.* | - | NO | - | Append-only (REVOKE UPDATE/DELETE) | Trigger DB di Fase 3 | US-004, FR-2 |
 | settings.key | text | NO | - | PK | target KPI/SLA/WA/nomor (FR-30, US-041) | US-041 |
 | settings.value | jsonb | NO | - | - | - | US-041 |
@@ -648,6 +653,8 @@ erDiagram
 | post_metrics.publication_id | publications.id | N:1 | Ya | CASCADE | CASCADE | - |
 | post_metrics.recorded_by | team_members.id | N:1 | Tidak | SET NULL | CASCADE | - |
 | community_interactions.handler_id | team_members.id | N:1 | Tidak | SET NULL | CASCADE | - |
+| inquiries.handler_id | team_members.id | N:1 | Tidak | SET NULL | CASCADE | - |
+| comments.author_id | team_members.id | N:1 | Tidak | SET NULL | CASCADE | - |
 | inquiries.lead_id | leads.id | 1:1 | Tidak | SET NULL | CASCADE | Hasil konversi |
 | inquiries.handler_id | team_members.id | N:1 | Tidak | SET NULL | CASCADE | - |
 | material_assets.material_id | content_materials.id | N:1 | Ya | CASCADE | CASCADE | Junction |
@@ -674,13 +681,15 @@ erDiagram
 | leads | industry | Filter industri | US-008 |
 | leads | contact_date | Rentang tanggal + sort | US-008 |
 | leads | whatsapp | Deteksi duplikat | FR-7 |
-| leads | company_name | Pencarian teks (trigram bila perlu) | US-008 |
+| leads | company_name | GIN trigram (`gin_trgm_ops`) untuk `ILIKE '%kata%'` | US-008 |
 | leads | next_follow_up | Overdue follow-up | US-012 |
 | lead_status_history | (lead_id, changed_at) | Komposit: tren status per periode | FR-6 |
 | lead_activities | lead_id | FK + timeline | US-012 |
-| clients | company_name | Pencarian | US-014 |
+| clients | company_name | GIN trigram (`gin_trgm_ops`) | US-014 |
 | deals | status | Filter/alur | US-017 |
 | deals | client_id | FK + daftar per klien | US-014 |
+| deals | created_by | FK + notifikasi Sales | US-017 |
+| deals | confirmed_by | FK + audit konfirmasi | US-017 |
 | deal_payment_terms | deal_id | FK | US-016 |
 | change_requests | deal_id | FK | US-018 |
 | projects | status | Filter | US-020 |
@@ -690,7 +699,7 @@ erDiagram
 | tasks | project_id | FK + board per proyek | US-022 |
 | tasks | status | Kanban + filter | US-022 |
 | tasks | parent_id | Sub-task | US-022 |
-| tasks | title | Pencarian global | US-044 |
+| tasks | title | GIN trigram (`gin_trgm_ops`) | US-044 |
 | tasks | assignee_id | FK + "Tugas saya" | US-044 |
 | features | project_id | FK + backlog | US-023 |
 | features | developer_id | FK | US-023 |
@@ -702,6 +711,10 @@ erDiagram
 | content_materials | idea_id | FK | US-028 |
 | content_materials | brand | Filter | US-028 |
 | content_materials | status | Gerbang approval | US-030 |
+| content_materials | copywriter_id | FK + Tugas assign | US-028 |
+| content_materials | designer_id | FK | US-028 |
+| content_materials | video_editor_id | FK | US-028 |
+| content_materials | gate_override_by | FK + jejak Admin | US-029 |
 | material_platforms | material_id | FK | US-031 |
 | publications | material_id | FK | US-031 |
 | publications | schedule_date | Kalender | US-032 |
@@ -710,9 +723,12 @@ erDiagram
 | post_metrics | (publication_id) WHERE snapshot='Final' | Partial UK dedup Final | FR-25 |
 | account_growth | (platform, brand, month) | PK komposit + tren | US-036 |
 | community_interactions | received_at | Sort + SLA | US-037 |
+| community_interactions | handler_id | FK | US-037 |
 | inquiries | status | Filter | US-038 |
+| inquiries | handler_id | FK | US-038 |
 | assets | license_expiry | Warning 30 hari | FR-27 |
 | comments | (entity_type, entity_id) | Komposit: timeline per entitas | US-006 |
+| comments | author_id | FK | US-006 |
 | attachments | (entity_type, entity_id) | Daftar lampiran | US-006 |
 | notifications | (recipient_id, is_read) | Komposit: badge unread | US-006 |
 | audit_logs | (entity_type, entity_id) | Komposit: timeline | US-004 |
@@ -805,7 +821,7 @@ erDiagram
 - **US-035:** `INSERT post_metrics`; dedup via partial UK Final; ER = rumus di query; kunci edit via RLS.
 - **US-036:** `INSERT account_growth`; net = rumus; tren `ORDER BY month` [PK komposit].
 - **US-037:** `INSERT community_interactions`; response = `replied - received`; SLA ≤ 30 dari `settings` (WIB).
-- **US-038:** `INSERT inquiries`; routing ≤ 15 (WIB); konversi: `INSERT leads(source, industry default)` + `UPDATE inquiries.lead_id`.
+- **US-038:** `INSERT inquiries`; routing ≤ 15 (WIB); konversi: kontak (nama/WA/email) diminta via form konversi (kolom NOT NULL di `leads`), lalu `INSERT leads(source, industry default)` + `UPDATE inquiries.lead_id`.
 - **US-039:** 6 agregat dari tabel di atas + target dari `settings`.
 - **US-040:** CRUD `strategy_evaluations`; Test wajib `hypothesis` (CHECK via trigger/service).
 - **US-041:** CRUD `settings` (+ `holidays`, `developer_capacity`); audit perubahan.

@@ -162,3 +162,15 @@
 - **Alternatif yang dipertimbangkan:** Hanya deals (proyek basi; melanggar semangat FR-15).
 - **Alasan:** Satu sumber kebenaran nilai/deadline lintas handover–proyek.
 - **Konsekuensi:** Service Fase 3 menerapkan ketiga tulis dalam satu transaksi.
+
+---
+
+## DEC-013: Jaminan Klien Proyek = Klien Handover via FK Komposit
+
+- **Tanggal:** 2026-10-05
+- **Terkait:** US-019, FR-15
+- **Konteks:** Review pemilik: `projects.client_id/code/value_idr` menyalin `deals` tanpa jaminan tetap sama.
+- **Keputusan:** `FOREIGN KEY (handover_id, client_id) REFERENCES deals(id, client_id)` (+ `UNIQUE(id, client_id)` di `deals`) sehingga klien proyek dijamin sama dengan klien handover-nya di level DB. Sinkron nilai/deadline pasca-CR menjadi tanggung jawab service dalam satu transaksi (DEC-012).
+- **Alternatif yang dipertimbangkan:** Hanya validasi service (bisa basi bila ada tulis langsung); trigger sinkron (menyembunyikan logika bisnis di DB).
+- **Alasan:** Invarian struktural (klien sama) milik DB; sinkron nilai (keputusan bisnis) milik service.
+- **Konsekuensi:** Migration wajib membuat `UNIQUE(id, client_id)` sebelum FK komposit.

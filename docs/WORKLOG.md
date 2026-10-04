@@ -1029,3 +1029,20 @@
 - **Verifikasi:** Mermaid parse OK; SQL parse OK (42 tabel/44 index; blok prosedural dicek manual)
 - **Catatan/Masalah:** TETAP BUTUH APPROVED tertulis sebelum merge/tag/Fase 3
 - **Langkah berikutnya:** Review + APPROVED pemilik
+
+---
+
+## 2026-10-05 15:00 — Fase 2 — Revisi ronde 2 + RLS deny-all (menunggu APPROVED)
+
+- **Branch:** db/skema-database-awal (BELUM merge)
+- **Yang dilakukan:**
+  - Bug: hapus `UNIQUE(publication_id, snapshot)` (Monitoring boleh banyak; dedup Final via partial index)
+  - RLS deny-all 42 tabel di DDL yang sama (`ENABLE ROW LEVEL SECURITY`, policies Fase 3)
+  - CHECK murah: revisi feedback, hipotesis Test, override fitur, pasangan gate, replied/routed, tanggal task
+  - Inkonsistensi: padding MAT/PUB 4 digit; pillar evaluasi → FK master; brand komunitas tanpa default
+  - Sedang: pg_trgm + GIN (leads/tasks/clients); 8 index FK baru; FK komposit handover (DEC-013); audit jsonb; entity UUID + peta `konten`
+  - Sinkron DATABASE.md (kamus, matriks, index, walkthrough) + re-validasi Mermaid/SQL OK (42 tabel/52 index)
+- **File berubah:** database/schema.sql, docs/DATABASE.md, docs/DECISIONS.md (DEC-013), docs/WORKLOG.md, CHANGELOG.md
+- **Verifikasi:** Mermaid OK; SQL parse OK; item stale review dikonfirmasi sudah beres di rev2
+- **Catatan/Masalah:** TETAP BUTUH APPROVED tertulis sebelum merge/tag/Fase 3
+- **Langkah berikutnya:** Review + APPROVED pemilik
