@@ -42,6 +42,15 @@ export function ProductionDashboard() {
   const [dateTo, setDateTo] = useState("");
   const [projectOptions, setProjectOptions] = useState<{ id: string; name: string }[]>([]);
 
+  const filtersActive = pmName !== "" || projectId !== "" || dateFrom !== "" || dateTo !== "";
+
+  function resetFilters() {
+    setPmName("");
+    setProjectId("");
+    setDateFrom("");
+    setDateTo("");
+  }
+
   useEffect(() => {
     let cancelled = false;
     void listProjects().then(({ data: projects }) => {
@@ -142,6 +151,13 @@ export function ProductionDashboard() {
           </label>
           <Input id="prod-to" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
         </div>
+        {filtersActive ? (
+          <div className="md:col-span-2 xl:col-span-4">
+            <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
+              Reset filter
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {loading || !data ? (
