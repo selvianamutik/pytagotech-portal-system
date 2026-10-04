@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { getMaterial } from "@/services/materials";
 import { ApprovalSection } from "@/components/sosmed/approval-section";
 import { DistributionSection } from "@/components/sosmed/distribution-section";
+import { MaterialAssets } from "@/components/sosmed/material-assets";
 import {
   releaseMaterial,
   scheduleMaterial,
@@ -163,6 +164,12 @@ export function MaterialDetail({ materialId }: { materialId: string }) {
       <ApprovalSection materialId={material.id} onChanged={() => void refresh()} />
 
       <DistributionSection materialId={material.id} />
+
+      <MaterialAssets
+        materialId={material.id}
+        linkedAssetIds={material.linkedAssetIds ?? []}
+        onChanged={() => void refresh()}
+      />
 
       <Card>
         <CardHeader className="border-b">

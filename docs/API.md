@@ -436,7 +436,15 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Assets
 
-> _Akan didokumentasikan saat US-034 dimulai_
+> **Status:** Draft Fase 1 (US-034) — mock di `frontend/src/mocks/assets.ts`,
+> diakses via `frontend/src/services/assets.ts`. Halaman `/sosmed/aset`.
+> Fase 2: tabel `assets`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| CRUD aset | Nama, tipe, link cloud, pemilik, izin, masa berlaku (opsional) |
+| `listAssetsWithStatus()` (FR-27) | Kedaluwarsa + peringatan ≤30 hari |
+| `linkAssetsToMaterial(materialId, assetIds)` | Kedaluwarsa ditolak dengan pesan; opsi kedaluwarsa terkunci di UI |
 
 ---
 

@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - US-031: distribusi Parent-Child (Single/Crosspost + rekonsiliasi)
 - US-032: kalender publikasi (filter, drag, Overdue/Kritis + ambang konfigurabel)
 - US-033: pelacakan rilis (tanggal aktual + link live, kunci jadwal-ulang)
+- US-034: asset library (lisensi + 30 hari + tolak kedaluwarsa ditautkan)
 
 ### Chore
 - Fase 0: inisialisasi repo, branch `main` + `develop`, struktur folder, `.env.example`, docs awal

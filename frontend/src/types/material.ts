@@ -49,6 +49,8 @@ export interface ContentMaterial {
   gateOverride?: { by: string; reason: string };
   /** Riwayat review (US-030). */
   revisions: MaterialRevision[];
+  /** Aset tertaut — hanya yang belum kedaluwarsa (US-034, FR-27). */
+  linkedAssetIds?: string[];
   createdAt: string;
 }
 
