@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-04  
-> **Fase saat ini:** Fase 1 — Frontend (EPIC A–D DONE; berikutnya EPIC E / US-027)
+> **Fase saat ini:** Fase 1 — Frontend SELESAI (Gate 1 DONE, tag `v0.1.0-frontend`); berikutnya Fase 2 — Backend
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -142,7 +142,7 @@
 | Gate | Deskripsi | Status |
 |------|-----------|--------|
 | Gate 0 | Fase 0 selesai: proyek jalan kosong, lint/typecheck lolos | DONE |
-| Gate 1 | Frontend selesai: semua UI dengan mock, kontrak API draft | TODO |
+| Gate 1 | Frontend selesai: semua UI dengan mock, kontrak API draft | DONE |
 | Gate 2 | Backend selesai: semua US & FR DONE, mock diganti API | TODO |
 | Gate 3 | Deploy Ready: build produksi bersih, dokumentasi lengkap | TODO |
 
