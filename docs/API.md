@@ -569,4 +569,17 @@ interface NotificationItem { id: string; type: NotificationType; title: string; 
 
 ## Modul: Pengaturan
 
-> _Akan didokumentasikan saat US-041 dimulai_
+> Pengaturan penuh (KPI, SLA, routing) menyusul US-041 (Backend).
+> Bagian panduan/RACI selesai di US-042 di bawah.
+
+---
+
+## Modul: Panduan & RACI
+
+> **Status:** Draft Fase 1 (US-042) — `services/guides.ts`.
+> Halaman `/pengaturan/panduan` (baca semua role, sunting Admin).
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| `listGuides()` / `updateGuide(slug, markdown)` | Markdown `#/##/-/tebal/link`; isi tak boleh kosong |
+| `listRaci()` / `setRaciCell(activity, role, value)` | 3 aktivitas × 7 role; nilai R/A/C/I/kosong |

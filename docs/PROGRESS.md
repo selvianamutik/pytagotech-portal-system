@@ -93,7 +93,7 @@
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
 | US-041 | Pengaturan KPI, SLA, dan routing | Backend | TODO | 0/3 | - |
-| US-042 | SOP, panduan, dan matriks RACI | Frontend | TODO | 0/3 | - |
+| US-042 | SOP, panduan, dan matriks RACI | Frontend | DONE | 3/3 ✅ | eba2031 |
 | US-043 | Arsip data & backup | Backend | TODO | 0/4 | - |
 | US-044 | Pencarian global & beranda per role | Frontend | TODO | 0/4 | - |
 
