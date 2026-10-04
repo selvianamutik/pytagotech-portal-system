@@ -289,8 +289,8 @@ erDiagram
     }
     ACCOUNT_GROWTH {
         uuid id PK
-        string platform "PK2"
-        string month "YYYY-MM, PK2"
+        string platform "PK komposit"
+        string month "YYYY-MM, PK komposit"
         bigint followers_start ">=0"
         bigint followers_gained ">=0"
         bigint unfollows ">=0"
@@ -390,8 +390,8 @@ erDiagram
         jsonb value "NOT NULL"
     }
     MASTER_OPTIONS {
-        string category PK2 "mis. industry"
-        string value PK2
+        string category "PK komposit, mis. industry"
+        string value "PK komposit"
         boolean is_active "default true"
     }
     GUIDES {
@@ -400,8 +400,8 @@ erDiagram
         string content_md "NOT NULL"
     }
     RACI_MATRIX {
-        string activity PK2
-        string role PK2 "label role"
+        string activity "PK komposit"
+        string role "PK komposit, label role"
         string value "R|A|C|I|kosong"
     }
 ```
