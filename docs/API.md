@@ -489,6 +489,18 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Evaluasi Strategi (KIST)
+
+> **Status:** Draft Fase 1 (US-040) — `services/evaluations.ts`.
+> Halaman `/sosmed/evaluasi`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| CRUD + filter kategori/brand/periode | Keep/Improve/Stop/Test + pillar/format + bukti |
+| Kategori Test (FR-29) | Hipotesis wajib; rencana/target/dampak/hasil opsional |
+
+---
+
 ## Modul: Assets
 
 > **Status:** Draft Fase 1 (US-034) — mock di `frontend/src/mocks/assets.ts`,

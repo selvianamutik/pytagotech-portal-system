@@ -84,7 +84,7 @@
 | US-037 | Community management & SLA response time | Frontend | DONE | 4/4 ✅ | 72b17c7 |
 | US-038 | Inquiry tracking & handover WhatsApp | Frontend | DONE | 5/5 ✅ | 8c84adb |
 | US-039 | Dashboard eksekutif Sosmed (KPI Scorecard) | Frontend | DONE | 4/4 ✅ | 2c9b118 |
-| US-040 | Evaluasi strategi KIST | Frontend | TODO | 0/4 | - |
+| US-040 | Evaluasi strategi KIST | Frontend | DONE | 4/4 ✅ | b554c2d |
 
 ---
 
