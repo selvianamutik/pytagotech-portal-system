@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Dialog aktivitas lead: ubah status langsung (6 status lain, tercatat di timeline)
+
 ### Changed
 - Layout portal (sidebar + header + menu aktif) menjadi global via grup route `(portal)`; URL tidak berubah; `/login` dan `/403` tetap tanpa shell
 - Penyesuaian alur kerja: `Frontend → Skema Database → Backend → Deploy Ready` (Gate 2–4, tag database/backend); scaffold `docs/DATABASE.md` (DRAFT) + `database/schema.sql`

@@ -26,10 +26,12 @@ import {
   type TimelineItem,
   type TimelineKind,
 } from "@/services/lead-activities";
-import { setNextFollowUp } from "@/services/leads";
+import { setNextFollowUp, updateLead } from "@/services/leads";
+import { FormSelect } from "@/components/crm/lead-table";
 import { useAuthStore } from "@/store/auth";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import type { Lead } from "@/types/lead";
+import { LEAD_STATUSES } from "@/types/lead";
 
 const kindIcons: Record<TimelineKind, typeof MessageSquareIcon> = {
   note: MessageSquareIcon,
@@ -59,6 +61,8 @@ export function LeadActivityDialog({
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState("");
   const [followUp, setFollowUp] = useState(lead.nextFollowUp ?? "");
+  const [currentStatus, setCurrentStatus] = useState<Lead["status"]>(lead.status);
+  const [newStatus, setNewStatus] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -120,7 +124,29 @@ export function LeadActivityDialog({
     await refresh();
   }
 
-  const overdue = isFollowUpOverdue(lead.nextFollowUp, lead.status);
+  async function handleStatusChange(event: React.FormEvent) {
+    event.preventDefault();
+    if (!newStatus) {
+      return;
+    }
+    setPending(true);
+    setError(null);
+    const { data, error: statusError } = await updateLead(
+      lead.id,
+      { status: newStatus as Lead["status"] },
+      actor()
+    );
+    setPending(false);
+    if (statusError || !data) {
+      setError(statusError ?? "Gagal mengubah status.");
+      return;
+    }
+    setCurrentStatus(data.status);
+    setNewStatus("");
+    await refresh();
+  }
+
+  const overdue = isFollowUpOverdue(lead.nextFollowUp, currentStatus);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -142,6 +168,26 @@ export function LeadActivityDialog({
             )}
             {overdue ? <Badge variant="destructive">Overdue</Badge> : null}
           </div>
+
+          <form onSubmit={handleStatusChange} className="flex flex-wrap items-end gap-2">
+            <div className="space-y-2">
+              <span className="text-sm text-muted-foreground">
+                Status: <span className="font-medium text-foreground">{currentStatus}</span>
+              </span>
+              <div className="w-52">
+                <FormSelect
+                  id={`status-${lead.id}`}
+                  label="Ubah ke status"
+                  value={newStatus}
+                  onChange={setNewStatus}
+                  options={LEAD_STATUSES.filter((status) => status !== currentStatus)}
+                />
+              </div>
+            </div>
+            <Button type="submit" size="sm" disabled={pending || !newStatus}>
+              {pending ? "Menyimpan..." : "Ubah status"}
+            </Button>
+          </form>
 
           <form onSubmit={handleFollowUp} className="flex items-end gap-2">
             <div className="space-y-2">
