@@ -708,6 +708,22 @@
 
 ---
 
+## 2026-10-05 03:00 — Gate 1 — Frontend Selesai (DONE, tag v0.1.0-frontend)
+
+- **Fase:** 1 → 2 (Frontend selesai, berikutnya Backend)
+- **Branch:** develop
+- **Verifikasi akhir:**
+  - 39/39 US Frontend DONE, 0 TODO (EPIC A–G frontend)
+  - Test: 198/198 lolos (43 file); lint ✅ typecheck ✅
+  - Build produksi bersih: 26 route (21 static + 5 dinamis)
+  - Browser: seluruh route 200 (list + kalender + panduan + home; halaman client-hydration terverifikasi via state loading + unit test)
+  - Kontrak API draft lengkap di `docs/API.md` (semua modul)
+- **Gate 1 checklist:** UI DONE ✅ mock ✅ kontrak ✅ build ✅ merge develop ✅ tag ✅
+- **Catatan/Masalah:** FR-1–FR-31 tetap TODO (Fase 2). Q-005, Q-012, Q-013 masih OPEN. CR-001/CR-002 PENDING.
+- **Langkah berikutnya:** Fase 2 — Backend, mulai US-003 (RLS)
+
+---
+
 ## 2026-10-05 02:00 — US-042 — SOP & RACI (DONE)
 
 - **Fase:** 1 (Frontend)
