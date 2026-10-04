@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ShieldXIcon } from "lucide-react";
@@ -44,6 +45,15 @@ interface RequireRoleProps {
 export function RequireRole({ allowed, children }: RequireRoleProps) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
+  const initialize = useAuthStore((state) => state.initialize);
+
+  // Guard sendiri memicu pemuatan sesi agar tidak macet di "Memeriksa akses..."
+  // bila komponen di dalamnya belum sempat mount.
+  useEffect(() => {
+    if (status === "loading") {
+      void initialize();
+    }
+  }, [status, initialize]);
 
   if (status === "loading") {
     return (

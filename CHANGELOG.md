@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Seed 4 task + 3 fitur berjadwal agar kalender/Gantt/board demo terisi
 - Task Board kembali ke halaman asal (`?from=`) bila datang dari kalender
 - Semua halaman detail kembali ke halaman asal (`?from=` tervalidasi)
+- Perbaiki guard role yang macet di "Memeriksa akses" (guard kini memicu muat sesi)
 - Perbaiki warning Base UI: `nativeButton={false}` pada tombol bermuatan link/label
 
 ### Changed

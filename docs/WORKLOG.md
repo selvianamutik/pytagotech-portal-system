@@ -925,3 +925,15 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (payload "Kembali" di 3 detail)
 - **Catatan/Masalah:** - (pemetaan: US-022, US-025, US-019, US-015, US-030)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 10:30 — Fix — Pengaturan macet di "Memeriksa akses" (laporan pemilik)
+
+- **Branch:** fix/require-role-init
+- **Akar masalah:** `RequireRole` menunggu sesi selesai dimuat, tetapi `initialize()` hanya dipanggil komponen di dalamnya — yang tak pernah mount. Deadlock khusus kunjungan langsung (tanpa lewat login dulu).
+- **Yang dilakukan:** guard sendiri memicu `initialize()` saat status masih loading
+- **File berubah:** components/auth/require-role
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (4 halaman pengaturan 200)
+- **Catatan/Masalah:** - (pemetaan: US-002)
+- **Langkah berikutnya:** Fase 2 — Skema Database
