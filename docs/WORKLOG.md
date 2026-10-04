@@ -793,3 +793,16 @@
   isi aturan — hanya penyesuaian repo (PROGRESS, DEPLOYMENT, DECISIONS, scaffold DATABASE).
   Dicatat di sini sesuai kewajiban lapor pelanggaran proses.
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 05:00 — US-012+ — Ubah status di dialog aktivitas (permintaan pemilik)
+
+- **Branch:** feature/US-012-status-aktivitas
+- **Yang dilakukan:**
+  - Dialog aktivitas lead kini menampilkan status saat ini + dropdown ubah ke 6 status lain + tombol "Ubah status" (via `updateLead`, tercatat di timeline audit)
+  - Test komponen baru: pindah New → Contacted + entri timeline
+- **File berubah:** components/crm/lead-activity-dialog(.test)
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (baru + 18 terkait) build ✅ browser ✅ (`/crm/leads` 200)
+- **Catatan/Masalah:** - (pemetaan: US-012, US-007)
+- **Langkah berikutnya:** Fase 2 — Skema Database
