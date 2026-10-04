@@ -19,6 +19,7 @@ export const mockMaterials: ContentMaterial[] = [
       "link bio/CTA": false,
       "proofread copy": false,
     },
+    revisions: [],
     createdAt: "2026-10-03T02:00:00Z",
   },
 ];

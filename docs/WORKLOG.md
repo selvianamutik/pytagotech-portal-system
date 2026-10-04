@@ -532,3 +532,20 @@
 - **Acceptance Criteria:** 3/3 — checklist ✅ gerbang jadwal/rilis ✅ lint/typecheck ✅ (browser: sweep akhir)
 - **Catatan/Masalah:** -
 - **Langkah berikutnya:** US-030 (Approval & revisi)
+
+---
+
+## 2026-10-04 20:30 — US-030 — Approval & revisi (DONE)
+
+- **Fase:** 1 (Frontend)
+- **Branch:** feature/US-030-approval
+- **Commit:** 14445e0 — feat(frontend): approval dan revisi materi US-030
+- **Yang dilakukan:**
+  - Tipe revisi (Rev 0,1... + reviewer + keputusan + feedback + bukti)
+  - `services/approvals.ts`: 3 keputusan; feedback wajib saat Ditolak; Disetujui → status Disetujui (gerbang jadwal); Ditolak → Draf
+  - `ApprovalSection` di detail materi (riwayat + form review)
+- **File berubah:** types/material, mocks/materials, services/materials (clone dalam), services/approvals(.test), components/sosmed (approval-section, material-detail), docs
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (163/163) · browser menyusul di sweep akhir
+- **Acceptance Criteria:** 5/5 — versi + reviewer ✅ 3 keputusan ✅ feedback + bukti ✅ gerbang Disetujui ✅ lint/typecheck ✅ (browser: sweep akhir)
+- **Catatan/Masalah:** -
+- **Langkah berikutnya:** US-031 (Distribusi)
