@@ -382,6 +382,19 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
+## Modul: Quality Gate
+
+> **Status:** Draft Fase 1 (US-029) — `services/quality-gate.ts`.
+> Checklist + jadwal + rilis di halaman detail `/sosmed/materi/[id]`.
+
+| Fungsi | Aturan bisnis |
+|--------|---------------|
+| `setGateItem(materialId, item, checked)` | 5 checklist; mengubah checklist menghanguskan pengecualian lama |
+| `scheduleMaterial(materialId, {scheduleDate, releaseTime?, overrideReason?}, actor)` | Wajib Disetujui + gate penuh, atau Admin beralasan |
+| `releaseMaterial(materialId, actor, overrideReason?)` | Dari Dijadwalkan + gate penuh (atau override Admin) |
+
+---
+
 ## Modul: Publications
 
 > _Akan didokumentasikan saat US-031 dimulai_
