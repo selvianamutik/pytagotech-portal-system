@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "supabase:start": "pnpm dlx supabase@latest start",
+    "supabase:stop": "pnpm dlx supabase@latest stop",
+    "supabase:reset": "pnpm dlx supabase@latest db reset",
+    "supabase:types": "pnpm dlx supabase@latest gen types typescript --local > src/types/database.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

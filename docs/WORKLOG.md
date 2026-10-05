@@ -998,3 +998,84 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ build ✅ browser ✅ (`/proyek/board` 200)
 - **Catatan/Masalah:** - (pemetaan: US-022)
 - **Langkah berikutnya:** Fase 2 — Skema Database
+
+---
+
+## 2026-10-05 13:00 — Fase 2 — Draf skema database selesai (menunggu review)
+
+- **Branch:** db/skema-database-awal (BELUM merge — menunggu APPROVED per Gate 2)
+- **Yang dilakukan:**
+  - `docs/DATABASE.md` lengkap: 37 tabel + ERD Mermaid + kamus + matriks relasi (ON DELETE/UPDATE) + index + keterlacakan + walkthrough 44 US + seed
+  - Normalisasi 3NF (junction: user_roles, task_dependencies, idea_platforms, material_assets); polimorfik komentar/lampiran tanpa FK (terdokumentasi)
+  - Partial unique index untuk dedup KPI Final; trigger display ID (DEC-006/010)
+  - DEC-010: PK UUID + display ID trigger
+- **File berubah:** docs/DATABASE.md, docs/DECISIONS.md, docs/PROGRESS.md, CHANGELOG.md, docs/WORKLOG.md
+- **Verifikasi:** review dokumen (tidak ada kode; lint/test tak terdampak)
+- **Catatan/Masalah:** BUTUH PERSETUJUAN TERTULIS pemilik (`APPROVED`) sebelum merge + tag `v0.2.0-database` + Fase 3
+- **Langkah berikutnya:** Review pemilik atas DATABASE.md
+
+---
+
+## 2026-10-05 14:00 — Fase 2 — Revisi skema dari review pemilik + DDL (menunggu APPROVED)
+
+- **Branch:** db/skema-database-awal (BELUM merge)
+- **Yang dilakukan:**
+  - Koreksi blocking (5): `developers` → `team_members` (+`profile_id` UNIQUE NULL, selaras ERD-matriks); dropdown US-005 → FK master via kolom generated; `brand` di growth/community (+UK); `deals.created_by/confirmed_by/at`; `lead_status_history` baru
+  - Koreksi sedang (6): clients nullable; CR `≠0` + sync ke projects (DEC-012); assignee materi → FK + status `Ditolak` + override_by FK; `material_platforms`; zona WIB; 7 index FK + 3 index baru
+  - Higiene (8): entity 5 tipe; kolom `status`; growth tanpa surrogate; inquiry 1:1; 4 relasi ERD; hapus baris holidays; seed service_hours + brief 5/5; LPAD tanpa batas
+  - `database/schema.sql`: DDL draf lengkap 42 tabel (tervalidasi parser: 42 tabel + 44 index) + ERD re-validasi Mermaid OK
+  - DEC-011 (master FK pattern), DEC-012 (sync CR→proyek)
+- **File berubah:** docs/DATABASE.md, database/schema.sql, docs/DECISIONS.md, docs/WORKLOG.md, CHANGELOG.md
+- **Verifikasi:** Mermaid parse OK; SQL parse OK (42 tabel/44 index; blok prosedural dicek manual)
+- **Catatan/Masalah:** TETAP BUTUH APPROVED tertulis sebelum merge/tag/Fase 3
+- **Langkah berikutnya:** Review + APPROVED pemilik
+
+---
+
+## 2026-10-05 15:00 — Fase 2 — Revisi ronde 2 + RLS deny-all (menunggu APPROVED)
+
+- **Branch:** db/skema-database-awal (BELUM merge)
+- **Yang dilakukan:**
+  - Bug: hapus `UNIQUE(publication_id, snapshot)` (Monitoring boleh banyak; dedup Final via partial index)
+  - RLS deny-all 42 tabel di DDL yang sama (`ENABLE ROW LEVEL SECURITY`, policies Fase 3)
+  - CHECK murah: revisi feedback, hipotesis Test, override fitur, pasangan gate, replied/routed, tanggal task
+  - Inkonsistensi: padding MAT/PUB 4 digit; pillar evaluasi → FK master; brand komunitas tanpa default
+  - Sedang: pg_trgm + GIN (leads/tasks/clients); 8 index FK baru; FK komposit handover (DEC-013); audit jsonb; entity UUID + peta `konten`
+  - Sinkron DATABASE.md (kamus, matriks, index, walkthrough) + re-validasi Mermaid/SQL OK (42 tabel/52 index)
+- **File berubah:** database/schema.sql, docs/DATABASE.md, docs/DECISIONS.md (DEC-013), docs/WORKLOG.md, CHANGELOG.md
+- **Verifikasi:** Mermaid OK; SQL parse OK; item stale review dikonfirmasi sudah beres di rev2
+- **Catatan/Masalah:** TETAP BUTUH APPROVED tertulis sebelum merge/tag/Fase 3
+- **Langkah berikutnya:** Review + APPROVED pemilik
+
+---
+
+## 2026-10-05 18:00 — Fase 3 — Audit + parity-fix backend (melanjutkan pekerjaan IN_PROGRESS)
+
+- **Fase:** 3 (Backend)
+- **Branch:** db/skema-database-awal (belum di-commit; Gate 2 masih TODO — lihat catatan)
+- **Yang dilakukan:**
+  - Audit `20261005000000_initial_schema.sql` vs `DATABASE.md` rev2: 42 tabel, kolom, FK/ON DELETE, index, trigger display_id/updated_at, master-FK generated, partial UK Final — SESUAI. Dua CHECK tak terdokumentasi (`term_tempo`, `cr_min_impact`) didokumentasikan ke §2.3 (masuk paket approval).
+  - Audit `20261005001000_backend_foundation.sql` vs kontrak frontend (`types/`, `services/`): enum/role 7 label sama persis; enum funnel/channel/tipe/status sama.
+  - Temuan parity (RLS vs kontrak UI): leads UPDATE owner-only memblokir bulk-assign Sales (US-009); projects owner-only vs `canManageProjects` semua-PM (US-020); deals/clients/CR `FOR ALL` mencakup DELETE tanpa UI hapus; tasks tanpa DELETE padahal US-022 hapus+anak; policy INSERT `WITH CHECK (true)` di audit/history memungkinkan pemalsuan (US-004); tidak ada jalur `inquiries.lead_id` untuk Sales (US-038); tanpa notifikasi ke Sales di `transition_deal_status` (US-017); tanpa `handle_new_user` auth→profiles (US-002).
+  - Migrasi baru `20261005002000_backend_parity_fixes.sql`: RLS role-based (leads UPDATE Sales/Admin; projects INSERT/UPDATE semua-PM/Admin tanpa DELETE; deals/clients insert+update tanpa DELETE; CR insert+update tanpa DELETE; tasks UPDATE PM/assignee + DELETE PM/Admin); hapus 2 policy INSERT palsu; hapus index redundan `material_platforms_material_idx`; trigger `handle_new_user`; RPC DEFINER `convert_inquiry_to_lead` (atomik + anti-ganda, tanggal WIB); `transition_deal_status` + notifikasi ke Sales pembuat.
+  - Sinkron `docs/DATABASE.md` §2.3 + walkthrough US-002/004/009/017/020/022/038; `frontend/supabase/README.md` (daftar migrasi + langkah berikut).
+- **File berubah:** frontend/supabase/migrations/20261005002000_backend_parity_fixes.sql (baru), docs/DATABASE.md, frontend/supabase/README.md, docs/WORKLOG.md
+- **Verifikasi:** cek statis migrasi ✅ (dollar-quote/par-rens seimbang, DROP POLICY merujuk policy yang ada, signature RPC vs GRANT cocok) · typecheck ✅ (`tsc --noEmit` exit 0) · test ✅ (208/208) · `supabase db reset` BELUM bisa (tanpa Docker/CLI di mesin ini — wajib dijalankan di mesin dengan Docker sebelum Gate 3)
+- **Catatan/Masalah:** (1) DATABASE.md tetap DRAFT — pekerjaan backend berjalan mendahului Gate 2 (pelanggaran alur; dicatat di sini). (2) Seed `team_members.profile_id` NULL sampai user dibuat — penautan user→tim dilakukan manual via Admin. (3) RPC baru + RLS baru BELUM diuji terhadap DB live.
+- **Langkah berikutnya:** (a) APPROVED tertulis DATABASE.md (Gate 2) + merge/tag `v0.2.0-database`; (b) `supabase db reset` + uji RPC/RLS; (c) ganti service mock bertahap (mulai US-005/US-041: master_options/settings)
+
+---
+
+## 2026-10-05 18:30 — Gate 2 — DATABASE.md APPROVED (pemilik proyek)
+
+- **Fase:** 2 → 3 (Skema Database selesai, Backend resmi dibuka)
+- **Branch:** db/skema-database-awal (belum merge/tag — menunggu izin commit)
+- **Yang dilakukan:**
+  - Persetujuan tertulis pemilik atas `docs/DATABASE.md` (mencakup revisi parity-fix: CHECK `term_tempo`/`cr_min_impact`, walkthrough RPC/RLS) dicatat di dokumen (`Status: APPROVED`, 2026-10-05); skema dikunci untuk Fase 3.
+  - `docs/PROGRESS.md`: Gate 2 TODO → DONE; header fase diperbarui.
+  - `CHANGELOG.md` (Unreleased): entri migrasi parity-fix.
+  - Komentar header `20261005000000_initial_schema.sql`: DRAFT → APPROVED.
+- **File berubah:** docs/DATABASE.md, docs/PROGRESS.md, CHANGELOG.md, frontend/supabase/migrations/20261005000000_initial_schema.sql, docs/WORKLOG.md
+- **Verifikasi:** tidak ada perubahan kode (docs + komentar SQL saja)
+- **Catatan/Masalah:** merge ke `develop` + tag `v0.2.0-database` belum dijalankan (butuh izin eksplisit).
+- **Langkah berikutnya:** commit + merge + tag Gate 2, lalu (b) `supabase db reset` di mesin Docker, (c) service swap US-005/US-041

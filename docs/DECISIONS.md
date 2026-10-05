@@ -126,3 +126,51 @@
 - **Alternatif yang dipertimbangkan:** CSV saja (tidak memenuhi "Excel"), print-to-PDF browser (tidak memenuhi "ekspor PDF" sebagai file).
 - **Alasan:** Dua AC terpenuhi langsung dengan API kecil; builder terisolasi di `services/production-export.ts` sehingga mudah diganti.
 - **Konsekuensi:** Ukuran bundle bertambah; audit `pnpm audit` dicatat di Fase 3.
+
+---
+
+## DEC-010: Strategi Primary Key — UUID + Display ID Trigger
+
+- **Tanggal:** 2026-10-05
+- **Terkait:** Semua US/FR (Fase 2)
+- **Konteks:** AGENT_RULES mewajibkan satu strategi PK konsisten (Fase 2 Langkah 3).
+- **Keputusan:** PK semua tabel = UUID v4 (`gen_random_uuid()`); ID ramah-user (`LEAD-xxx`, `MAT-xxxx`, …) sebagai kolom `display_id TEXT UNIQUE` yang diisi trigger + sequence (meneruskan DEC-006).
+- **Alternatif yang dipertimbangkan:** BIGINT auto-increment sebagai PK (lebih hemat, tapi bocor urutan dan tidak cocok untuk RLS multi-tenant di masa depan); display ID sebagai PK (rapuh terhadap perubahan format).
+- **Alasan:** UUID aman untuk relasi terdistribusi dan tidak menebak; display ID tetap pendek untuk UI sesuai PRD.
+- **Konsekuensi:** Semua FK bertipe UUID; migration Fase 3 wajib memakai tipe ini.
+
+---
+
+## DEC-011: Dropdown Master via Kolom Generated + FK Komposit
+
+- **Tanggal:** 2026-10-05
+- **Terkait:** US-005, FR-3
+- **Konteks:** Review pemilik: status/brand/platform hardcode CHECK bertentangan dengan US-005/FR-3.
+- **Keputusan:** Dropdown kelolaan Admin divalidasi DB via `<kolom>_category TEXT GENERATED ALWAYS AS ('<kategori>') STORED` + FK komposit ke `master_options(category, value)`. Status alur sistem tetap `TEXT + CHECK` (transisi dikunci service).
+- **Alternatif yang dipertimbangkan:** Validasi hanya di service (lemah — bypass via SQL langsung); tabel lookup per dropdown (tabel ×9, over-engineering).
+- **Alasan:** Satu tabel master + integritas di level DB tanpa ledakan tabel.
+- **Konsekuensi:** Setiap nilai baru wajib ada di `master_options` dulu (seed US-005).
+
+---
+
+## DEC-012: CR Disetujui Sinkron ke Proyek
+
+- **Tanggal:** 2026-10-05
+- **Terkait:** US-018, FR-14, FR-15
+- **Konteks:** Review pemilik: belum ada aturan sinkron CR → proyek.
+- **Keputusan:** CR yang Disetujui memperbarui `deals` + `deal_versions` + `projects.value_idr/target_date` agar warisan FR-15 tidak basi.
+- **Alternatif yang dipertimbangkan:** Hanya deals (proyek basi; melanggar semangat FR-15).
+- **Alasan:** Satu sumber kebenaran nilai/deadline lintas handover–proyek.
+- **Konsekuensi:** Service Fase 3 menerapkan ketiga tulis dalam satu transaksi.
+
+---
+
+## DEC-013: Jaminan Klien Proyek = Klien Handover via FK Komposit
+
+- **Tanggal:** 2026-10-05
+- **Terkait:** US-019, FR-15
+- **Konteks:** Review pemilik: `projects.client_id/code/value_idr` menyalin `deals` tanpa jaminan tetap sama.
+- **Keputusan:** `FOREIGN KEY (handover_id, client_id) REFERENCES deals(id, client_id)` (+ `UNIQUE(id, client_id)` di `deals`) sehingga klien proyek dijamin sama dengan klien handover-nya di level DB. Sinkron nilai/deadline pasca-CR menjadi tanggung jawab service dalam satu transaksi (DEC-012).
+- **Alternatif yang dipertimbangkan:** Hanya validasi service (bisa basi bila ada tulis langsung); trigger sinkron (menyembunyikan logika bisnis di DB).
+- **Alasan:** Invarian struktural (klien sama) milik DB; sinkron nilai (keputusan bisnis) milik service.
+- **Konsekuensi:** Migration wajib membuat `UNIQUE(id, client_id)` sebelum FK komposit.
