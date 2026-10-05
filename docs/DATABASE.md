@@ -1,6 +1,6 @@
 # DATABASE.md — Skema Database
 
-> **Status:** DRAFT (revisi 2 — menunggu `APPROVED` + persetujuan tertulis sebelum Fase 3)
+> **Status:** APPROVED (oleh: pemilik proyek, tanggal: 2026-10-05) — mencakup revisi parity-fix backend (CHECK `term_tempo`/`cr_min_impact`, walkthrough RPC/RLS). Skema dikunci untuk Fase 3.
 > **DBMS:** PostgreSQL 15 (Supabase) | **PK:** UUID v4 (`gen_random_uuid()`) | **Timezone:** UTC (`timestamptz`; perbandingan tanggal pakai `(now() AT TIME ZONE 'Asia/Jakarta')::date`) | **Penamaan:** tabel `snake_case` jamak, kolom `snake_case`, FK `<tabel_tunggal>_id`, junction `a_b`
 >
 > Sumber: PRD (US/FR) → kontrak `frontend/src/types/` + mock → draf `docs/API.md`.
@@ -523,6 +523,10 @@ erDiagram
 
 > Total termin = nilai deal (FR-12) ditegakkan di **service** (penjumlahan lintas baris
 > tidak bisa CHECK baris-tunggal); disiapkan constraint trigger bila DBMS mendukung.
+> Setiap termin wajib punya tempo: `term_tempo CHECK (due_date IS NOT NULL OR milestone
+> terisi)` — termin tanpa tanggal maupun milestone tidak valid.
+> Setiap CR wajib berdampak: `cr_min_impact CHECK (value_impact IS NOT NULL OR
+> deadline_impact IS NOT NULL)` — CR tanpa dampak nilai maupun deadline ditolak.
 > CR yang Disetujui **juga** memperbarui `projects.value_idr` + `target_date`
 > (sinkronisasi warisan FR-15; keputusan DEC-012).
 
@@ -785,14 +789,14 @@ erDiagram
 > Semua perbandingan tanggal memakai WIB: `(now() AT TIME ZONE 'Asia/Jakarta')::date`.
 
 - **US-001:** baca `settings`, `master_options`; tulis `audit_logs` implisit. Tidak ada tabel baru.
-- **US-002:** `INSERT profiles + user_roles`; login via Supabase Auth; `UPDATE profiles.is_active`.
+- **US-002:** `INSERT profiles + user_roles`; login via Supabase Auth; `UPDATE profiles.is_active`. Trigger `trg_handle_new_user` di `auth.users` membuat baris `profiles` otomatis saat sign-up (nama dari `raw_user_meta_data->>'name'`, fallback prefix email); role tetap ditetapkan Super Admin via `user_roles` (tanpa role default).
 - **US-003:** RLS: `team_members.profile_id = auth.uid()` → PIC/PM/assignee miliknya; test: user tanpa role `SELECT` → 0 baris.
-- **US-004:** trigger `INSERT audit_logs(actor, action, entity, old, new)` tiap CUD entitas utama.
+- **US-004:** trigger `INSERT audit_logs(actor, action, entity, old, new)` tiap CUD entitas utama. Satu-satunya penulis sah adalah trigger `SECURITY DEFINER` (bypass RLS); policy INSERT langsung `WITH CHECK (true)` di `audit_logs`/`lead_status_history` **dihapus** agar baris audit/history tak bisa dipalsukan via API.
 - **US-005:** CRUD `master_options`; dropdown baca `WHERE category=? AND is_active` (FK generated menjamin validitas).
 - **US-006:** `INSERT/SELECT comments(entity_type, entity_id)` [index komposit]; `attachments` + Storage; `notifications(recipient_id)` [index].
 - **US-007:** `INSERT leads`; duplikat: `SELECT ... WHERE whatsapp=?` [index] (peringatan).
 - **US-008:** `SELECT leads WHERE status/PIC/industry/date + search` [index status/pic/industry/date]; badge dari `status`.
-- **US-009:** `UPDATE leads.pic_id` (→ `team_members`); `INSERT audit_logs('lead.assign-pic')`.
+- **US-009:** `UPDATE leads.pic_id` role-based (Sales/Marketing atau Super Admin, bukan owner-only — bulk assign oleh Sales atas lead milik PIC lain harus lolos) + `INSERT audit_logs('lead.assign-pic')`.
 - **US-010:** bulk `INSERT leads` + `SELECT` duplikat per baris.
 - **US-011:** `SELECT leads WHERE status='Interest'` + `LEFT JOIN lead_interests`; `UPDATE lead_interests.stage` + audit.
 - **US-012:** `INSERT lead_activities`; timeline = `lead_activities + audit_logs(entity)`; `UPDATE leads.next_follow_up`; Overdue = `next_follow_up < WIB-hari-ini`.
@@ -800,12 +804,12 @@ erDiagram
 - **US-014:** `INSERT clients(source_lead_id, pic_name/referrer NULL bila dari lead)` dari `SELECT leads WHERE status='Closing'`.
 - **US-015:** `INSERT deals + deal_features`; `displayName` format di service; `code` UK; `created_by` = Sales.
 - **US-016:** `INSERT deal_payment_terms`; validasi `SUM = deals.value` di service.
-- **US-017:** `UPDATE deals.status + confirmed_by/at` sesuai graf; notifikasi ke Sales via `created_by → team_members → profiles`.
+- **US-017:** `UPDATE deals.status + confirmed_by/at` sesuai graf; notifikasi ke Sales via `created_by → team_members → profiles` **di dalam RPC** `transition_deal_status` (tanpa profil penerima → dilewati).
 - **US-018:** `INSERT change_requests`; bila Disetujui: `UPDATE deals + projects` + `INSERT deal_versions`; nilai negatif = diskon.
 - **US-019:** `INSERT projects(...) SELECT FROM deals WHERE status='Dikonfirmasi'`; cek 1:1 via UK `handover_id`.
-- **US-020:** `SELECT projects + filter` [index status/pm/client]; progress = agregat `tasks.percent`; `UPDATE projects` (PM/Admin via RLS).
+- **US-020:** `SELECT projects + filter` [index status/pm/client]; progress = agregat `tasks.percent`; `UPDATE/INSERT projects` role-based (semua PM + Super Admin, selaras `canManageProjects` — bukan owner-only); tanpa DELETE (arsip via RPC).
 - **US-021:** `SELECT task_templates WHERE is_active ORDER BY ord`; bulk `INSERT tasks`.
-- **US-022:** CRUD `tasks`; Kanban `UPDATE status`; sub-task `parent_id`; `%` induk = `AVG` anak; komentar/lampiran via `comments/attachments`.
+- **US-022:** CRUD `tasks`; Kanban `UPDATE status` role-based (PM/Admin atau assignee sendiri); `DELETE` khusus PM/Admin (hapus induk hapus anak via CASCADE); sub-task `parent_id`; `%` induk = `AVG` anak; komentar/lampiran via `comments/attachments`.
 - **US-023:** `INSERT features`; impor: `INSERT ... SELECT FROM deal_features`; konversi: `INSERT tasks` + `UPDATE features.task_id`.
 - **US-024:** baca `features + developer_capacity + holidays`; tulis `scheduled_*/override_*`; bentrok = self-join overlap per developer (hari WIB).
 - **US-025:** baca `tasks + features` bertanggal; `UPDATE` tanggal + `task_dependencies` FS + kaskade.
@@ -821,7 +825,7 @@ erDiagram
 - **US-035:** `INSERT post_metrics`; dedup via partial UK Final; ER = rumus di query; kunci edit via RLS.
 - **US-036:** `INSERT account_growth`; net = rumus; tren `ORDER BY month` [PK komposit].
 - **US-037:** `INSERT community_interactions`; response = `replied - received`; SLA ≤ 30 dari `settings` (WIB).
-- **US-038:** `INSERT inquiries`; routing ≤ 15 (WIB); konversi: kontak (nama/WA/email) diminta via form konversi (kolom NOT NULL di `leads`), lalu `INSERT leads(source, industry default)` + `UPDATE inquiries.lead_id`.
+- **US-038:** RPC `convert_inquiry_to_lead` (DEFINER, role Sales/Marketing + Super Admin): kontak (nama/WA/email) wajib via parameter (kolom NOT NULL di `leads`), lalu `INSERT leads(source='Sosmed/<platform>', industry='Lainnya', contact_date=tanggal terima WIB)` + `UPDATE inquiries SET (lead_id, status='Handover Selesai')` atomik; anti-ganda via `lead_id IS NULL`.
 - **US-039:** 6 agregat dari tabel di atas + target dari `settings`.
 - **US-040:** CRUD `strategy_evaluations`; Test wajib `hypothesis` (CHECK via trigger/service).
 - **US-041:** CRUD `settings` (+ `holidays`, `developer_capacity`); audit perubahan.
@@ -847,7 +851,7 @@ erDiagram
 
 ## Persetujuan
 
-- **Status:** DRAFT
-- **Oleh:** -
-- **Tanggal:** -
+- **Status:** APPROVED
+- **Oleh:** pemilik proyek
+- **Tanggal:** 2026-10-05
 - **Catatan:** Setelah `APPROVED`, skema dikunci untuk Fase 3. Perubahan apa pun = CR + migration + update dokumen ini dalam commit yang sama.

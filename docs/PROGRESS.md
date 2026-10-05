@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
-> **Update terakhir:** 2026-10-04  
-> **Fase saat ini:** Fase 2 — Skema Database (`docs/DATABASE.md` DRAFT di branch `db/skema-database-awal`, menunggu review pemilik)
+> **Update terakhir:** 2026-10-05  
+> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; migration baseline + RLS/audit/RPC + parity-fix di `frontend/supabase`, menunggu `db reset` di mesin Docker)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -12,9 +12,9 @@
 |----|-------|------|--------|--------------|------------|
 | US-001 | Setup proyek & desain sistem | Frontend | DONE | 6/6 ✅ | 2b04163 |
 | US-002 | Autentikasi & manajemen user | Frontend | DONE | 6/6 ✅ | 9c1834f |
-| US-003 | Row Level Security per role | Backend | TODO | 0/4 | - |
-| US-004 | Audit trail | Backend | TODO | 0/5 | - |
-| US-005 | Pengaturan master data & dropdown | Backend | TODO | 0/5 | - |
+| US-003 | Row Level Security per role | Backend | IN_PROGRESS | 2/4 | `frontend/supabase/migrations/20261005001000_backend_foundation.sql` |
+| US-004 | Audit trail | Backend | IN_PROGRESS | 3/5 | `frontend/supabase/migrations/20261005001000_backend_foundation.sql` |
+| US-005 | Pengaturan master data & dropdown | Backend | IN_PROGRESS | 3/5 | `frontend/supabase/seed.sql` |
 | US-006 | Komentar, lampiran, dan notifikasi | Frontend | DONE | 5/5 ✅ | 52af09f |
 
 ---
@@ -92,9 +92,9 @@
 
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
-| US-041 | Pengaturan KPI, SLA, dan routing | Backend | TODO | 0/3 | - |
+| US-041 | Pengaturan KPI, SLA, dan routing | Backend | IN_PROGRESS | 2/3 | `frontend/supabase/seed.sql` |
 | US-042 | SOP, panduan, dan matriks RACI | Frontend | DONE | 3/3 ✅ | eba2031 |
-| US-043 | Arsip data & backup | Backend | TODO | 0/4 | - |
+| US-043 | Arsip data & backup | Backend | IN_PROGRESS | 2/4 | `frontend/supabase/migrations/20261005001000_backend_foundation.sql` |
 | US-044 | Pencarian global & beranda per role | Frontend | DONE | 4/4 ✅ | ac3b400 |
 
 ---
@@ -103,37 +103,37 @@
 
 | ID | Deskripsi | Status |
 |----|-----------|--------|
-| FR-1 | Auth email/password + RLS | TODO |
-| FR-2 | Audit trail (siapa/kapan/apa/nilai lama/baru) | TODO |
-| FR-3 | Dropdown dari master data terpusat | TODO |
-| FR-4 | Komentar, lampiran, notifikasi reusable | TODO |
-| FR-5 | Semua kalkulasi metrik di sistem, rumus terdokumentasi | TODO |
-| FR-6 | Lead dengan field kontak, industri, PIC, status 7 tahap | TODO |
-| FR-7 | Deteksi lead duplikat | TODO |
-| FR-8 | Lead Interest → pipeline Interested Leads otomatis | TODO |
-| FR-9 | Lead Closing → klien + deal handover tanpa input ulang | TODO |
-| FR-10 | Dashboard CRM agregat + per PIC + filter periode | TODO |
-| FR-11 | Format nama proyek otomatis + kode unik | TODO |
-| FR-12 | Validasi total termin = nilai deal | TODO |
-| FR-13 | Alur status handover Draft→Menunggu→Dikonfirmasi/Perlu Revisi | TODO |
-| FR-14 | Change request dengan riwayat versi setelah konfirmasi | TODO |
-| FR-15 | Proyek mewarisi data handover | TODO |
-| FR-16 | Generate task dari template saat proyek dibuat | TODO |
-| FR-17 | Task: Kanban, List, sub-task, komentar, lampiran, progress otomatis | TODO |
-| FR-18 | Jadwal fitur otomatis + deteksi bentrok | TODO |
-| FR-19 | Gantt: drag-drop, zoom, dependensi finish-to-start | TODO |
-| FR-20 | Dashboard produksi: filter + ekspor PDF/Excel | TODO |
-| FR-21 | Skor kelengkapan brief + validasi status | TODO |
-| FR-22 | Materi tidak bisa jadwal sebelum quality gate + Disetujui | TODO |
-| FR-23 | Relasi MAT → banyak PUB (Single/Crosspost) | TODO |
-| FR-24 | Kalender publikasi dari data distribusi + filter | TODO |
-| FR-25 | Metrik snapshot Monitoring/KPI Final; deduplikasi Final | TODO |
-| FR-26 | Hitung response time komunitas + SLA routing WA | TODO |
-| FR-27 | Aset kedaluwarsa tidak bisa ditautkan; peringatan 30 hari | TODO |
-| FR-28 | Inquiry → lead CRM dengan sumber tercatat | TODO |
-| FR-29 | Evaluasi strategi KIST + hipotesis untuk Test | TODO |
-| FR-30 | Target KPI, SLA, jam layanan, nomor WA, kalender libur dari Pengaturan | TODO |
-| FR-31 | Arsip, ekspor CSV, pencarian global dengan hak akses | TODO |
+| FR-1 | Auth email/password + RLS | IN_PROGRESS |
+| FR-2 | Audit trail (siapa/kapan/apa/nilai lama/baru) | IN_PROGRESS |
+| FR-3 | Dropdown dari master data terpusat | IN_PROGRESS |
+| FR-4 | Komentar, lampiran, notifikasi reusable | IN_PROGRESS |
+| FR-5 | Semua kalkulasi metrik di sistem, rumus terdokumentasi | IN_PROGRESS |
+| FR-6 | Lead dengan field kontak, industri, PIC, status 7 tahap | IN_PROGRESS |
+| FR-7 | Deteksi lead duplikat | IN_PROGRESS |
+| FR-8 | Lead Interest → pipeline Interested Leads otomatis | IN_PROGRESS |
+| FR-9 | Lead Closing → klien + deal handover tanpa input ulang | IN_PROGRESS |
+| FR-10 | Dashboard CRM agregat + per PIC + filter periode | IN_PROGRESS |
+| FR-11 | Format nama proyek otomatis + kode unik | IN_PROGRESS |
+| FR-12 | Validasi total termin = nilai deal | IN_PROGRESS |
+| FR-13 | Alur status handover Draft→Menunggu→Dikonfirmasi/Perlu Revisi | IN_PROGRESS |
+| FR-14 | Change request dengan riwayat versi setelah konfirmasi | IN_PROGRESS |
+| FR-15 | Proyek mewarisi data handover | IN_PROGRESS |
+| FR-16 | Generate task dari template saat proyek dibuat | IN_PROGRESS |
+| FR-17 | Task: Kanban, List, sub-task, komentar, lampiran, progress otomatis | IN_PROGRESS |
+| FR-18 | Jadwal fitur otomatis + deteksi bentrok | IN_PROGRESS |
+| FR-19 | Gantt: drag-drop, zoom, dependensi finish-to-start | IN_PROGRESS |
+| FR-20 | Dashboard produksi: filter + ekspor PDF/Excel | IN_PROGRESS |
+| FR-21 | Skor kelengkapan brief + validasi status | IN_PROGRESS |
+| FR-22 | Materi tidak bisa jadwal sebelum quality gate + Disetujui | IN_PROGRESS |
+| FR-23 | Relasi MAT → banyak PUB (Single/Crosspost) | IN_PROGRESS |
+| FR-24 | Kalender publikasi dari data distribusi + filter | IN_PROGRESS |
+| FR-25 | Metrik snapshot Monitoring/KPI Final; deduplikasi Final | IN_PROGRESS |
+| FR-26 | Hitung response time komunitas + SLA routing WA | IN_PROGRESS |
+| FR-27 | Aset kedaluwarsa tidak bisa ditautkan; peringatan 30 hari | IN_PROGRESS |
+| FR-28 | Inquiry → lead CRM dengan sumber tercatat | IN_PROGRESS |
+| FR-29 | Evaluasi strategi KIST + hipotesis untuk Test | IN_PROGRESS |
+| FR-30 | Target KPI, SLA, jam layanan, nomor WA, kalender libur dari Pengaturan | IN_PROGRESS |
+| FR-31 | Arsip, ekspor CSV, pencarian global dengan hak akses | IN_PROGRESS |
 
 ---
 
@@ -143,8 +143,8 @@
 |------|-----------|--------|
 | Gate 0 | Fase 0 selesai: proyek jalan kosong, lint/typecheck lolos | DONE |
 | Gate 1 | Frontend selesai: semua UI dengan mock, kontrak API draft | DONE |
-| Gate 2 | Skema Database selesai & disetujui (`DATABASE.md` + tag `v0.2.0-database`) | TODO |
-| Gate 3 | Backend selesai: semua US & FR DONE, mock diganti API | TODO |
+| Gate 2 | Skema Database selesai & disetujui (`DATABASE.md` + tag `v0.2.0-database`) | DONE |
+| Gate 3 | Backend selesai: semua US & FR DONE, mock diganti API | IN_PROGRESS |
 | Gate 4 | Deploy Ready: build produksi bersih, dokumentasi lengkap | TODO |
 
 ---

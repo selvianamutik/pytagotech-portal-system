@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-10-05
+
+### Added
+- Gate 2 selesai: `docs/DATABASE.md` APPROVED pemilik (42 tabel + ERD Mermaid + kamus data + matriks relasi + index + keterlacakan US/FR + walkthrough; tag `v0.2.0-database`)
+- Fondasi backend di `frontend/supabase` (ikut merge; pembuktian `db reset` menyusul): migrasi baseline skema, helper role/RLS + policy per modul, trigger audit generik, guardrail bisnis, view/RPC dasar, migrasi parity-fix, seed referensi + `supabase/README.md`
+
 ## [Unreleased]
 
 ### Added
+- Migrasi parity-fix backend (`20261005002000`): RLS role-based selaras kontrak UI, RPC `convert_inquiry_to_lead`, notifikasi handover ke Sales, trigger `handle_new_user`, hapus policy INSERT pemalsu audit
 - Dialog aktivitas lead: ubah status langsung (6 status lain, tercatat di timeline)
 - Draf skema database Fase 2 (`docs/DATABASE.md`, Status DRAFT): 37 tabel + ERD + relasi + index, menunggu persetujuan
 - Revisi skema dari review: `team_members`, FK master_options, `lead_status_history`, DDL draf `database/schema.sql`
