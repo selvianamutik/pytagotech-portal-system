@@ -231,8 +231,8 @@ export function UserManagement() {
             <DialogHeader>
               <DialogTitle>Undang user baru</DialogTitle>
               <DialogDescription>
-                User baru langsung aktif. Undangan email dikirim via Supabase
-                Auth di Fase 2.
+                User baru langsung aktif. Minta user memakai Lupa kata sandi
+                di halaman masuk untuk mengatur kata sandinya sendiri.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">

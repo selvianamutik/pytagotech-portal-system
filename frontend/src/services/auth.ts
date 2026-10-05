@@ -1,4 +1,4 @@
-import { mockUsers } from "@/mocks/auth";
+import { createClient } from "@/lib/supabase/client";
 import { isValidEmail } from "@/lib/validators";
 import type {
   AuthSession,
@@ -12,31 +12,134 @@ import type { ServiceResult } from "@/services/result";
 
 /**
  * Lapisan akses data autentikasi & user (US-002, FR-1).
- * Fase 1: mock in-memory dengan signature yang meniru Supabase Auth
- * (`signInWithPassword`, `signOut`, `resetPasswordForEmail`, tabel `profiles`).
+ * Implementasi Supabase Auth + tabel `profiles`/`user_roles` (RLS US-003).
  * Komponen HANYA boleh memanggil fungsi dari file ini.
  */
 
 const MIN_PASSWORD_LENGTH = 8;
 
-let userStore: PortalUser[] = structuredClone(mockUsers);
-let sessionStore: AuthSession | null = null;
+type BrowserSupabase = ReturnType<typeof createClient>;
 
-/** Mengembalikan state mock ke awal — dipakai test dan demo. */
-export function resetMockAuth(): void {
-  userStore = structuredClone(mockUsers);
-  sessionStore = null;
+interface ProfileRow {
+  id: string;
+  name: string;
+  email: string;
+  is_active: boolean;
+  created_at: string;
 }
 
-function sessionFor(user: PortalUser): AuthSession {
+interface UserRoleRow {
+  user_id: string;
+  role_name: string;
+}
+
+function isValidRole(role: string): role is UserRole {
+  return (PORTAL_ROLES as readonly string[]).includes(role);
+}
+
+function toPortalUser(
+  profile: ProfileRow,
+  roles: UserRoleRow[]
+): PortalUser {
   return {
-    user: { ...user, roles: [...user.roles] },
-    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    roles: roles
+      .filter((row) => row.user_id === profile.id && isValidRole(row.role_name))
+      .map((row) => row.role_name as UserRole),
+    isActive: profile.is_active,
+    createdAt: profile.created_at,
+  };
+}
+
+async function fetchPortalUser(
+  supabase: BrowserSupabase,
+  authUserId: string
+): Promise<PortalUser | null> {
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, name, email, is_active, created_at")
+    .eq("id", authUserId)
+    .single();
+  if (profileError || !profile) {
+    return null;
+  }
+
+  const { data: roles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("user_id, role_name")
+    .eq("user_id", authUserId);
+  if (rolesError) {
+    return null;
+  }
+
+  return toPortalUser(profile as ProfileRow, (roles ?? []) as UserRoleRow[]);
+}
+
+/** ID user aktif ber-role Super Admin — dipakai guard proteksi admin terakhir. */
+async function fetchActiveSuperAdminIds(
+  supabase: BrowserSupabase
+): Promise<string[] | null> {
+  const { data: roleRows, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("user_id")
+    .eq("role_name", "Super Admin");
+  if (rolesError || !roleRows) {
+    return null;
+  }
+  const ids = (roleRows as { user_id: string }[]).map((row) => row.user_id);
+  if (ids.length === 0) {
+    return [];
+  }
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id")
+    .in("id", ids)
+    .eq("is_active", true);
+  if (profilesError || !profiles) {
+    return null;
+  }
+  return (profiles as { id: string }[]).map((row) => row.id);
+}
+
+function sessionResult(
+  user: PortalUser,
+  expiresAt: string | null
+): ServiceResult<AuthSession> {
+  return {
+    data: {
+      user,
+      expiresAt:
+        expiresAt ?? new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    },
+    error: null,
   };
 }
 
 export async function getSession(): Promise<ServiceResult<AuthSession>> {
-  return { data: sessionStore, error: null };
+  try {
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      return { data: null, error: null };
+    }
+
+    const user = await fetchPortalUser(supabase, session.user.id);
+    if (!user) {
+      return { data: null, error: null };
+    }
+
+    const expiresAt = session.expires_at
+      ? new Date(session.expires_at * 1000).toISOString()
+      : null;
+    return sessionResult(user, expiresAt);
+  } catch {
+    // Gagal baca sesi (mis. env belum dikonfigurasi) = anggap belum masuk.
+    return { data: null, error: null };
+  }
 }
 
 export async function login(
@@ -54,25 +157,65 @@ export async function login(
     };
   }
 
-  const user = userStore.find((candidate) => candidate.email === email);
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password: input.password,
+  });
   // Pesan generik agar tidak membocorkan email mana yang terdaftar.
-  if (!user) {
+  if (error || !data.session) {
     return { data: null, error: "Email atau kata sandi salah." };
   }
+
+  const user = await fetchPortalUser(supabase, data.session.user.id);
+  if (!user) {
+    await supabase.auth.signOut();
+    return {
+      data: null,
+      error: "Profil portal belum tersedia. Hubungi Super Admin.",
+    };
+  }
   if (!user.isActive) {
+    await supabase.auth.signOut();
     return {
       data: null,
       error: "Akun dinonaktifkan. Hubungi Super Admin.",
     };
   }
 
-  // Fase 1 (mock): kecocokan password diverifikasi Supabase Auth di Fase 2.
-  sessionStore = sessionFor(user);
-  return { data: sessionStore, error: null };
+  const expiresAt = data.session.expires_at
+    ? new Date(data.session.expires_at * 1000).toISOString()
+    : null;
+  return sessionResult(user, expiresAt);
 }
 
 export async function logout(): Promise<ServiceResult<true>> {
-  sessionStore = null;
+  await createClient().auth.signOut();
+  return { data: true, error: null };
+}
+
+/**
+ * Atur kata sandi baru dari sesi recovery (US-002).
+ * Dipakai mode "password baru" di /login?recovery=1 setelah tautan email.
+ */
+export async function updatePassword(
+  newPassword: string
+): Promise<ServiceResult<true>> {
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
+    return {
+      data: null,
+      error: `Kata sandi minimal ${MIN_PASSWORD_LENGTH} karakter.`,
+    };
+  }
+  const { error } = await createClient().auth.updateUser({
+    password: newPassword,
+  });
+  if (error) {
+    return {
+      data: null,
+      error: "Gagal memperbarui kata sandi. Minta tautan reset baru.",
+    };
+  }
   return { data: true, error: null };
 }
 
@@ -83,35 +226,52 @@ export async function requestPasswordReset(
   if (!isValidEmail(normalized)) {
     return { data: null, error: "Format email tidak valid." };
   }
-  const user = userStore.find((candidate) => candidate.email === normalized);
-  if (!user) {
-    return { data: null, error: "Email tidak terdaftar di portal." };
+
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (typeof window !== "undefined" ? window.location.origin : "");
+  // Tautan email ditukar sesi di /auth/confirm, lalu ke mode password-baru.
+  const redirectTo = appUrl
+    ? `${appUrl}/auth/confirm?next=${encodeURIComponent("/login?recovery=1")}`
+    : undefined;
+  const { error } = await createClient().auth.resetPasswordForEmail(
+    normalized,
+    redirectTo ? { redirectTo } : undefined
+  );
+  if (error) {
+    return { data: null, error: "Gagal mengirim tautan reset. Coba lagi." };
   }
-  // Fase 2: diganti `supabase.auth.resetPasswordForEmail`.
+  // Selalu sukses agar tidak membocorkan email mana yang terdaftar.
   return {
-    data: `Tautan reset kata sandi dikirim ke ${normalized}. (mock — email asli dikirim via Supabase Auth di Fase 2)`,
+    data: `Jika ${normalized} terdaftar, tautan reset kata sandi telah dikirim.`,
     error: null,
   };
 }
 
 export async function listUsers(): Promise<ServiceResult<PortalUser[]>> {
+  const supabase = createClient();
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, name, email, is_active, created_at")
+    .order("name");
+  if (profilesError || !profiles) {
+    return { data: null, error: "Gagal memuat daftar user." };
+  }
+
+  const { data: roles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("user_id, role_name");
+  if (rolesError || !roles) {
+    return { data: null, error: "Gagal memuat daftar user." };
+  }
+
+  const roleRows = roles as UserRoleRow[];
   return {
-    data: userStore.map((user) => ({ ...user, roles: [...user.roles] })),
+    data: (profiles as ProfileRow[]).map((profile) =>
+      toPortalUser(profile, roleRows)
+    ),
     error: null,
   };
-}
-
-function isValidRole(role: string): role is UserRole {
-  return (PORTAL_ROLES as readonly string[]).includes(role);
-}
-
-/** User aktif terakhir dengan role Super Admin — tidak boleh hilang. */
-function isLastActiveSuperAdmin(targetId: string): boolean {
-  const others = userStore.filter(
-    (user) =>
-      user.id !== targetId && user.isActive && user.roles.includes("Super Admin")
-  );
-  return others.length === 0;
 }
 
 export async function createUser(
@@ -132,50 +292,86 @@ export async function createUser(
   if (!input.roles.every(isValidRole)) {
     return { data: null, error: "Terdapat role yang tidak dikenal." };
   }
-  if (userStore.some((user) => user.email === email)) {
-    return { data: null, error: "Email sudah digunakan user lain." };
+
+  // Pembuatan akun Auth memakai service_role → wajib lewat Route Handler
+  // agar kunci service tidak masuk bundle browser.
+  let response: Response;
+  try {
+    response = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, roles: input.roles }),
+    });
+  } catch {
+    return { data: null, error: "Gagal membuat user. Coba lagi." };
   }
 
-  const nextNumber = userStore.length + 1;
-  const user: PortalUser = {
-    id: `USR-${String(nextNumber).padStart(3, "0")}`,
-    name,
-    email,
-    roles: [...input.roles],
-    isActive: true,
-    createdAt: new Date().toISOString(),
+  const payload = (await response.json()) as {
+    data?: PortalUser;
+    error?: string;
   };
-  userStore.push(user);
-  return { data: { ...user, roles: [...user.roles] }, error: null };
+  if (!response.ok || !payload.data) {
+    return {
+      data: null,
+      error: payload.error ?? "Gagal membuat user.",
+    };
+  }
+  return { data: payload.data, error: null };
 }
 
 export async function updateUserRoles(
   userId: string,
   roles: UserRole[]
 ): Promise<ServiceResult<PortalUser>> {
-  const user = userStore.find((candidate) => candidate.id === userId);
-  if (!user) {
-    return { data: null, error: "User tidak ditemukan." };
-  }
   if (roles.length === 0) {
     return { data: null, error: "User harus memiliki minimal satu role." };
   }
   if (!roles.every(isValidRole)) {
     return { data: null, error: "Terdapat role yang tidak dikenal." };
   }
-  if (
-    user.isActive &&
-    user.roles.includes("Super Admin") &&
-    !roles.includes("Super Admin") &&
-    isLastActiveSuperAdmin(userId)
-  ) {
-    return {
-      data: null,
-      error: "Tidak dapat mencabut Super Admin terakhir yang aktif.",
-    };
+
+  const supabase = createClient();
+  const { data: currentRoles } = await supabase
+    .from("user_roles")
+    .select("role_name")
+    .eq("user_id", userId);
+  const currentlySuperAdmin = ((currentRoles ?? []) as { role_name: string }[]).some(
+    (row) => row.role_name === "Super Admin"
+  );
+
+  if (currentlySuperAdmin && !roles.includes("Super Admin")) {
+    const adminIds = await fetchActiveSuperAdminIds(supabase);
+    if (adminIds === null) {
+      return { data: null, error: "Gagal memeriksa proteksi Super Admin." };
+    }
+    if (adminIds.length <= 1 && adminIds.includes(userId)) {
+      return {
+        data: null,
+        error: "Tidak dapat mencabut Super Admin terakhir yang aktif.",
+      };
+    }
   }
-  user.roles = [...roles];
-  return { data: { ...user, roles: [...user.roles] }, error: null };
+
+  const { error: deleteError } = await supabase
+    .from("user_roles")
+    .delete()
+    .eq("user_id", userId);
+  if (deleteError) {
+    return { data: null, error: "Gagal mengubah role." };
+  }
+
+  const { error: insertError } = await supabase.from("user_roles").insert(
+    roles.map((role) => ({ user_id: userId, role_name: role }))
+  );
+  if (insertError) {
+    return { data: null, error: "Gagal mengubah role." };
+  }
+
+  const user = await fetchPortalUser(supabase, userId);
+  if (!user) {
+    return { data: null, error: "User tidak ditemukan." };
+  }
+  return { data: user, error: null };
 }
 
 export async function setUserActive(
@@ -183,26 +379,47 @@ export async function setUserActive(
   isActive: boolean,
   actorId?: string
 ): Promise<ServiceResult<PortalUser>> {
-  const user = userStore.find((candidate) => candidate.id === userId);
-  if (!user) {
-    return { data: null, error: "User tidak ditemukan." };
-  }
   if (!isActive && actorId === userId) {
     return {
       data: null,
       error: "Tidak dapat menonaktifkan akun sendiri.",
     };
   }
-  if (
-    !isActive &&
-    user.roles.includes("Super Admin") &&
-    isLastActiveSuperAdmin(userId)
-  ) {
-    return {
-      data: null,
-      error: "Tidak dapat menonaktifkan Super Admin terakhir yang aktif.",
-    };
+
+  const supabase = createClient();
+  if (!isActive) {
+    const { data: currentRoles } = await supabase
+      .from("user_roles")
+      .select("role_name")
+      .eq("user_id", userId);
+    const isSuperAdmin = ((currentRoles ?? []) as { role_name: string }[]).some(
+      (row) => row.role_name === "Super Admin"
+    );
+    if (isSuperAdmin) {
+      const adminIds = await fetchActiveSuperAdminIds(supabase);
+      if (adminIds === null) {
+        return { data: null, error: "Gagal memeriksa proteksi Super Admin." };
+      }
+      if (adminIds.length <= 1 && adminIds.includes(userId)) {
+        return {
+          data: null,
+          error: "Tidak dapat menonaktifkan Super Admin terakhir yang aktif.",
+        };
+      }
+    }
   }
-  user.isActive = isActive;
-  return { data: { ...user, roles: [...user.roles] }, error: null };
+
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ is_active: isActive })
+    .eq("id", userId);
+  if (updateError) {
+    return { data: null, error: "Gagal mengubah status user." };
+  }
+
+  const user = await fetchPortalUser(supabase, userId);
+  if (!user) {
+    return { data: null, error: "User tidak ditemukan." };
+  }
+  return { data: user, error: null };
 }

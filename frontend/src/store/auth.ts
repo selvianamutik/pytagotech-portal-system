@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 
+import { createClient } from "@/lib/supabase/client";
 import { getSession, login, logout } from "@/services/auth";
 import type { LoginInput, PortalUser } from "@/types/auth";
 
@@ -16,34 +17,64 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
-/**
- * State sesi client-side (US-002).
- * Diisi dari `services/auth` agar komponen tidak menyentuh mock langsung.
- * Fase 2: `initialize` membaca sesi Supabase (middleware + Server Component).
- */
-export const useAuthStore = create<AuthState>()((set) => ({
-  status: "loading",
-  user: null,
-  error: null,
+let subscribed = false;
 
-  async initialize() {
-    const { data } = await getSession();
-    set({ status: data ? "authenticated" : "unauthenticated", user: data?.user ?? null });
-  },
-
-  async signIn(input) {
-    set({ error: null });
-    const { data, error } = await login(input);
-    if (error || !data) {
-      set({ status: "unauthenticated", user: null, error });
-      return false;
+/** Sinkronkan store saat sesi berubah di tab lain / refresh token. */
+function ensureSubscription(refresh: () => Promise<void>): void {
+  if (subscribed) {
+    return;
+  }
+  subscribed = true;
+  createClient().auth.onAuthStateChange((event) => {
+    if (
+      event === "SIGNED_IN" ||
+      event === "SIGNED_OUT" ||
+      event === "TOKEN_REFRESHED" ||
+      event === "USER_UPDATED"
+    ) {
+      void refresh();
     }
-    set({ status: "authenticated", user: data.user, error: null });
-    return true;
-  },
+  });
+}
 
-  async signOut() {
-    await logout();
-    set({ status: "unauthenticated", user: null, error: null });
-  },
-}));
+/**
+ * State sesi client-side (US-002, FR-1).
+ * Diisi dari Supabase Auth via `services/auth`; perubahan sesi
+ * (tab lain, refresh token) mengalir lewat `onAuthStateChange`.
+ */
+export const useAuthStore = create<AuthState>()((set) => {
+  async function refresh() {
+    const { data } = await getSession();
+    set({
+      status: data ? "authenticated" : "unauthenticated",
+      user: data?.user ?? null,
+    });
+  }
+
+  return {
+    status: "loading",
+    user: null,
+    error: null,
+
+    async initialize() {
+      ensureSubscription(refresh);
+      await refresh();
+    },
+
+    async signIn(input) {
+      set({ error: null });
+      const { data, error } = await login(input);
+      if (error || !data) {
+        set({ status: "unauthenticated", user: null, error });
+        return false;
+      }
+      set({ status: "authenticated", user: data.user, error: null });
+      return true;
+    },
+
+    async signOut() {
+      await logout();
+      set({ status: "unauthenticated", user: null, error: null });
+    },
+  };
+});
