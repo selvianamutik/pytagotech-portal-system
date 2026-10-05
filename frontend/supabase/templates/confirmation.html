@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Konfirmasi akun Pytagotech Portal Anda</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+    Satu langkah lagi — konfirmasi akun portal Anda.
+  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="background-color:#1d4ed8;padding:28px 32px;text-align:center;">
+              <p style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;">Pytagotech Portal</p>
+              <p style="margin:6px 0 0;color:#bfdbfe;font-size:13px;">Portal web multi-divisi Pytagotech Group</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <h1 style="margin:0 0 12px;font-size:20px;color:#0f172a;">Konfirmasi akun Anda</h1>
+              <p style="margin:0 0 12px;font-size:14px;line-height:22px;color:#334155;">
+                Halo,<br />
+                akun <strong>{{ .Email }}</strong> telah didaftarkan ke Pytagotech Portal.
+                Klik tombol di bawah untuk mengaktifkan akun Anda:
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+                <tr>
+                  <td align="center" style="background-color:#1d4ed8;border-radius:8px;">
+                    <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 36px;color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+                      Konfirmasi Akun Saya
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 12px;font-size:13px;line-height:20px;color:#64748b;">
+                Tombol tidak berfungsi? Salin tautan berikut ke peramban Anda:<br />
+                <a href="{{ .ConfirmationURL }}" style="color:#1d4ed8;word-break:break-all;">{{ .ConfirmationURL }}</a>
+              </p>
+              <p style="margin:0;font-size:13px;line-height:20px;color:#64748b;">
+                Demi keamanan, tautan ini akan kedaluwarsa. Jika Anda tidak merasa
+                mendaftar, abaikan email ini.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px;background-color:#f8fafc;border-top:1px solid #e2e8f0;">
+              <p style="margin:0;font-size:12px;line-height:18px;color:#94a3b8;">
+                Email otomatis dari Pytagotech Portal — mohon jangan dibalas.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
