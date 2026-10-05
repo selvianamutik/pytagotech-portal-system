@@ -174,3 +174,19 @@
 - **Alternatif yang dipertimbangkan:** Hanya validasi service (bisa basi bila ada tulis langsung); trigger sinkron (menyembunyikan logika bisnis di DB).
 - **Alasan:** Invarian struktural (klien sama) milik DB; sinkron nilai (keputusan bisnis) milik service.
 - **Konsekuensi:** Migration wajib membuat `UNIQUE(id, client_id)` sebelum FK komposit.
+
+---
+
+## DEC-014: Wiring Supabase Auth — Service Tetap, Route Handler untuk Admin
+
+- **Tanggal:** 2026-10-05
+- **Terkait:** US-002, FR-1
+- **Konteks:** Swap mock → Supabase Auth nyata adalah prasyarat semua service swap (policy RLS `to authenticated`; mock auth = anon = 0 baris).
+- **Keputusan:**
+  - `services/auth.ts` memakai browser client; signature + `ServiceResult` dipertahankan sehingga komponen/store tak berubah (kecuali teks bantuan Fase 1).
+  - Pembuatan user (butuh service_role) hanya lewat `POST /api/admin/users`; browser tak pernah memegang kunci service. User dibuat terkonfirmasi + password acak, lalu atur kata sandi via Lupa kata sandi (tanpa SMTP undangan).
+  - Proxy redirect: tamu → `/login`, user di `/login` → `/`; `getSession` gagal = belum masuk (fail-closed).
+  - Reset password selalu "sukses" agar tak membocorkan email terdaftar.
+- **Alternatif yang dipertimbangkan:** Invite email Supabase (butuh SMTP terkonfigurasi — belum ada); guard owner di RLS leads (ditolak — bertentangan kontrak bulk-assign US-009, lihat migrasi parity-fix).
+- **Alasan:** Satu lapis service, secrets hanya di server, alur sesuai kontrak UI Fase 1.
+- **Konsekuensi:** Butuh `SUPABASE_SERVICE_ROLE_KEY` di server + user Super Admin pertama dibuat via Dashboard/SQL (terdokumentasi di `API.md`); `db reset` di mesin Docker tetap wajib sebelum klaim DONE.

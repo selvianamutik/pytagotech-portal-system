@@ -1094,3 +1094,129 @@
   - Verifikasi pra-commit: lint ✅ typecheck ✅ test ✅ (208/208); secret (`.env.local`, `credentials.txt`) ter-ignore ✅
 - **Catatan/Masalah:** temuan sekuens — service swap US-005/US-041 butuh sesi Auth nyata (policy RLS `to authenticated`; mock auth = anon = 0 baris). Opsi: (a) wiring Supabase Auth dulu (US-002 backend), atau (b) bangun UI + service sekarang (berfungsi setelah auth).
 - **Langkah berikutnya:** putuskan sekuens (a)/(b) dengan pemilik
+
+---
+
+## 2026-10-05 20:00 — Fase 3 — Wiring Supabase Auth / US-002 backend (IN_PROGRESS, belum DONE)
+
+- **Fase:** 3 (Backend)
+- **Branch:** feature/US-002-backend-auth (belum merge)
+- **Yang dilakukan:**
+  - `services/auth.ts` rewrite penuh ke Supabase Auth (signIn/out/reset/session + `profiles`/`user_roles`); signature + `ServiceResult` dipertahankan — komponen tak berubah kecuali 2 teks bantuan Fase 1.
+  - `store/auth.ts`: langganan `onAuthStateChange` (SIGNED_IN/OUT/REFRESH/UPDATED).
+  - `POST /api/admin/users`: buat user terkonfirmasi + role via service_role (otorisasi Super Admin, rollback bila role gagal); browser tak pegang kunci service.
+  - `src/proxy.ts`: tamu → `/login`, user di `/login` → `/`; `updateSession` kembalikan klaim.
+  - Test: fake Supabase client bersama (`src/test/supabase-fake.ts`); rewrite `auth.test.ts` + `auth.test.ts`(store); isolasi client di `require-role.test.tsx`.
+  - Docs: `API.md` (modul Users & Roles → backend + admin route + bootstrap Super Admin pertama), `DECISIONS.md` DEC-014.
+- **File berubah:** services/auth(.test), store/auth(.test), app/api/admin/users/route.ts (baru), test/supabase-fake.ts (baru), lib/supabase/middleware.ts, src/proxy.ts, components login-form/user-management (teks), require-role.test, API.md, DECISIONS.md, WORKLOG.md
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (211/211, 48 file) · build ✅ (`/api/admin/users` + Proxy) · browser ✅ (`/` → 307 `/login`; `/login` → 200) · DB live BELUM (tanpa Docker/CLI + `SUPABASE_SERVICE_ROLE_KEY` belum ada di env lokal)
+- **Catatan/Masalah:** (1) Login nyata butuh user + role di DB (bootstrap via Dashboard/SQL, lihat API.md). (2) `db reset` + uji RPC/RLS + login E2E tetap wajib sebelum DONE. (3) `mocks/auth.ts` kini tak dipakai service (masih dirujuk? — cek sebelum hapus di sweep akhir).
+- **Langkah berikutnya:** `db reset` di mesin Docker → bootstrap Super Admin → uji login/CRUD user E2E → merge; lalu swap US-005/US-041
+
+---
+
+## 2026-10-05 21:00 — Fix — Foundation Gagal di Dashboard (`uuid = text`) + Bug Shadowing
+
+- **Laporan pemilik:** `20261005001000` error `42883 operator does not exist: uuid = text` di SQL Editor.
+- **Yang dilakukan:**
+  - Parse seluruh file dengan `pglast` (149 statement): sintaks BERSIH — error berasal dari katalog live, bukan sintaks.
+  - Temuan kritis A (bug nyata, bukan tebakan): parameter fungsi SQL `has_role(role_name, user_id)` / `has_any_role(...)` di-shadow kolom bernama sama → kondisi menjadi `ur.user_id = ur.user_id` (selalu benar). Semua cek role akan lolos untuk user ber-role apa pun. Diperbaiki dengan prefix `p_` di 5 helper.
+  - Temuan kritis B: `deal_terms_total_idr(deal_id)` — `deal_id` di-resolve ke kolom `dpt.deal_id`, bukan parameter → total dihitung untuk SEMUA deal. Diperbaiki (`p_deal_id`).
+  - Idempotensi (DB pemilik kemungkinan ter-migrasi parsial): `DROP POLICY IF EXISTS` sebelum 91 `CREATE POLICY`; guard `pg_publication_tables` untuk 3 `ADD TABLE` realtime. File kini aman di-run ulang penuh. Catatan: `001000` belum pernah teraplikasi di DB mana pun sehingga amend di tempat sah (bukan migration yang sudah live).
+- **File berubah:** frontend/supabase/migrations/20261005001000_backend_foundation.sql, docs/WORKLOG.md
+- **Verifikasi:** re-parse `pglast` OK (240 statement); `db reset` + eksekusi live tetap menunggu mesin Docker / SQL Editor pemilik.
+- **Catatan/Masalah:** akar `uuid = text` belum pasti dari file ini — kemungkinan drift tipe kolom di baseline hosted. Minta pemilik jalankan query diagnostik (lihat laporan) bila error berulang.
+- **Langkah berikutnya:** pemilik run ulang file foundation yang sudah diperbaiki → parity-fix → seed.
+
+---
+
+## 2026-10-05 22:00 — Fix — Akar `uuid = text` Ketemu via PGlite + 2 Bug search_path
+
+- **Laporan pemilik:** error 42883 berulang setelah run ulang.
+- **Yang dilakukan:**
+  - Probing tipe kolom live via REST (filter `eq.BUKAN-UUID`): semua kolom id/FK = uuid, kontrol text lolos — baseline hosted SESUAI repo, bukan drift.
+  - Validasi penuh di PGlite (Postgres asli, WASM: stub auth/storage/role): reproduksi error persis di statement #239 — policy storage `owner = (select auth.uid())::text`, padahal `storage.objects.owner` bertipe UUID. Cast dihapus.
+  - Bug laten 1: `handle_new_user` memakai `new.email::citext` dengan search_path kosong → gagal saat signup (tipe citext tak ter-resolve). Diganti assignment cast implisit.
+  - Bug laten 2: `set_display_id()` memanggil `nextval('seq_x')` tak-diskualifikasi → gagal bila INSERT terjadi di dalam fungsi DEFINER bersearch_path kosong (mis. `convert_inquiry_to_lead`). Migrasi baru `20261005003000` mengkualifikasi 13 argumen trigger (`public.seq_x`).
+  - Verifikasi: DDL 481 statement 0 gagal (baseline 180 + foundation 240 + parity 26 + display-fix 26 + seed 9); fungsional 13/13 (helper role ±, display ID, history, interests, total termin, submit/putuskan + notifikasi ×2, konversi inquiry + lead Sosmed).
+  - `supabase/README.md`: daftar migrasi + seksi validasi PGlite + catatan bug.
+- **File berubah:** migrations/20261005001000 (hapus `::text`), migrations/20261005002000 (`::citext` → assignment), migrations/20261005003000 (baru), supabase/README.md, WORKLOG.md
+- **Verifikasi:** PGlite DDL ✅ + fungsional ✅ (setara `db reset` untuk kebenaran SQL; Docker tetap dianjurkan untuk RLS-as-user E2E)
+- **Catatan/Masalah:** run parsial sebelumnya di hosted aman di-run ulang penuh (guard idempoten). Belum di-commit (tunggu konfirmasi hijau dari pemilik).
+- **Langkah berikutnya:** pemilik run 4 file berurutan (foundation → parity → display-fix → seed) → buat user pertama → kirim email untuk bootstrap Super Admin.
+
+---
+
+## 2026-10-05 22:30 — Bootstrap Super Admin + Verifikasi Live Hosted
+
+- **Fase:** 3 (Backend, US-002)
+- **Yang dilakukan:**
+  - Verifikasi hosted via service_role: seed masuk (7 role, 44 master, 8 settings, 5 template, 1 libur, 2 panduan, 5 RACI, 4 tim); RPC `content_brief_score` + view `project_progress` jalan; bucket `portal-attachments` ada.
+  - Bootstrap `superadmin@pytagotech.com` via Admin API (terkonfirmasi, password acak tak tercatat): trigger `handle_new_user` TERBUKTI membuat profil otomatis (nama benar, aktif); role Super Admin terpasang.
+- **Verifikasi:** seed ✅ RPC/view ✅ trigger live ✅ role ✅
+- **Catatan/Masalah:** password awal acak & tak disimpan di mana pun — user wajib atur via Lupa kata sandi. E2E login browser menunggu user.
+- **Langkah berikutnya:** user reset password → login → konfirmasi `/pengaturan/pengguna` → merge `feature/US-002-backend-auth` → DONE.
+
+---
+
+## 2026-10-05 22:45 — Swap Super Admin ke Gmail
+
+- **Konteks:** `superadmin@pytagotech.com` ternyata bukan mailbox aktif (reset email tak akan sampai).
+- **Yang dilakukan:** hapus akun lama via Admin API (profil + role ikut CASCADE) → buat `info.pytagotech@gmail.com` (terkonfirmasi) → profil otomatis terbentuk → role Super Admin terpasang.
+- **Verifikasi:** profil ✅ role ✅ via service_role.
+- **Langkah berikutnya:** sama — reset password → login → konfirmasi → merge.
+
+---
+
+## 2026-10-05 23:00 — Template Email + Lengkapi Alur Reset (US-002 backend)
+
+- **Permintaan pemilik:** template email Supabase (signup, ganti email, reset) yang menarik.
+- **Yang dilakukan:**
+  - `supabase/templates/`: `confirmation.html`, `email_change.html`, `recovery.html` (ID, brand biru, tombol + tautan cadangan, footer) + `README.md` cara paste + subject + uji kirim.
+  - Temuan: tautan email butuh penukar kode + form password baru, belum ada. Ditambah: `GET /auth/confirm` (tukar `code` PKCE / `token_hash`+`type` OTP, `next` tervalidasi, gagal → `/login?error=tautan-kedaluwarsa`); `updatePassword()` di service; mode "password baru" di login-form (`?recovery=1`, mismatch + pesan basi ditangani); proxy izinkan sesi recovery di `/login`; redirect reset → `/auth/confirm?next=/login?recovery=1`; Suspense di halaman login.
+  - Test: `updateUser` di fake + 2 test `updatePassword`.
+- **File berubah:** supabase/templates/* (4 baru), app/auth/confirm/route.ts (baru), services/auth(.test), components/login-form, app/login/page, proxy, test/supabase-fake, API.md, WORKLOG.md
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (213/213) · build ✅ (`/api/admin/users`, `/auth/confirm`, Proxy) · browser ✅ (`/auth/confirm?code=bogus` → 307 login+error; `/login?recovery=1` → 200)
+- **Catatan/Masalah:** kirim email asli (SMTP) + klik tautan end-to-end menunggu pemilik (setelah paste template + reset password Gmail).
+- **Langkah berikutnya:** pemilik paste 3 template → reset password → login → konfirmasi → merge.
+
+---
+
+## 2026-10-05 23:30 — Fix — Sesi Hilang di Redirect /auth/confirm
+
+- **Laporan pemilik:** klik tautan reset → "Tautan sudah kedaluwarsa atau tidak valid".
+- **Akar 1 (bug, diperbaiki):** route memakai `createClient()` (server) lalu me-return `NextResponse.redirect()` baru — cookie sesi hasil `verifyOtp`/`exchangeCodeForSession` tertinggal di respons internal yang dibuang. Walau kode valid, sesi tak pernah sampai ke browser. Route kini mengumpulkan `pendingCookies` dan menempelkannya ke redirect (beserta options).
+- **Akar 2 (kemungkinan pada klik pemilik):** token email sekali pakai — klik ganda/refresh, email lama setelah request baru, atau redirect URL tak terdaftar di Dashboard (cek Site URL + Additional Redirect URLs mencakup origin aplikasi).
+- **File berubah:** app/auth/confirm/route.ts, WORKLOG.md
+- **Verifikasi:** lint ✅ typecheck ✅ build ✅ · browser ✅ (code bogus → 307 login+error)
+- **Langkah berikutnya:** pemilik pastikan dev server memuat route baru → minta tautan BARU → klik sekali → atur password → masuk.
+
+---
+
+## 2026-10-05 23:45 — Halaman Error Auth Khusus (masukan pemilik)
+
+- **Masukan pemilik:** error jangan menempel di form login (email+password) — butuh halaman sendiri yang fokus.
+- **Yang dilakukan:** `src/app/auth/error/page.tsx` (server component, pesan per `reason`, aksi Minta tautan/masuk + Ke beranda); `/auth/confirm` gagal → `/auth/error?reason=...`; hapus penanganan `?error=` di login-form.
+- **File berubah:** app/auth/error/page (baru), app/auth/confirm/route, components/login-form, API.md, WORKLOG.md
+- **Verifikasi:** lint ✅ typecheck ✅ build ✅ · browser ✅ (`/auth/error` → 200 "Tautan tidak valid"; confirm bogus → 307 `/auth/error`)
+- **Langkah berikutnya:** sama — tautan baru → atur password → masuk → konfirmasi → merge.
+
+---
+
+## 2026-10-06 00:00 — E2E Penuh: Password Langsung + Login sebagai Super Admin
+
+- **Permintaan pemilik:** lewati alur email (tetap mendarat di login) — buatkan akun full email+password; popup ganti password di dalam aplikasi menyusul.
+- **Yang dilakukan:** set password langsung via Admin API untuk `info.pytagotech@gmail.com`, lalu E2E dengan anon key sebagai user tersebut.
+- **Verifikasi E2E (JWT user asli, bukan service_role):** login ✅ · profil sendiri ✅ · roles `["Super Admin"]` ✅ · list users via RLS admin ✅ · baca leads ✅ · baca master_options ✅.
+- **Catatan/Masalah:** rantai Auth → profil → role → RLS TERBUKTI jalan. Alur tautan email tetap perlu konfirmasi pemilik di browser (kemungkinan klik ganda/allowlist). Password awal hanya ada di chat ini — wajib diganti via popup ganti password (US berikutnya) atau rotasi manual.
+- **Langkah berikutnya:** pemilik login browser → konfirmasi → merge `feature/US-002-backend-auth` → popup ganti password.
+
+---
+
+## 2026-10-06 00:30 — Merge US-002 backend (login browser OK oleh pemilik)
+
+- **Branch:** feature/US-002-backend-auth → develop (tanpa tag; Gate 3 belum lengkap)
+- **Isi merge:** wiring Auth (service/store/admin-route/proxy/confirm/recovery/error-page) + template email + fix migrasi (owner cast, search_path, display trigger) — 4 commit terpisah.
+- **Verifikasi kumulatif:** lint ✅ typecheck ✅ test ✅ (213/213) · build ✅ · browser ✅ · live hosted ✅ (seed, RPC, trigger, role) · E2E user ✅ · login pemilik ✅
+- **Sisa verifikasi:** `POST /api/admin/users` via browser (buat user kedua) — dicoba saat popup ganti password dibangun.
+- **Langkah berikutnya:** popup ganti password di dalam aplikasi (permintaan pemilik).
