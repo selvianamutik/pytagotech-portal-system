@@ -1079,3 +1079,18 @@
 - **Verifikasi:** tidak ada perubahan kode (docs + komentar SQL saja)
 - **Catatan/Masalah:** merge ke `develop` + tag `v0.2.0-database` belum dijalankan (butuh izin eksplisit).
 - **Langkah berikutnya:** commit + merge + tag Gate 2, lalu (b) `supabase db reset` di mesin Docker, (c) service swap US-005/US-041
+
+---
+
+## 2026-10-05 19:00 — Gate 2 — Merge + tag `v0.2.0-database` (DONE)
+
+- **Fase:** 2 → 3
+- **Branch:** db/skema-database-awal → develop
+- **Yang dilakukan:**
+  - Commit 1 `3344f37` — chore(backend): koneksi Supabase client + refresh sesi (Refs: FR-1)
+  - Commit 2 `f5a8415` — feat(database): fondasi backend + parity-fix + APPROVED (Refs: US-003/004/005, FR-1/2/3)
+  - Commit 3 `6174844` — chore(backend): kecualikan cache CLI (Refs: -)
+  - Merge --no-ff ke `develop` (`3a3461e`); tag anotasi `v0.2.0-database`; `CHANGELOG.md` seksi `[0.2.0]`
+  - Verifikasi pra-commit: lint ✅ typecheck ✅ test ✅ (208/208); secret (`.env.local`, `credentials.txt`) ter-ignore ✅
+- **Catatan/Masalah:** temuan sekuens — service swap US-005/US-041 butuh sesi Auth nyata (policy RLS `to authenticated`; mock auth = anon = 0 baris). Opsi: (a) wiring Supabase Auth dulu (US-002 backend), atau (b) bangun UI + service sekarang (berfungsi setelah auth).
+- **Langkah berikutnya:** putuskan sekuens (a)/(b) dengan pemilik
