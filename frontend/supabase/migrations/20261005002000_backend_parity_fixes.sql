@@ -139,8 +139,11 @@ begin
     display_name := split_part(coalesce(new.email, 'pengguna'), '@', 1);
   end if;
 
+  -- Tanpa cast eksplisit ke citext: nilai text dikonversi otomatis
+  -- (assignment cast) mengikuti tipe kolom, sehingga fungsi yang berjalan
+  -- dengan search_path kosong tidak perlu me-resolve nama tipe citext.
   insert into public.profiles (id, email, name)
-  values (new.id, new.email::citext, display_name)
+  values (new.id, new.email, display_name)
   on conflict (id) do nothing;
 
   return new;
