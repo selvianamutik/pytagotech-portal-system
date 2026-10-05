@@ -1,7 +1,6 @@
 // Helper middleware/proxy Supabase untuk Next.js App Router.
-// Tugasnya HANYA me-refresh session (access/refresh token) lewat cookies,
-// bukan memaksa redirect auth — agar alur mock Fase 1 tidak terblokir.
-// Proteksi rute (redirect ke /login) ditambahkan nanti di Fase 3 (Backend).
+// Me-refresh session (access/refresh token) lewat cookies dan mengembalikan
+// klaim user agar proxy dapat mengatur redirect auth (US-002 backend).
 // Ref: https://supabase.com/docs/guides/auth/server-side/nextjs
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
@@ -40,7 +39,7 @@ export async function updateSession(request: NextRequest) {
   // getClaims() memverifikasi JWT secara lokal (ringan, tanpa round-trip
   // ke Auth server). Pakai getUser() hanya bila perlu mendeteksi revokasi
   // session sisi server.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
 
-  return supabaseResponse;
+  return { response: supabaseResponse, user: data?.claims ?? null };
 }

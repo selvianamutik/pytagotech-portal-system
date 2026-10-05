@@ -1,8 +1,8 @@
 /**
  * Kontrak data autentikasi & manajemen user (US-002, FR-1).
  * Fase 1: diimplementasikan via mock (`@/mocks/auth`) dan `services/auth`.
- * Fase 2: signature service dipertahankan, implementasi diganti Supabase Auth
- * + tabel `profiles`/`user_roles` dengan RLS (US-003).
+ * Fase 3: implementasi Supabase Auth + tabel `profiles`/`user_roles` dengan
+ * RLS (US-003); signature service dipertahankan.
  */
 
 /** Daftar role kanonis sesuai PRD Bagian 3 (User Roles). */

@@ -7,7 +7,7 @@ grant usage on schema private to authenticated;
 
 -- ---------- Helper role & identitas ----------
 
-create or replace function private.has_role(role_name text, user_id uuid default auth.uid())
+create or replace function private.has_role(p_role_name text, p_user_id uuid default auth.uid())
 returns boolean
 language sql
 security definer
@@ -18,13 +18,13 @@ as $$
     select 1
     from public.user_roles ur
     join public.profiles p on p.id = ur.user_id
-    where ur.user_id = user_id
-      and ur.role_name = role_name
+    where ur.user_id = p_user_id
+      and ur.role_name = p_role_name
       and p.is_active = true
   );
 $$;
 
-create or replace function private.has_any_role(role_names text[], user_id uuid default auth.uid())
+create or replace function private.has_any_role(p_role_names text[], p_user_id uuid default auth.uid())
 returns boolean
 language sql
 security definer
@@ -35,13 +35,13 @@ as $$
     select 1
     from public.user_roles ur
     join public.profiles p on p.id = ur.user_id
-    where ur.user_id = user_id
-      and ur.role_name = any(role_names)
+    where ur.user_id = p_user_id
+      and ur.role_name = any(p_role_names)
       and p.is_active = true
   );
 $$;
 
-create or replace function private.current_team_member_id(user_id uuid default auth.uid())
+create or replace function private.current_team_member_id(p_user_id uuid default auth.uid())
 returns uuid
 language sql
 security definer
@@ -51,29 +51,29 @@ as $$
   select tm.id
   from public.team_members tm
   join public.profiles p on p.id = tm.profile_id
-  where tm.profile_id = user_id
+  where tm.profile_id = p_user_id
     and p.is_active = true
   limit 1;
 $$;
 
-create or replace function private.is_super_admin(user_id uuid default auth.uid())
+create or replace function private.is_super_admin(p_user_id uuid default auth.uid())
 returns boolean
 language sql
 security definer
 stable
 set search_path = ''
 as $$
-  select private.has_role('Super Admin', user_id);
+  select private.has_role('Super Admin', p_user_id);
 $$;
 
-create or replace function private.can_manage_platform(user_id uuid default auth.uid())
+create or replace function private.can_manage_platform(p_user_id uuid default auth.uid())
 returns boolean
 language sql
 security definer
 stable
 set search_path = ''
 as $$
-  select private.has_any_role(array['Super Admin', 'Executive / Leader'], user_id);
+  select private.has_any_role(array['Super Admin', 'Executive / Leader'], p_user_id);
 $$;
 
 grant execute on function private.has_role(text, uuid) to authenticated;
@@ -549,7 +549,7 @@ begin
 end;
 $$;
 
-create or replace function public.deal_terms_total_idr(deal_id uuid)
+create or replace function public.deal_terms_total_idr(p_deal_id uuid)
 returns bigint
 language sql
 security invoker
@@ -564,7 +564,7 @@ as $$
   ), 0)
   from public.deals d
   left join public.deal_payment_terms dpt on dpt.deal_id = d.id
-  where d.id = deal_id;
+  where d.id = p_deal_id;
 $$;
 
 create or replace function public.transition_deal_status(
@@ -722,57 +722,73 @@ grant execute on function public.create_project_from_handover(uuid, uuid, date) 
 -- ---------- RLS policies ----------
 
 -- Auth/platform tables.
+drop policy if exists "roles_select_authenticated" on public.roles;
 create policy "roles_select_authenticated" on public.roles
 for select to authenticated using (true);
 
+drop policy if exists "roles_manage_super_admin" on public.roles;
 create policy "roles_manage_super_admin" on public.roles
 for all to authenticated using (private.is_super_admin()) with check (private.is_super_admin());
 
+drop policy if exists "profiles_select_self_or_manager" on public.profiles;
 create policy "profiles_select_self_or_manager" on public.profiles
 for select to authenticated using (id = (select auth.uid()) or private.can_manage_platform());
 
+drop policy if exists "profiles_insert_self_or_admin" on public.profiles;
 create policy "profiles_insert_self_or_admin" on public.profiles
 for insert to authenticated with check (id = (select auth.uid()) or private.is_super_admin());
 
+drop policy if exists "profiles_update_self_or_admin" on public.profiles;
 create policy "profiles_update_self_or_admin" on public.profiles
 for update to authenticated using (id = (select auth.uid()) or private.is_super_admin())
 with check (id = (select auth.uid()) or private.is_super_admin());
 
+drop policy if exists "user_roles_select_self_or_admin" on public.user_roles;
 create policy "user_roles_select_self_or_admin" on public.user_roles
 for select to authenticated using (user_id = (select auth.uid()) or private.is_super_admin());
 
+drop policy if exists "user_roles_manage_super_admin" on public.user_roles;
 create policy "user_roles_manage_super_admin" on public.user_roles
 for all to authenticated using (private.is_super_admin()) with check (private.is_super_admin());
 
+drop policy if exists "team_members_select_authenticated" on public.team_members;
 create policy "team_members_select_authenticated" on public.team_members
 for select to authenticated using (true);
 
+drop policy if exists "team_members_manage_admin" on public.team_members;
 create policy "team_members_manage_admin" on public.team_members
 for all to authenticated using (private.is_super_admin()) with check (private.is_super_admin());
 
+drop policy if exists "master_options_select_authenticated" on public.master_options;
 create policy "master_options_select_authenticated" on public.master_options
 for select to authenticated using (is_active = true or private.is_super_admin());
 
+drop policy if exists "master_options_manage_admin" on public.master_options;
 create policy "master_options_manage_admin" on public.master_options
 for all to authenticated using (private.is_super_admin()) with check (private.is_super_admin());
 
+drop policy if exists "settings_select_authenticated" on public.settings;
 create policy "settings_select_authenticated" on public.settings
 for select to authenticated using (true);
 
+drop policy if exists "settings_manage_admin" on public.settings;
 create policy "settings_manage_admin" on public.settings
 for all to authenticated using (private.is_super_admin()) with check (private.is_super_admin());
 
 -- CRM.
+drop policy if exists "leads_select_crm_roles" on public.leads;
 create policy "leads_select_crm_roles" on public.leads
 for select to authenticated using (
   private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing', 'Project Manager'])
 );
 
+drop policy if exists "leads_insert_sales_roles" on public.leads;
 create policy "leads_insert_sales_roles" on public.leads
 for insert to authenticated with check (
   private.has_any_role(array['Super Admin', 'Sales / Marketing'])
 );
 
+drop policy if exists "leads_update_owner_or_admin" on public.leads;
 create policy "leads_update_owner_or_admin" on public.leads
 for update to authenticated using (
   private.is_super_admin() or pic_id = private.current_team_member_id()
@@ -780,79 +796,104 @@ for update to authenticated using (
   private.is_super_admin() or pic_id = private.current_team_member_id()
 );
 
+drop policy if exists "lead_interests_select_crm_roles" on public.lead_interests;
 create policy "lead_interests_select_crm_roles" on public.lead_interests
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing']));
 
+drop policy if exists "lead_interests_manage_sales" on public.lead_interests;
 create policy "lead_interests_manage_sales" on public.lead_interests
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Sales / Marketing']))
 with check (private.has_any_role(array['Super Admin', 'Sales / Marketing']));
 
+drop policy if exists "lead_status_history_select_crm_roles" on public.lead_status_history;
 create policy "lead_status_history_select_crm_roles" on public.lead_status_history
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing', 'Project Manager']));
 
+drop policy if exists "lead_status_history_insert_authenticated" on public.lead_status_history;
 create policy "lead_status_history_insert_authenticated" on public.lead_status_history
 for insert to authenticated with check (true);
 
+drop policy if exists "lead_activities_select_crm_roles" on public.lead_activities;
 create policy "lead_activities_select_crm_roles" on public.lead_activities
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing']));
 
+drop policy if exists "lead_activities_insert_crm_roles" on public.lead_activities;
 create policy "lead_activities_insert_crm_roles" on public.lead_activities
 for insert to authenticated with check (private.has_any_role(array['Super Admin', 'Sales / Marketing']));
 
 -- Klien, handover, proyek.
+drop policy if exists "clients_select_business_roles" on public.clients;
 create policy "clients_select_business_roles" on public.clients
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing', 'Project Manager']));
 
+drop policy if exists "clients_manage_sales_admin" on public.clients;
 create policy "clients_manage_sales_admin" on public.clients
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Sales / Marketing']))
 with check (private.has_any_role(array['Super Admin', 'Sales / Marketing']));
 
+drop policy if exists "deals_select_business_roles" on public.deals;
 create policy "deals_select_business_roles" on public.deals
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing', 'Project Manager']));
 
+drop policy if exists "deals_manage_sales_pm" on public.deals;
 create policy "deals_manage_sales_pm" on public.deals
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Sales / Marketing', 'Project Manager']))
 with check (private.has_any_role(array['Super Admin', 'Sales / Marketing', 'Project Manager']));
 
+drop policy if exists "deal_children_select_business_roles" on public.deal_features;
 create policy "deal_children_select_business_roles" on public.deal_features
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing', 'Project Manager']));
+drop policy if exists "deal_children_manage_business_roles" on public.deal_features;
 create policy "deal_children_manage_business_roles" on public.deal_features
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Sales / Marketing', 'Project Manager']))
 with check (private.has_any_role(array['Super Admin', 'Sales / Marketing', 'Project Manager']));
 
+drop policy if exists "deal_terms_select_business_roles" on public.deal_payment_terms;
 create policy "deal_terms_select_business_roles" on public.deal_payment_terms
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing', 'Project Manager']));
+drop policy if exists "deal_terms_manage_business_roles" on public.deal_payment_terms;
 create policy "deal_terms_manage_business_roles" on public.deal_payment_terms
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Sales / Marketing', 'Project Manager']))
 with check (private.has_any_role(array['Super Admin', 'Sales / Marketing', 'Project Manager']));
 
+drop policy if exists "deal_versions_select_business_roles" on public.deal_versions;
 create policy "deal_versions_select_business_roles" on public.deal_versions
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing', 'Project Manager']));
+drop policy if exists "deal_versions_insert_business_roles" on public.deal_versions;
 create policy "deal_versions_insert_business_roles" on public.deal_versions
 for insert to authenticated with check (private.has_any_role(array['Super Admin', 'Sales / Marketing', 'Project Manager']));
 
+drop policy if exists "change_requests_select_business_roles" on public.change_requests;
 create policy "change_requests_select_business_roles" on public.change_requests
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing', 'Project Manager']));
+drop policy if exists "change_requests_manage_business_roles" on public.change_requests;
 create policy "change_requests_manage_business_roles" on public.change_requests
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Sales / Marketing', 'Project Manager']))
 with check (private.has_any_role(array['Super Admin', 'Sales / Marketing', 'Project Manager']));
 
+drop policy if exists "projects_select_production_roles" on public.projects;
 create policy "projects_select_production_roles" on public.projects
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Project Manager', 'Developer']));
 
+drop policy if exists "projects_manage_pm_admin" on public.projects;
 create policy "projects_manage_pm_admin" on public.projects
 for all to authenticated using (private.is_super_admin() or pm_id = private.current_team_member_id())
 with check (private.is_super_admin() or pm_id = private.current_team_member_id());
 
+drop policy if exists "task_templates_select_authenticated" on public.task_templates;
 create policy "task_templates_select_authenticated" on public.task_templates
 for select to authenticated using (true);
+drop policy if exists "task_templates_manage_admin" on public.task_templates;
 create policy "task_templates_manage_admin" on public.task_templates
 for all to authenticated using (private.is_super_admin()) with check (private.is_super_admin());
 
+drop policy if exists "tasks_select_production_roles" on public.tasks;
 create policy "tasks_select_production_roles" on public.tasks
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Project Manager', 'Developer']));
+drop policy if exists "tasks_insert_pm_admin" on public.tasks;
 create policy "tasks_insert_pm_admin" on public.tasks
 for insert to authenticated with check (private.has_any_role(array['Super Admin', 'Project Manager']));
+drop policy if exists "tasks_update_owner_pm_admin" on public.tasks;
 create policy "tasks_update_owner_pm_admin" on public.tasks
 for update to authenticated using (
   private.is_super_admin()
@@ -864,70 +905,93 @@ for update to authenticated using (
   or exists (select 1 from public.projects p where p.id = tasks.project_id and p.pm_id = private.current_team_member_id())
 );
 
+drop policy if exists "task_dependencies_select_production_roles" on public.task_dependencies;
 create policy "task_dependencies_select_production_roles" on public.task_dependencies
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Project Manager', 'Developer']));
+drop policy if exists "task_dependencies_manage_pm_admin" on public.task_dependencies;
 create policy "task_dependencies_manage_pm_admin" on public.task_dependencies
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Project Manager']))
 with check (private.has_any_role(array['Super Admin', 'Project Manager']));
 
+drop policy if exists "features_select_production_roles" on public.features;
 create policy "features_select_production_roles" on public.features
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Project Manager', 'Developer']));
+drop policy if exists "features_manage_pm_admin" on public.features;
 create policy "features_manage_pm_admin" on public.features
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Project Manager']))
 with check (private.has_any_role(array['Super Admin', 'Project Manager']));
 
+drop policy if exists "developer_capacity_select_production_roles" on public.developer_capacity;
 create policy "developer_capacity_select_production_roles" on public.developer_capacity
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Project Manager', 'Developer']));
+drop policy if exists "developer_capacity_manage_pm_admin" on public.developer_capacity;
 create policy "developer_capacity_manage_pm_admin" on public.developer_capacity
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Project Manager']))
 with check (private.has_any_role(array['Super Admin', 'Project Manager']));
 
+drop policy if exists "holidays_select_authenticated" on public.holidays;
 create policy "holidays_select_authenticated" on public.holidays
 for select to authenticated using (true);
+drop policy if exists "holidays_manage_admin" on public.holidays;
 create policy "holidays_manage_admin" on public.holidays
 for all to authenticated using (private.is_super_admin()) with check (private.is_super_admin());
 
 -- Sosmed.
+drop policy if exists "sosmed_core_select_roles" on public.content_ideas;
 create policy "sosmed_core_select_roles" on public.content_ideas
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
+drop policy if exists "sosmed_ideas_manage_roles" on public.content_ideas;
 create policy "sosmed_ideas_manage_roles" on public.content_ideas
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Social Media Specialist']))
 with check (private.has_any_role(array['Super Admin', 'Social Media Specialist']));
 
+drop policy if exists "idea_platforms_select_sosmed_roles" on public.idea_platforms;
 create policy "idea_platforms_select_sosmed_roles" on public.idea_platforms
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
+drop policy if exists "idea_platforms_manage_sosmed_roles" on public.idea_platforms;
 create policy "idea_platforms_manage_sosmed_roles" on public.idea_platforms
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Social Media Specialist']))
 with check (private.has_any_role(array['Super Admin', 'Social Media Specialist']));
 
+drop policy if exists "materials_select_sosmed_roles" on public.content_materials;
 create policy "materials_select_sosmed_roles" on public.content_materials
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
+drop policy if exists "materials_manage_sosmed_roles" on public.content_materials;
 create policy "materials_manage_sosmed_roles" on public.content_materials
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']))
 with check (private.has_any_role(array['Super Admin', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
 
+drop policy if exists "material_platforms_select_sosmed_roles" on public.material_platforms;
 create policy "material_platforms_select_sosmed_roles" on public.material_platforms
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
+drop policy if exists "material_platforms_manage_sosmed_roles" on public.material_platforms;
 create policy "material_platforms_manage_sosmed_roles" on public.material_platforms
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Social Media Specialist']))
 with check (private.has_any_role(array['Super Admin', 'Social Media Specialist']));
 
+drop policy if exists "content_revisions_select_sosmed_roles" on public.content_revisions;
 create policy "content_revisions_select_sosmed_roles" on public.content_revisions
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
+drop policy if exists "content_revisions_manage_reviewers" on public.content_revisions;
 create policy "content_revisions_manage_reviewers" on public.content_revisions
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist']))
 with check (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist']));
 
+drop policy if exists "publications_select_sosmed_roles" on public.publications;
 create policy "publications_select_sosmed_roles" on public.publications
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
+drop policy if exists "publications_manage_sosmed_roles" on public.publications;
 create policy "publications_manage_sosmed_roles" on public.publications
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Social Media Specialist']))
 with check (private.has_any_role(array['Super Admin', 'Social Media Specialist']));
 
+drop policy if exists "post_metrics_select_sosmed_roles" on public.post_metrics;
 create policy "post_metrics_select_sosmed_roles" on public.post_metrics
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist']));
+drop policy if exists "post_metrics_insert_sosmed_roles" on public.post_metrics;
 create policy "post_metrics_insert_sosmed_roles" on public.post_metrics
 for insert to authenticated with check (private.has_any_role(array['Super Admin', 'Social Media Specialist']));
+drop policy if exists "post_metrics_update_final_admin_leader" on public.post_metrics;
 create policy "post_metrics_update_final_admin_leader" on public.post_metrics
 for update to authenticated using (
   snapshot <> 'Final' or private.has_any_role(array['Super Admin', 'Executive / Leader'])
@@ -935,78 +999,105 @@ for update to authenticated using (
   snapshot <> 'Final' or private.has_any_role(array['Super Admin', 'Executive / Leader'])
 );
 
+drop policy if exists "account_growth_select_sosmed_roles" on public.account_growth;
 create policy "account_growth_select_sosmed_roles" on public.account_growth
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist']));
+drop policy if exists "account_growth_manage_sosmed_roles" on public.account_growth;
 create policy "account_growth_manage_sosmed_roles" on public.account_growth
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Social Media Specialist']))
 with check (private.has_any_role(array['Super Admin', 'Social Media Specialist']));
 
+drop policy if exists "community_select_sosmed_roles" on public.community_interactions;
 create policy "community_select_sosmed_roles" on public.community_interactions
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist']));
+drop policy if exists "community_manage_sosmed_roles" on public.community_interactions;
 create policy "community_manage_sosmed_roles" on public.community_interactions
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Social Media Specialist']))
 with check (private.has_any_role(array['Super Admin', 'Social Media Specialist']));
 
+drop policy if exists "inquiries_select_crm_sosmed_roles" on public.inquiries;
 create policy "inquiries_select_crm_sosmed_roles" on public.inquiries
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Sales / Marketing', 'Social Media Specialist']));
+drop policy if exists "inquiries_manage_sosmed_roles" on public.inquiries;
 create policy "inquiries_manage_sosmed_roles" on public.inquiries
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Social Media Specialist']))
 with check (private.has_any_role(array['Super Admin', 'Social Media Specialist']));
 
+drop policy if exists "assets_select_sosmed_roles" on public.assets;
 create policy "assets_select_sosmed_roles" on public.assets
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
+drop policy if exists "assets_manage_sosmed_roles" on public.assets;
 create policy "assets_manage_sosmed_roles" on public.assets
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']))
 with check (private.has_any_role(array['Super Admin', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
 
+drop policy if exists "material_assets_select_sosmed_roles" on public.material_assets;
 create policy "material_assets_select_sosmed_roles" on public.material_assets
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
+drop policy if exists "material_assets_manage_sosmed_roles" on public.material_assets;
 create policy "material_assets_manage_sosmed_roles" on public.material_assets
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']))
 with check (private.has_any_role(array['Super Admin', 'Social Media Specialist', 'Graphic Designer / Video Editor / Copywriter']));
 
+drop policy if exists "strategy_select_sosmed_roles" on public.strategy_evaluations;
 create policy "strategy_select_sosmed_roles" on public.strategy_evaluations
 for select to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist']));
+drop policy if exists "strategy_manage_sosmed_roles" on public.strategy_evaluations;
 create policy "strategy_manage_sosmed_roles" on public.strategy_evaluations
 for all to authenticated using (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist']))
 with check (private.has_any_role(array['Super Admin', 'Executive / Leader', 'Social Media Specialist']));
 
 -- Kolaborasi, notifikasi, audit, panduan.
+drop policy if exists "comments_select_authenticated" on public.comments;
 create policy "comments_select_authenticated" on public.comments
 for select to authenticated using (true);
+drop policy if exists "comments_insert_authenticated" on public.comments;
 create policy "comments_insert_authenticated" on public.comments
 for insert to authenticated with check (author_id is null or author_id = private.current_team_member_id());
+drop policy if exists "comments_update_author_admin" on public.comments;
 create policy "comments_update_author_admin" on public.comments
 for update to authenticated using (private.is_super_admin() or author_id = private.current_team_member_id())
 with check (private.is_super_admin() or author_id = private.current_team_member_id());
 
+drop policy if exists "attachments_select_authenticated" on public.attachments;
 create policy "attachments_select_authenticated" on public.attachments
 for select to authenticated using (true);
+drop policy if exists "attachments_insert_authenticated" on public.attachments;
 create policy "attachments_insert_authenticated" on public.attachments
 for insert to authenticated with check (uploaded_by is null or uploaded_by = private.current_team_member_id());
+drop policy if exists "attachments_delete_owner_admin" on public.attachments;
 create policy "attachments_delete_owner_admin" on public.attachments
 for delete to authenticated using (private.is_super_admin() or uploaded_by = private.current_team_member_id());
 
+drop policy if exists "notifications_select_recipient" on public.notifications;
 create policy "notifications_select_recipient" on public.notifications
 for select to authenticated using (recipient_id = (select auth.uid()) or private.is_super_admin());
+drop policy if exists "notifications_update_recipient" on public.notifications;
 create policy "notifications_update_recipient" on public.notifications
 for update to authenticated using (recipient_id = (select auth.uid()) or private.is_super_admin())
 with check (recipient_id = (select auth.uid()) or private.is_super_admin());
+drop policy if exists "notifications_insert_authenticated" on public.notifications;
 create policy "notifications_insert_authenticated" on public.notifications
 for insert to authenticated with check (true);
 
+drop policy if exists "audit_logs_select_admin_leader" on public.audit_logs;
 create policy "audit_logs_select_admin_leader" on public.audit_logs
 for select to authenticated using (private.can_manage_platform());
+drop policy if exists "audit_logs_insert_authenticated" on public.audit_logs;
 create policy "audit_logs_insert_authenticated" on public.audit_logs
 for insert to authenticated with check (true);
 
+drop policy if exists "guides_select_authenticated" on public.guides;
 create policy "guides_select_authenticated" on public.guides
 for select to authenticated using (true);
+drop policy if exists "guides_manage_admin" on public.guides;
 create policy "guides_manage_admin" on public.guides
 for all to authenticated using (private.is_super_admin()) with check (private.is_super_admin());
 
+drop policy if exists "raci_select_authenticated" on public.raci_matrix;
 create policy "raci_select_authenticated" on public.raci_matrix
 for select to authenticated using (true);
+drop policy if exists "raci_manage_admin" on public.raci_matrix;
 create policy "raci_manage_admin" on public.raci_matrix
 for all to authenticated using (private.is_super_admin()) with check (private.is_super_admin());
 
@@ -1017,9 +1108,33 @@ alter view public.inquiry_routing_sla_summary set (security_invoker = true);
 alter view public.asset_license_status set (security_invoker = true);
 
 -- Realtime untuk notifikasi dan board/task utama.
-alter publication supabase_realtime add table public.notifications;
-alter publication supabase_realtime add table public.tasks;
-alter publication supabase_realtime add table public.comments;
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public'
+    and tablename = 'notifications') then
+    alter publication supabase_realtime add table public.notifications;
+  end if;
+end
+$$;
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public'
+    and tablename = 'tasks') then
+    alter publication supabase_realtime add table public.tasks;
+  end if;
+end
+$$;
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public'
+    and tablename = 'comments') then
+    alter publication supabase_realtime add table public.comments;
+  end if;
+end
+$$;
 
 -- Storage privat untuk lampiran portal.
 create policy "portal_attachments_read_authenticated"
@@ -1041,7 +1156,7 @@ to authenticated
 using (
   bucket_id = 'portal-attachments'
   and (
-    owner = (select auth.uid())::text
+    owner = (select auth.uid())
     or private.is_super_admin()
   )
 );

@@ -8,6 +8,7 @@ Backend Pytagotech Portal ditempatkan di dalam `frontend/supabase` agar tetap sa
 - `migrations/20261005000000_initial_schema.sql`: baseline schema dari `../../docs/DATABASE.md`.
 - `migrations/20261005001000_backend_foundation.sql`: helper role, audit generik, guardrail bisnis, view/RPC dasar, dan policy RLS per modul.
 - `migrations/20261005002000_backend_parity_fixes.sql`: parity-fix hasil audit kontrak frontend (RLS role-based, RPC konversi inquiry, notifikasi handover, profil otomatis, hapus policy pemalsu audit).
+- `migrations/20261005003000_display_id_search_path.sql`: skualifikasi nama sequence di argumen trigger display ID (lihat bug search_path di bawah).
 - `seed.sql`: data referensi awal untuk role, master options, settings, task template, guides, RACI, team members, dan bucket lampiran.
 
 ## Catatan Analisis DATABASE.md
@@ -31,6 +32,20 @@ pnpm supabase:types
 ```
 
 `pnpm supabase:types` menghasilkan `src/types/database.ts` dari database lokal.
+
+## Validasi tanpa Docker (PGlite)
+
+Seluruh migrasi + seed + 13 uji fungsional (helper role, trigger lead,
+workflow handover + notifikasi, konversi inquiry, profil otomatis) lolos di
+PGlite/Postgres asli pada 2026-10-05. `supabase db reset` di mesin Docker
+tetap dianjurkan sebagai validasi akhir sebelum Gate 3.
+
+## Bug search_path yang Pernah Ditemukan (catatan)
+
+- `storage.objects.owner` bertipe UUID — policy dengan `::text` gagal 42883.
+- Fungsi `SECURITY DEFINER` bersearch_path kosong tidak boleh memakai nama
+  tak-diskualifikasi di luar `pg_catalog`: `::citext` (pakai assignment cast)
+  dan `nextval('seq_x')` (pakai `public.seq_x`) pernah gagal saat runtime.
 
 ## Urutan Implementasi Berikutnya
 

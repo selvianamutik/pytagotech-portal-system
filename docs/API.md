@@ -70,29 +70,51 @@ interface DashboardSnapshot {
 
 ## Modul: Users & Roles
 
-> **Status:** Draft Fase 1 (US-002) — mock di `frontend/src/mocks/auth.ts`,
-> diakses via `frontend/src/services/auth.ts`, tipe di `frontend/src/types/auth.ts`,
-> state sesi di `frontend/src/store/auth.ts` (Zustand).
-> Fase 2: login/logout/reset diganti Supabase Auth; CRUD user memakai tabel
-> `profiles` + `user_roles` dengan RLS (US-003).
+> **Status:** Backend Fase 3 (US-002 + FR-1) — `services/auth.ts` memakai
+> Supabase Auth + tabel `profiles`/`user_roles` (RLS US-003); signature service
+> tidak berubah sehingga komponen UI (`login-form`, `user-management`,
+> `RequireRole`, `store/auth`) tidak disentuh kecuali teks bantuan.
+> Proxy (`src/proxy.ts`): tamu → `/login`; user login di `/login` → `/`.
 
 ### Auth
 
-| Fungsi service | Setara Supabase (Fase 2) | Deskripsi |
-|----------------|--------------------------|-----------|
-| `login({email, password}) → AuthSession` | `signInWithPassword` | Validasi format email + password min 8; pesan error generik |
+| Fungsi service | Implementasi backend | Deskripsi |
+|----------------|----------------------|-----------|
+| `login({email, password}) → AuthSession` | `signInWithPassword` + baca `profiles`/`user_roles` | Validasi format email + password min 8; pesan error generik; tolak akun nonaktif (sesi langsung di-sign-out) |
 | `logout() → true` | `signOut` | Menghapus sesi |
-| `requestPasswordReset(email) → string` | `resetPasswordForEmail` | Pesan tautan reset (mock) |
-| `getSession() → AuthSession \| null` | `getSession` + middleware | Sumber state `store/auth` |
+| `requestPasswordReset(email) → string` | `resetPasswordForEmail` (`redirectTo: <APP_URL>/auth/confirm?next=/login?recovery=1`) | Selalu sukses agar tidak membocorkan email terdaftar |
+| `updatePassword(password) → true` | `updateUser` (sesi recovery) | Mode "password baru" di `/login?recovery=1`; min 8 karakter |
+| `getSession() → AuthSession \| null` | `getSession` + profil/role | Sumber state `store/auth`; gagal baca = belum masuk |
+
+### Alur email Auth (template di `frontend/supabase/templates/`)
+
+Paste ke Dashboard → Authentication → Email Templates (panduan di
+`frontend/supabase/templates/README.md`): `confirmation.html` (signup),
+`email_change.html` (ganti email), `recovery.html` (reset password).
+Semua tautan mendarat di `GET /auth/confirm` (tukar `code`/`token_hash` →
+sesi, dukung PKCE + OTP; `next` tervalidasi path internal) lalu:
+signup/ganti-email → `/`; recovery → `/login?recovery=1` (form password baru,
+proxy mengizinkan sesi recovery di `/login`). Tautan basi/gagal →
+`/auth/error?reason=tautan-kedaluwarsa` (halaman error khusus, terpisah dari
+form login).
 
 ### Manajemen user (khusus Super Admin, halaman `/pengaturan/pengguna`)
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|
-| `listUsers() → PortalUser[]` | Termasuk user nonaktif (dengan badge) |
-| `createUser({name, email, roles}) → PortalUser` | Email unik; minimal 1 role valid dari `PORTAL_ROLES` |
-| `updateUserRoles(id, roles)` | Minimal 1 role; Super Admin terakhir yang aktif tidak bisa dicabut |
+| `listUsers() → PortalUser[]` | Dari `profiles` + `user_roles`, urut nama; termasuk nonaktif (badge) |
+| `createUser({name, email, roles}) → PortalUser` | Via `POST /api/admin/users` (service_role, tak pernah ke browser); email unik; minimal 1 role valid; user langsung aktif — atur kata sandi via Lupa kata sandi |
+| `updateUserRoles(id, roles)` | Minimal 1 role; Super Admin terakhir yang aktif tidak bisa dicabut (dicek via query) |
 | `setUserActive(id, active, actorId?)` | Tidak bisa menonaktifkan akun sendiri; tidak bisa menonaktifkan Super Admin terakhir |
+
+### `POST /api/admin/users`
+
+Membuat akun Auth terkonfirmasi (password acak) + profil (trigger `handle_new_user`, nama diselaraskan) + role awal. Rollback (hapus akun Auth) bila insert role gagal.
+
+- **Auth:** cookie sesi; penelepon wajib Super Admin (dicek dari role milik sendiri) → 401/403.
+- **Butuh env server:** `SUPABASE_SERVICE_ROLE_KEY` (dari Dashboard → Settings → API; tanpa ini → 500) — berlaku juga untuk user Super Admin pertama: buat via Dashboard → Auth → Users, lalu `INSERT INTO user_roles` + tautkan `team_members.profile_id` via SQL.
+- **Request:** `{ name: string, email: string, roles: UserRole[] }`
+- **Response:** `201 { data: PortalUser }` · `400 validasi` · `401/403 otorisasi` · `409 email ganda` · `500 konfigurasi/gagal` → `{ error: string }`.
 
 ```ts
 type UserRole = "Super Admin" | "Executive / Leader" | "Sales / Marketing"

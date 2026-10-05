@@ -1,8 +1,21 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import { RequireRole } from "@/components/auth/require-role";
 import { useAuthStore } from "@/store/auth";
+
+// Isolasi: guard memicu initialize() → getSession() → client Supabase.
+// Stub client agar tidak menyentuh env/jaringan.
+vi.mock("@/lib/supabase/client", () => ({
+  createClient: () => ({
+    auth: {
+      getSession: async () => ({ data: { session: null } }),
+      onAuthStateChange: () => ({
+        data: { subscription: { unsubscribe: () => {} } },
+      }),
+    },
+  }),
+}));
 
 const superAdmin = {
   id: "USR-001",
