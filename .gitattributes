@@ -1,0 +1,17 @@
+# Normalisasi line ending agar diff tidak dipenuhi perubahan LF/CRLF.
+* text=auto eol=lf
+
+# File biner tidak boleh dinormalisasi.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+*.zip binary
+
+# Lockfile tetap LF agar konsisten di semua OS.
+pnpm-lock.yaml text eol=lf
