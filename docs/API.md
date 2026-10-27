@@ -690,6 +690,47 @@ interface NotificationItem { id: string; type: NotificationType; title: string; 
 
 ---
 
+## Modul: Arsip & Backup
+
+> **Status:** Backend Fase 3 (US-043, FR-5) — `services/archive.ts`, tipe di
+> `types/archive.ts`, halaman `/pengaturan/arsip` (Super Admin).
+> Soft archive memakai RPC database yang sudah ada: `archive_entity` dan
+> `restore_entity` (`security invoker` + cek `private.is_super_admin()`).
+> Tidak ada migrasi/tabel baru.
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listArchiveItems()` | Baca `leads`, `projects`, `content_materials` (maks. 500 terbaru per modul) + nama tim/klien; hasil dinormalisasi menjadi `ArchiveItem`; data aktif dan arsip dibedakan dari `archivedAt` |
+| `archiveRecord(type, id)` | Panggil RPC `archive_entity`, lalu verifikasi `archived_at` terisi; tipe valid: `lead`, `project`, `content_material`; error otorisasi/0 baris tidak dilaporkan sebagai sukses |
+| `restoreRecord(type, id)` | Panggil RPC `restore_entity`, lalu verifikasi `archived_at` kembali `null` |
+| `exportModuleCsv(type)` | Ekspor **seluruh baris** modul (aktif + arsip) dengan paging 1.000 baris; kolom `Diarsipkan` menunjukkan status; hasil `{ filename, content }` |
+| `buildCsv(headers, rows)` | CSV RFC 4180 + BOM UTF-8, escape koma/kutip/baris baru |
+| `archiveCsvFilename(type, date?)` | `lead-YYYY-MM-DD.csv`, `project-YYYY-MM-DD.csv`, `materi-konten-YYYY-MM-DD.csv` |
+
+**Kontrak data:**
+
+```ts
+type ArchiveEntityType = "lead" | "project" | "content_material";
+
+interface ArchiveItem {
+  type: ArchiveEntityType;
+  id: string;              // UUID database
+  displayId: string;       // LEAD-001 / PRJ-001 / MAT-0001
+  title: string;
+  subtitle: string;        // modul + PIC/PM/klien + jadwal
+  status: string;
+  archivedAt: string | null;
+  updatedAt: string;
+}
+```
+
+**Hak akses:** halaman dibungkus `RequireRole(["Super Admin"])`; RPC menolak
+role lain dengan `42501`. RLS modul tetap berlaku saat daftar/ekspor dibaca.
+**Backup:** prosedur lengkap ada di [`docs/DEPLOYMENT.md`](./DEPLOYMENT.md)
+bagian *Backup & Restore Supabase*; retensi arsip menunggu Q-018.
+
+---
+
 ## Modul: Panduan & RACI
 
 > **Status:** Draft Fase 1 (US-042) — `services/guides.ts`.

@@ -830,7 +830,7 @@ erDiagram
 - **US-040:** CRUD `strategy_evaluations`; Test wajib `hypothesis` (CHECK via trigger/service).
 - **US-041:** baca/tulis `settings` (SLA, jam layanan, WA, target KPI, ambang kritis) + CRUD `holidays`; audit otomatis dari trigger. `developer_capacity` belum dipindah ke backend (masih mock di `services/scheduling.ts`).
 - **US-042:** CRUD `guides`; `UPDATE raci_matrix`.
-- **US-043:** `UPDATE ... SET archived_at` + `SELECT ... WHERE archived_at IS NULL`; ekspor CSV = query; backup = prosedur Supabase.
+- **US-043:** `UPDATE ... SET archived_at` via RPC `archive_entity`/`restore_entity` (Super Admin) + verifikasi hasil di service; `SELECT` seluruh baris untuk daftar arsip dan ekspor CSV (paging 1.000, termasuk data terarsip); backup = prosedur `docs/DEPLOYMENT.md`. Tidak ada migrasi/tabel baru; retensi purge menunggu Q-018.
 - **US-044:** pencarian: `UNION` atas `leads/clients/projects/tasks/materials` (RLS memfilter); Tugas saya = query per role via `team_members`.
 
 ---

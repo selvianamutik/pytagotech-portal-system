@@ -239,3 +239,17 @@
   - B) Biarkan; nilai lama/baru di `old_value`/`new_value` sudah cukup untuk audit.
 - **Dampak jika salah:** A memperbaiki keterlacakan audit; B menyisakan kolom entitas kosong untuk beberapa tabel.
 - **Jawaban:** _(diisi pemilik proyek)_
+
+---
+
+## Q-018 — [OPEN]
+
+- **Terkait:** US-043 / FR-5, lanjutan Q-010
+- **Pertanyaan:** Q-010 memilih retensi arsip opsi B (dihapus permanen setelah X tahun), tetapi nilai X belum ditentukan. Berapa tahun arsip disimpan sebelum dihapus, dan berapa lama backup Supabase perlu dipertahankan?
+- **Opsi yang dipertimbangkan:**
+  - A) Arsip 2 tahun; backup harian 7 hari + backup manual bulanan 12 bulan
+  - B) Arsip 5 tahun; backup harian 30 hari + backup manual bulanan 24 bulan
+  - C) Tidak ada penghapusan otomatis; backup mengikuti batas plan Supabase
+  - D) Nilai lain (diisi pemilik)
+- **Dampak jika salah:** Job purge tidak boleh dibuat sebelum X disepakati. Retensi backup memengaruhi biaya penyimpanan dan kepatuhan terhadap data pelanggan. Saat ini arsip hanya mengisi `archived_at` dan **belum ada penghapusan otomatis**.
+- **Jawaban:** _(diisi pemilik proyek)_

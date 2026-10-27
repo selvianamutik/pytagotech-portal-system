@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-27  
-> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 BLOCKED — ditunda atas keputusan pemilik, lihat Q-014; US-005 4/5 — verifikasi browser selesai, delete opsi diblokir policy live (Q-016), AC3 tim/PIC menunggu Q-015; US-041 DONE 3/3)
+> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 BLOCKED — ditunda atas keputusan pemilik, lihat Q-014; US-005 4/5 — verifikasi browser selesai, delete opsi diblokir policy live (Q-016), AC3 tim/PIC menunggu Q-015; US-041 DONE 3/3; US-043 DONE 4/4)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -94,7 +94,7 @@
 |----|-------|------|--------|--------------|------------|
 | US-041 | Pengaturan KPI, SLA, dan routing | Backend | DONE | 3/3 ✅ | 4163c88 |
 | US-042 | SOP, panduan, dan matriks RACI | Frontend | DONE | 3/3 ✅ | eba2031 |
-| US-043 | Arsip data & backup | Backend | IN_PROGRESS | 2/4 | `frontend/supabase/migrations/20261005001000_backend_foundation.sql` |
+| US-043 | Arsip data & backup | Backend | DONE | 4/4 ✅ | 45d84bc |
 | US-044 | Pencarian global & beranda per role | Frontend | DONE | 4/4 ✅ | ac3b400 |
 
 ---
