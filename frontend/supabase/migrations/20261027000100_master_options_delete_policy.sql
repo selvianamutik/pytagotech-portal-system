@@ -15,6 +15,11 @@ create policy "master_options_select_authenticated" on public.master_options
 for select to authenticated
 using (is_active = true or private.is_super_admin());
 
+-- Live sempat memakai policy INSERT/UPDATE terpisah tanpa DELETE. Hapus agar
+-- tidak ada policy duplikat; `master_options_manage_admin` di bawah mencakup
+-- SELECT/INSERT/UPDATE/DELETE untuk Super Admin.
+drop policy if exists "master_options_insert_admin" on public.master_options;
+drop policy if exists "master_options_update_admin" on public.master_options;
 drop policy if exists "master_options_manage_admin" on public.master_options;
 create policy "master_options_manage_admin" on public.master_options
 for all to authenticated

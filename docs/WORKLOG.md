@@ -1436,3 +1436,23 @@
 - **Acceptance Criteria:** AC1 CRUD 9 kelompok OK; AC2 dropdown membaca master data OK; AC3 opsi terpakai hanya dinonaktifkan (termasuk tim/PIC) OK di kode/test; AC4 lint/typecheck OK; AC5 verifikasi browser menunggu SQL live.
 - **Catatan/Masalah:** Pemilik perlu menjalankan SQL migration `is_active` dan policy `master_options` di Supabase live. Setelah itu ulangi REST + browser test; US-005 baru bisa `DONE` 5/5.
 - **Langkah berikutnya:** minta pemilik menjalankan SQL live, verifikasi browser `/pengaturan/master-data`, lalu tutup US-005/FR-3 dan lanjut Q-017/Q-018 + Gate 3.
+
+---
+
+## 2026-10-27 - Tahap 11 - Verifikasi Live US-005; DONE 5/5
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** develop
+- **Commit:** 3f85213 (kode/migration) + commit docs ini
+- **Yang dilakukan:**
+  - Menerapkan migration `20261027000000_team_members_is_active.sql` dan `20261027000100_master_options_delete_policy.sql` ke database live lewat koneksi Postgres langsung (setelah Q-015/Q-016 disetujui pemilik).
+  - Diagnostik policy live sebelum perbaikan: hanya ada `master_options_insert_admin`, `master_options_update_admin`, dan `master_options_select_authenticated`; tidak ada policy DELETE, sehingga DELETE tersaring menjadi 0 baris.
+  - Setelah migration: `team_members.is_active` ada (default true); policy `master_options_manage_admin FOR ALL` + SELECT terpasang; grant DELETE `authenticated` tersedia.
+  - Verifikasi REST sebagai Super Admin: INSERT opsi 201, DELETE opsi 200 + 1 baris, GET tim/PIC 200; INSERT anggota 201, PATCH nonaktif 200, filter aktif 0 baris untuk anggota nonaktif, DELETE anggota 200 + 1 baris.
+  - Verifikasi browser `/pengaturan/master-data`: 9 kelompok tampil; Tim/PIC menampilkan badge Aktif dan tombol Nonaktifkan; Raka dinonaktifkan (hitung aktif 4 -> 3, badge Nonaktif) lalu diaktifkan kembali (3 -> 4); opsi uji `Verifikasi Browser US005` ditambah, dihapus lewat dialog konfirmasi, dan hilang dari tabel.
+  - Data uji dibersihkan; live kembali hanya berisi 4 seed tim/PIC aktif dan 44 master options.
+- **File berubah:** migration policy (drop policy INSERT/UPDATE live yang usang), docs status/verifikasi.
+- **Verifikasi:** lint OK, type-check OK, test 258/258 (55 file); REST + browser live OK.
+- **Acceptance Criteria:** 5/5 - CRUD 9 kelompok; dropdown langsung memakai data terbaru; opsi terpakai hanya dinonaktifkan (termasuk tim/PIC); lint/typecheck lulus; browser live terverifikasi.
+- **Catatan/Masalah:** `db reset` dari database kosong tetap belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia; wajib diulang sebelum Gate 3 bila environment tersedia. Q-017/Q-018 masih OPEN.
+- **Langkah berikutnya:** lanjut Q-017 (entity_id audit PK komposit) dan Q-018 (retensi arsip/backup), lalu siapkan Gate 3/tag `v0.3.0-backend`.

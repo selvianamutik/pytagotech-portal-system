@@ -53,4 +53,4 @@ _Belum ada change request._
 - **Usulan:** Tambah kolom `team_members.is_active boolean NOT NULL DEFAULT true` agar anggota tim/PIC yang sudah dipakai dapat dinonaktifkan tanpa dihapus, sesuai AC3 US-005.
 - **Alasan:** Skema `team_members` yang disetujui pada Gate 2 belum punya flag aktif. Keputusan pemilik atas Q-015 pada 2026-10-27 memilih opsi A (tambah kolom lewat CR + migration); dropdown form hanya menampilkan anggota aktif, sedangkan baris nonaktif tetap tersimpan untuk histori lead/proyek/task.
 - **Dampak:** Satu migration baru (`20261027000000_team_members_is_active.sql`), tipe/service/UI tim/PIC, dan test. Policy SELECT `team_members` tetap `using (true)` untuk user terautentikasi agar nama historis tetap resolve; penyaringan aktif dilakukan di service/UI, bukan dengan mempersempit SELECT.
-- **Persetujuan:** Pemilik memilih opsi A pada 2026-10-27 (Q-015); migration dan implementasi US-005 dikerjakan pada hari yang sama.
+- **Persetujuan:** Pemilik memilih opsi A pada 2026-10-27 (Q-015); migration diterapkan ke live dan implementasi US-005 selesai pada hari yang sama.

@@ -190,7 +190,8 @@ RLS menyaring semua baris DELETE, bukan error. Service memakai
 menampilkan sukses palsu. Migration
 `20261027000100_master_options_delete_policy.sql` memberi grant DELETE dan
 membuat ulang policy `master_options_manage_admin FOR ALL` untuk Super Admin
-(Q-016). Verifikasi live diulang setelah migration dijalankan pemilik.
+(Q-016). Verifikasi live 2026-10-27 berhasil: DELETE mengembalikan 1 baris dan
+opsi uji hilang dari halaman setelah reload.
 
 ---
 

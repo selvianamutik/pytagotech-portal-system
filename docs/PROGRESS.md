@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-27  
-> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 DONE 4/4 — verifikasi live 42 tabel + role tanpa role, AC2 role-based via CR-003, PRD diperbarui 2026-10-27; US-005 4/5 — CRUD + tim/PIC `is_active` + migration policy selesai, menunggu SQL live & verifikasi browser ulang; US-041 DONE 3/3; US-043 DONE 4/4)
+> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 DONE 4/4 — verifikasi live 42 tabel + role tanpa role, AC2 role-based via CR-003, PRD diperbarui 2026-10-27; US-005 DONE 5/5 — tim/PIC `is_active` + policy DELETE `master_options` terverifikasi live (REST + browser); US-041 DONE 3/3; US-043 DONE 4/4)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -14,7 +14,7 @@
 | US-002 | Autentikasi & manajemen user | Frontend | DONE | 6/6 ✅ | 9c1834f |
 | US-003 | Row Level Security per role | Backend | DONE | 4/4 ✅ | 000e34f, d2e34c9 (verifikasi live + CR-003) |
 | US-004 | Audit trail | Backend | DONE | 5/5 ✅ | 19c6a6c |
-| US-005 | Pengaturan master data & dropdown | Backend | IN_PROGRESS | 4/5 | implementasi `is_active` + migration policy (belum live) |
+| US-005 | Pengaturan master data & dropdown | Backend | DONE | 5/5 ✅ | 3f85213, 9bfd0af (live REST + browser) |
 | US-006 | Komentar, lampiran, dan notifikasi | Frontend | DONE | 5/5 ✅ | 52af09f |
 
 ---
@@ -105,7 +105,7 @@
 |----|-----------|--------|
 | FR-1 | Auth email/password + RLS | DONE |
 | FR-2 | Audit trail (siapa/kapan/apa/nilai lama/baru) | IN_PROGRESS |
-| FR-3 | Dropdown dari master data terpusat | IN_PROGRESS |
+| FR-3 | Dropdown dari master data terpusat | DONE |
 | FR-4 | Komentar, lampiran, notifikasi reusable | IN_PROGRESS |
 | FR-5 | Semua kalkulasi metrik di sistem, rumus terdokumentasi | IN_PROGRESS |
 | FR-6 | Lead dengan field kontak, industri, PIC, status 7 tahap | IN_PROGRESS |

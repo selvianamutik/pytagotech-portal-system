@@ -184,7 +184,7 @@
   - B) Tanpa perubahan skema: blokir hapus anggota yang sudah dipakai, edit nama/status tetap bisa; anggota tak terpakai boleh dihapus
   - C) Keluarkan tim/PIC dari US-005 dan jadikan US terpisah
 - **Dampak jika salah:** Opsi A menambah kolom + migration baru dan menunda verifikasi karena `db reset` belum bisa dijalankan. Opsi B membuat perilaku tim/PIC sedikit berbeda dari opsi master lain (tidak ada tombol nonaktifkan).
-- **Jawaban:** Pemilik memilih **opsi A** pada 2026-10-27: tambah `team_members.is_active` lewat CR-004 + migration. Dropdown form memfilter anggota aktif; anggota yang sudah dipakai dinonaktifkan, bukan dihapus. Implementasi dan test selesai; verifikasi live menunggu SQL migration dijalankan pemilik.
+- **Jawaban:** Pemilik memilih **opsi A** pada 2026-10-27: tambah `team_members.is_active` lewat CR-004 + migration. Dropdown form memfilter anggota aktif; anggota yang sudah dipakai dinonaktifkan, bukan dihapus. Migration sudah diterapkan ke live; REST (toggle aktif/nonaktif + filter dropdown) dan browser `/pengaturan/master-data` lolos pada 2026-10-27.
 
 ---
 
@@ -225,7 +225,7 @@
   using (private.is_super_admin())
   with check (private.is_super_admin());
   ```
-- **Jawaban:** Pemilik memilih **opsi A** pada 2026-10-27: perbaiki policy live + tambahkan migration pengaman. Migration `20261027000100_master_options_delete_policy.sql` mengembalikan policy SELECT/manage dan grant DELETE untuk role `authenticated`; RLS tetap membatasi tulis ke Super Admin. Verifikasi live diulang setelah SQL dijalankan pemilik.
+- **Jawaban:** Pemilik memilih **opsi A** pada 2026-10-27: perbaiki policy live + tambahkan migration pengaman. Migration `20261027000100_master_options_delete_policy.sql` mengembalikan policy SELECT/manage dan grant DELETE untuk role `authenticated`; RLS tetap membatasi tulis ke Super Admin. Diagnostik live menunjukkan hanya ada policy INSERT/UPDATE/SELECT (tanpa DELETE), sehingga baris terfilter saat DELETE. Setelah migration diterapkan, REST DELETE mengembalikan 1 baris dan browser berhasil menghapus opsi uji; data uji sudah dibersihkan.
 
 ---
 
