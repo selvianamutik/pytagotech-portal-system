@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-27  
-> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 DONE 4/4 — verifikasi live 42 tabel + role tanpa role, AC2 role-based via CR-003, PRD diperbarui 2026-10-27; US-005 DONE 5/5 — tim/PIC `is_active` + policy DELETE `master_options` terverifikasi live (REST + browser); US-041 DONE 3/3; US-043 DONE 4/4)
+> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 DONE 4/4 — verifikasi live 42 tabel + role tanpa role, AC2 role-based via CR-003, PRD diperbarui 2026-10-27; US-005 DONE 5/5 — tim/PIC `is_active` + policy DELETE `master_options` terverifikasi live (REST + browser); Q-017/Q-018 ANSWERED — audit `entity_id` PK komposit + retensi arsip 2 tahun/backup 7 hari-12 bulan; US-041 DONE 3/3; US-043 DONE 4/4)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -104,7 +104,7 @@
 | ID | Deskripsi | Status |
 |----|-----------|--------|
 | FR-1 | Auth email/password + RLS | DONE |
-| FR-2 | Audit trail (siapa/kapan/apa/nilai lama/baru) | IN_PROGRESS |
+| FR-2 | Audit trail (siapa/kapan/apa/nilai lama/baru) | DONE |
 | FR-3 | Dropdown dari master data terpusat | DONE |
 | FR-4 | Komentar, lampiran, notifikasi reusable | IN_PROGRESS |
 | FR-5 | Semua kalkulasi metrik di sistem, rumus terdokumentasi | IN_PROGRESS |

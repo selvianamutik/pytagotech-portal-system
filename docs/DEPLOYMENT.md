@@ -58,7 +58,8 @@ Lihat [`.env.example`](../.env.example) untuk daftar lengkap.
 - **Manual:** sebelum migration besar, rilis produksi, impor data massal, atau
   perubahan konfigurasi RLS.
 - **Bulanan:** simpan satu salinan jangka panjang di storage terenkripsi di
-  luar Supabase. Lama retensi menunggu keputusan **Q-018**.
+  luar Supabase selama **12 bulan**; backup harian platform disimpan **7 hari**
+  (Q-018, `DEC-021`).
 - **PITR (Point-in-Time Recovery):** opsi berbayar bila butuh RPO < 24 jam.
   Restore PITR dilakukan ke timestamp tertentu lewat Dashboard atau Management
   API; aktifkan sebelum insiden, bukan sesudahnya.
@@ -171,13 +172,15 @@ konflik primary key dan kehilangan data pasca-backup.
 
 ### Retensi arsip & penghapusan permanen
 
-- Saat ini tidak ada job penghapusan otomatis. Data arsip hanya ditandai
-  `archived_at` dan dapat dipulihkan kapan saja.
-- Q-010 memilih opsi retensi **B (dihapus setelah X tahun)**, tetapi nilai X
-  belum disepakati (Q-018). Jangan membuat job purge sebelum ada keputusan.
-- Bila nanti disetujui: ekspor CSV modul terkait lebih dulu, jalankan purge
-  terjadwal dengan log audit, lalu verifikasi jumlah baris. Backup yang memuat
-  data tersebut tetap mengikuti kebijakan retensi backup.
+- Data arsip disimpan **2 tahun** sejak `archived_at` sebelum boleh dihapus
+  permanen (Q-018, `DEC-021`). Backup harian disimpan 7 hari dan salinan
+  backup manual bulanan disimpan 12 bulan.
+- Saat ini belum ada job penghapusan otomatis. Jangan menghapus arsip secara
+  manual sebelum masa retensi 2 tahun dan salinan backup terkait memenuhi
+  retensinya.
+- Bila nanti job purge dibuat: ekspor CSV modul terkait lebih dulu, jalankan
+  purge terjadwal dengan log audit, lalu verifikasi jumlah baris. Backup yang
+  memuat data tersebut tetap mengikuti kebijakan retensi backup di atas.
 
 ---
 

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pengaturan KPI, SLA & routing (US-041, FR-30): halaman `/pengaturan/kpi-sla` untuk ambang SLA 30/15 menit, jam layanan, nomor WhatsApp resmi per brand, ambang kritis publikasi, target KPI per lini bisnis, dan kalender hari libur; nilai dipakai Komunitas, Inquiry, Scorecard, Kalender Publikasi, dan penjadwalan fitur; perubahan tercatat di audit log tanpa mengubah snapshot final historis
 - Master data & dropdown terpusat (US-005): halaman `/pengaturan/master-data` untuk 8 kategori `master_options` + tim/PIC, CRUD, aktif/nonaktif, hapus terjaga; tim/PIC kini punya `is_active` (CR-004) sehingga anggota terpakai dinonaktifkan tanpa kehilangan histori; migration pengaman policy DELETE `master_options` (Q-016); form lead, interest, fitur, dan sosmed membaca opsi aktif dari database; terverifikasi live via REST + browser
 - Halaman Audit Log (US-004): baca `audit_logs` trigger DB + filter aktor/modul/tanggal, tanpa aksi ubah/hapus
+- Audit trail (US-004/FR-2): `audit_logs.entity_id` kini diisi untuk tabel ber-PK komposit (Q-017/CR-005); PK tunggal tetap memakai nilai aslinya
 - Wiring Supabase Auth (US-002 backend): login/logout/reset/password-baru via Auth nyata, manajemen user via `profiles`/`user_roles`, Route Handler admin, redirect proxy, halaman error auth, template email ID
 - Migrasi parity-fix backend (`20261005002000`): RLS role-based selaras kontrak UI, RPC `convert_inquiry_to_lead`, notifikasi handover ke Sales, trigger `handle_new_user`, hapus policy INSERT pemalsu audit
 - Dialog aktivitas lead: ubah status langsung (6 status lain, tercatat di timeline)
@@ -45,13 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Layout portal (sidebar + header + menu aktif) menjadi global via grup route `(portal)`; URL tidak berubah; `/login` dan `/403` tetap tanpa shell
 - Penyesuaian alur kerja: `Frontend → Skema Database → Backend → Deploy Ready` (Gate 2–4, tag database/backend); scaffold `docs/DATABASE.md` (DRAFT) + `database/schema.sql`
+- Retensi arsip ditetapkan 2 tahun; backup harian 7 hari + salinan manual bulanan 12 bulan (Q-018/`DEC-021`); job purge otomatis tetap belum dibuat
 
 ### Fixed
 - Master data (US-005): DELETE yang menghasilkan 0 baris (mis. disaring RLS) kini dilaporkan sebagai error, bukan sukses palsu; cek referensi tim/PIC dijalankan paralel agar hapus tidak menunggu 19 query berurutan.
 
 ### Known Issues
-- Policy DELETE `master_options` di DB live masih menyaring semua baris untuk role `authenticated` (Q-016); UI sudah menampilkan error, tetapi penghapusan baru berfungsi setelah policy diperbaiki.
-- `audit_logs.entity_id` kosong untuk tabel ber-PK komposit seperti `master_options` dan `user_roles` (Q-017).
+- `db reset` dari database kosong belum terbukti karena Docker/Supabase CLI/WSL tidak tersedia di mesin kerja; wajib dijalankan sebelum Gate 3 bila environment tersedia.
 
 ## [0.1.0] - 2026-10-05
 

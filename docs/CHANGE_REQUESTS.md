@@ -54,3 +54,12 @@ _Belum ada change request._
 - **Alasan:** Skema `team_members` yang disetujui pada Gate 2 belum punya flag aktif. Keputusan pemilik atas Q-015 pada 2026-10-27 memilih opsi A (tambah kolom lewat CR + migration); dropdown form hanya menampilkan anggota aktif, sedangkan baris nonaktif tetap tersimpan untuk histori lead/proyek/task.
 - **Dampak:** Satu migration baru (`20261027000000_team_members_is_active.sql`), tipe/service/UI tim/PIC, dan test. Policy SELECT `team_members` tetap `using (true)` untuk user terautentikasi agar nama historis tetap resolve; penyaringan aktif dilakukan di service/UI, bukan dengan mempersempit SELECT.
 - **Persetujuan:** Pemilik memilih opsi A pada 2026-10-27 (Q-015); migration diterapkan ke live dan implementasi US-005 selesai pada hari yang sama.
+
+---
+
+## CR-005 — [APPROVED]
+
+- **Usulan:** Perbaiki `private.audit_row_change()` agar `audit_logs.entity_id` diisi dari seluruh kolom primary key, bukan hanya `id`/`display_id`.
+- **Alasan:** Keputusan pemilik atas Q-017 pada 2026-10-27 memilih opsi A. Tabel ber-PK komposit (`master_options`, `user_roles`, `task_dependencies`, `idea_platforms`, `material_platforms`, `material_assets`, `raci_matrix`, dan tabel komposit lain) sebelumnya menghasilkan entitas kosong di audit log.
+- **Dampak:** Satu migration function (`20261027000200_audit_entity_id_composite.sql`), tanpa perubahan tabel/kolom/policy/PRD. PK tunggal tetap memakai nilai aslinya; PK komposit digabung dengan `/`. Baris audit lama tidak diubah agar tetap append-only.
+- **Persetujuan:** Pemilik memilih opsi A pada 2026-10-27 (Q-017); migration diterapkan ke live dan diverifikasi pada hari yang sama.

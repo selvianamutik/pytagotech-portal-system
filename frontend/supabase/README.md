@@ -11,6 +11,7 @@ Backend Pytagotech Portal ditempatkan di dalam `frontend/supabase` agar tetap sa
 - `migrations/20261005003000_display_id_search_path.sql`: skualifikasi nama sequence di argumen trigger display ID (lihat bug search_path di bawah).
 - `migrations/20261027000000_team_members_is_active.sql`: status aktif tim/PIC (CR-004, US-005 AC3) tanpa mengubah policy SELECT historis.
 - `migrations/20261027000100_master_options_delete_policy.sql`: grant + policy ulang DELETE `master_options` untuk Super Admin (Q-016).
+- `migrations/20261027000200_audit_entity_id_composite.sql`: `entity_id` audit dari PK tunggal/komposit (Q-017/CR-005); format komposit `kolom1/kolom2`.
 - `seed.sql`: data referensi awal untuk role, master options, settings, task template, guides, RACI, team members, dan bucket lampiran.
 
 ## Catatan Analisis DATABASE.md

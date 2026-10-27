@@ -606,6 +606,8 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 > **Status:** Backend Fase 3 (US-004, FR-2) — baca dari tabel `audit_logs`
 > (trigger DB) via `queryAuditLogs`; tulis mock modul lain tetap sampai swap
 > masing-masing. Halaman `/pengaturan/audit-log` (Super Admin + Leader).
+> `entity_id` diisi trigger dari PK: PK tunggal memakai nilai aslinya, PK
+> komposit digabung `/` sesuai urutan PK (Q-017); baris lama dapat kosong.
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|

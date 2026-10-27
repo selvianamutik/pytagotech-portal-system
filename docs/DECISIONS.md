@@ -261,3 +261,27 @@
 - **Alternatif yang dipertimbangkan:** Menyembunyikan tombol hapus (ditolak - menurunkan AC3); menunda sampai `db reset` (ditolak - memblokir penutupan US-005).
 - **Alasan:** RLS tetap menjadi lapisan otorisasi; grant role tidak memperluas akses karena policy membatasi ke Super Admin.
 - **Konsekuensi:** Policy live sudah diperbarui dan diverifikasi via REST + browser pada 2026-10-27; data uji dibersihkan. Migration ini juga menjaga hasil `db reset` tetap konsisten.
+
+---
+
+## DEC-020 - `entity_id` Audit dari Primary Key Tunggal/Komposit (Q-017/CR-005)
+
+- **Tanggal:** 2026-10-27
+- **Terkait:** US-004, FR-2
+- **Konteks:** `private.audit_row_change()` hanya membaca kolom `id`/`display_id`, sehingga `audit_logs.entity_id` kosong untuk 10 tabel ber-PK komposit, termasuk `master_options(category, value)`, `user_roles(user_id, role_name)`, dan `raci_matrix(activity, role)`. Kolom `old_value`/`new_value` sudah menyimpan data lengkap, tetapi kolom entitas tetap tidak bisa dipakai untuk penelusuran.
+- **Keputusan:** Pemilik memilih opsi A (Q-017): migration `20261027000200_audit_entity_id_composite.sql` mengganti fungsi audit agar membaca kolom PK dari `pg_index`/`pg_attribute` sesuai urutan PK. PK tunggal tetap menghasilkan nilai aslinya; PK komposit digabung dengan `/` (mis. `industry/F&B`). Baris audit lama tidak diubah agar tetap append-only.
+- **Alternatif yang dipertimbangkan:** Membiarkan kosong (ditolak - keterlacakan entitas hilang); menulis daftar kolom per tabel di fungsi (ditolak - duplikasi dan mudah basi); backfill baris audit lama (ditolak - melanggar sifat append-only).
+- **Alasan:** Solusi generik berlaku untuk semua tabel saat ini dan tabel baru, tanpa perubahan skema tabel bisnis.
+- **Konsekuensi:** Satu query katalog per baris audit (biaya kecil dibanding INSERT audit). Format `entity_id` komposit memakai `/`; nilai yang mengandung `/` tetap tersimpan lengkap di `old_value`/`new_value`. Verifikasi live 2026-10-27: `master_options` -> `industry/ZZ Audit Composite Test`, `raci_matrix` -> `ZZ Audit Test/QA`, `team_members` -> UUID; data/audit uji dibersihkan.
+
+---
+
+## DEC-021 - Retensi Arsip 2 Tahun dan Backup 7 Hari/12 Bulan (Q-018)
+
+- **Tanggal:** 2026-10-27
+- **Terkait:** US-043, FR-5
+- **Konteks:** Q-010 memilih arsip dihapus permanen setelah X tahun, tetapi X belum ditetapkan. Backup Supabase juga belum punya kebijakan retensi tertulis; arsip saat ini hanya mengisi `archived_at` dan belum ada job purge.
+- **Keputusan:** Pemilik memilih opsi A (Q-018): data arsip disimpan **2 tahun** sejak `archived_at`, backup harian disimpan **7 hari**, dan salinan backup manual bulanan disimpan **12 bulan**.
+- **Alternatif yang dipertimbangkan:** Arsip 5 tahun + backup 30 hari/24 bulan (ditolak - biaya lebih tinggi); tanpa purge otomatis (ditolak - tidak sesuai Q-010 opsi B); nilai lain (tidak diusulkan).
+- **Alasan:** Menyeimbangkan keterlacakan operasional, kepatuhan, dan biaya penyimpanan untuk skala portal internal.
+- **Konsekuensi:** Kebijakan dicatat di `docs/DEPLOYMENT.md`; belum ada job purge otomatis. Bila job dibuat, wajib ekspor CSV lebih dulu, log audit, verifikasi jumlah baris, dan menghormati retensi backup. Jangan menghapus arsip manual sebelum 2 tahun.

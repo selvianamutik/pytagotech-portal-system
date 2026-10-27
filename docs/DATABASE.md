@@ -605,6 +605,7 @@ erDiagram
 | attachments.storage_path | text | NO | - | - | Supabase Storage privat | US-006 |
 | notifications.recipient_id | uuid | YES | - | FK → profiles.id, CASCADE | Inbox per user | US-006 |
 | audit_logs.old_value / new_value | jsonb | YES | - | Query-able (`new_value->>'status'`); trigger generik Fase 3 | US-004, FR-2 |
+| audit_logs.entity_id | text | NO | - | Trigger audit: nilai PK tunggal apa adanya; PK komposit digabung `/` sesuai urutan PK (mis. `industry/F&B`) | Data lama sebelum Q-017 dapat tetap kosong | US-004, FR-2 |
 | audit_logs.* | - | NO | - | Append-only (REVOKE UPDATE/DELETE) | Trigger DB di Fase 3 | US-004, FR-2 |
 | settings.key | text | NO | - | PK | target KPI/SLA/WA/nomor (FR-30, US-041) | US-041 |
 | settings.value | jsonb | NO | - | - | - | US-041 |

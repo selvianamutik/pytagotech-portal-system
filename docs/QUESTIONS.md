@@ -229,7 +229,7 @@
 
 ---
 
-## Q-017 — [OPEN]
+## Q-017 — [ANSWERED]
 
 - **Terkait:** US-004 / FR-2
 - **Pertanyaan:** `audit_logs.entity_id` kosong untuk tabel ber-PK komposit seperti `master_options(category, value)` dan `user_roles(user_id, role_name)`. Trigger audit hanya membaca kolom `id`/`display_id`. Apakah perlu diperbaiki sekarang atau dicatat sebagai keterbatasan?
@@ -238,11 +238,11 @@
   - A) Perbaiki `private.audit_row_change()` agar membangun `entity_id` dari kolom PK komposit (butuh migration + verifikasi `db reset`).
   - B) Biarkan; nilai lama/baru di `old_value`/`new_value` sudah cukup untuk audit.
 - **Dampak jika salah:** A memperbaiki keterlacakan audit; B menyisakan kolom entitas kosong untuk beberapa tabel.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** Pemilik memilih **opsi A** pada 2026-10-27: perbaiki `private.audit_row_change()` agar `entity_id` dibangun dari seluruh kolom PK. Migration `20261027000200_audit_entity_id_composite.sql` membaca kolom PK dari katalog; PK tunggal tetap memakai nilai aslinya, sedangkan PK komposit digabung dengan `/` (mis. `industry/F&B`). Verifikasi live: `master_options` menghasilkan `industry/ZZ Audit Composite Test`, `raci_matrix` menghasilkan `ZZ Audit Test/QA`, dan `team_members` (PK tunggal) tetap menghasilkan UUID. Data/audit uji dibersihkan; baris audit lama tidak diubah agar sifat append-only tetap terjaga.
 
 ---
 
-## Q-018 — [OPEN]
+## Q-018 — [ANSWERED]
 
 - **Terkait:** US-043 / FR-5, lanjutan Q-010
 - **Pertanyaan:** Q-010 memilih retensi arsip opsi B (dihapus permanen setelah X tahun), tetapi nilai X belum ditentukan. Berapa tahun arsip disimpan sebelum dihapus, dan berapa lama backup Supabase perlu dipertahankan?
@@ -252,7 +252,7 @@
   - C) Tidak ada penghapusan otomatis; backup mengikuti batas plan Supabase
   - D) Nilai lain (diisi pemilik)
 - **Dampak jika salah:** Job purge tidak boleh dibuat sebelum X disepakati. Retensi backup memengaruhi biaya penyimpanan dan kepatuhan terhadap data pelanggan. Saat ini arsip hanya mengisi `archived_at` dan **belum ada penghapusan otomatis**.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** Pemilik memilih **opsi A** pada 2026-10-27: arsip disimpan **2 tahun** sebelum boleh dihapus permanen; backup harian disimpan **7 hari** dan salinan backup manual bulanan disimpan **12 bulan**. Kebijakan dicatat di `docs/DEPLOYMENT.md` dan `DEC-021`; belum ada job purge otomatis, dan penghapusan manual tidak boleh dilakukan sebelum masa retensi/backup terpenuhi.
 
 ---
 

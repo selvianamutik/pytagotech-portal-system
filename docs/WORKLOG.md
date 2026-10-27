@@ -1456,3 +1456,22 @@
 - **Acceptance Criteria:** 5/5 - CRUD 9 kelompok; dropdown langsung memakai data terbaru; opsi terpakai hanya dinonaktifkan (termasuk tim/PIC); lint/typecheck lulus; browser live terverifikasi.
 - **Catatan/Masalah:** `db reset` dari database kosong tetap belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia; wajib diulang sebelum Gate 3 bila environment tersedia. Q-017/Q-018 masih OPEN.
 - **Langkah berikutnya:** lanjut Q-017 (entity_id audit PK komposit) dan Q-018 (retensi arsip/backup), lalu siapkan Gate 3/tag `v0.3.0-backend`.
+
+---
+
+## 2026-10-27 - Tahap 12 - Q-017/Q-018: Audit PK Komposit + Retensi
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** develop
+- **Commit:** commit ini (Q-017/Q-018)
+- **Yang dilakukan:**
+  - Menjawab Q-017 (opsi A) dan Q-018 (opsi A) setelah persetujuan pemilik.
+  - Migration `20261027000200_audit_entity_id_composite.sql`: `private.audit_row_change()` membaca kolom PK dari `pg_index`/`pg_attribute`; PK tunggal tetap memakai nilai aslinya, PK komposit digabung `/` sesuai urutan PK. Baris audit lama tidak diubah agar tetap append-only.
+  - Menerapkan migration ke database live lewat koneksi Postgres langsung.
+  - Menetapkan retensi arsip 2 tahun serta backup harian 7 hari + salinan manual bulanan 12 bulan; kebijakan dicatat di `DEPLOYMENT.md` dan `DEC-021`, tanpa job purge otomatis.
+  - Memperbarui CR-005, DEC-020/DEC-021, Q-017/Q-018, DATABASE/API/README/CHANGELOG/PROGRESS.
+- **File berubah:** `frontend/supabase/migrations/20261027000200_audit_entity_id_composite.sql`, `frontend/supabase/README.md`, `docs/{QUESTIONS,CHANGE_REQUESTS,DECISIONS,DATABASE,API,DEPLOYMENT,PROGRESS,WORKLOG}.md`, `CHANGELOG.md`
+- **Verifikasi:** migration live OK; smoke test live untuk `master_options` (`industry/ZZ Audit Composite Test`), `raci_matrix` (`ZZ Audit Test/QA`), dan `team_members` (UUID) pada insert/update/delete; data dan audit uji dibersihkan (0 baris tersisa). Lint OK, type-check OK, test 258/258 (55 file).
+- **Acceptance Criteria:** Q-017 — `entity_id` terisi untuk PK tunggal dan komposit, tidak ada perubahan format untuk PK tunggal; Q-018 — retensi arsip/backup terdokumentasi dan disetujui. FR-2 ditandai DONE karena seluruh tabel bisnis memiliki trigger audit (kecuali `audit_logs`, `lead_status_history`, dan `roles` yang memang bukan entitas bisnis).
+- **Catatan/Masalah:** `db reset` dari database kosong belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia; wajib dibuktikan sebelum Gate 3. Baris audit lama yang sudah kosong tidak di-backfill.
+- **Langkah berikutnya:** audit sisa FR/US untuk Gate 3, jalankan `db reset` saat environment tersedia, lalu siapkan tag `v0.3.0-backend`.
