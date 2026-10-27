@@ -47,6 +47,7 @@ coverage/
 # Misc
 *.log
 .cache/
+/backups/
 
 
 credentials.txt

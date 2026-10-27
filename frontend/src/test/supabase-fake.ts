@@ -63,6 +63,8 @@ export interface FakeDb {
   tables?: Record<string, Record<string, unknown>[]>;
   /** Tabel yang menolak DELETE tanpa error (mensimulasikan RLS/trigger di DB live). */
   blockedDeleteTables?: string[];
+  /** Error yang dipaksa muncul dari setiap panggilan RPC. */
+  rpcError?: { message: string; code?: string } | null;
   sessionUserId: string | null;
   sessionExpiresAt: number | null;
   resetError: string | null;
@@ -101,6 +103,8 @@ class FakeQuery {
   private orderColumn: string | null = null;
   private orderAscending = true;
   private limitCount: number | null = null;
+  private rangeFrom: number | null = null;
+  private rangeTo: number | null = null;
   private singleRow = false;
   private insertRows: Record<string, unknown>[] | null = null;
   private updatePatch: Record<string, unknown> | null = null;
@@ -151,6 +155,12 @@ class FakeQuery {
 
   limit(count: number): this {
     this.limitCount = count;
+    return this;
+  }
+
+  range(from: number, to: number): this {
+    this.rangeFrom = from;
+    this.rangeTo = to;
     return this;
   }
 
@@ -264,6 +274,9 @@ class FakeQuery {
         return ascending ? compared : -compared;
       });
     }
+    if (this.rangeFrom !== null && this.rangeTo !== null) {
+      result = result.slice(this.rangeFrom, this.rangeTo + 1);
+    }
     if (this.limitCount !== null) {
       result = result.slice(0, this.limitCount);
     }
@@ -314,6 +327,13 @@ export interface FakeSupabaseClient {
     };
   };
   from: (table: TableName) => FakeQuery;
+  rpc: (
+    name: string,
+    args?: Record<string, unknown>
+  ) => Promise<{
+    data: unknown;
+    error: { message: string; code?: string } | null;
+  }>;
 }
 
 /** Membuat fake + setter seed per test. */
@@ -385,6 +405,39 @@ export function createSupabaseFake(seed: Partial<FakeDb>): {
       },
     },
     from: (table) => new FakeQuery(db, table),
+    rpc: async (name, args) => {
+      if (db.rpcError) {
+        return { data: null, error: db.rpcError };
+      }
+      const tableByType: Record<string, string> = {
+        lead: "leads",
+        project: "projects",
+        content_material: "content_materials",
+      };
+      const entityType = String(args?.["entity_type"] ?? "");
+      const entityId = String(args?.["entity_id"] ?? "");
+      const table = tableByType[entityType];
+      if (
+        !table ||
+        (name !== "archive_entity" && name !== "restore_entity")
+      ) {
+        return {
+          data: null,
+          error: { message: `RPC tidak dikenal: ${name}`, code: "22023" },
+        };
+      }
+      db.tables ??= {};
+      db.tables[table] ??= [];
+      const row = db.tables[table].find(
+        (candidate) => candidate["id"] === entityId
+      );
+      if (!row) {
+        return { data: null, error: null };
+      }
+      row["archived_at"] =
+        name === "archive_entity" ? new Date().toISOString() : null;
+      return { data: null, error: null };
+    },
   };
 
   return {

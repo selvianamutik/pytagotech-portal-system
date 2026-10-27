@@ -1341,3 +1341,22 @@
 - **Acceptance Criteria:** 3/3 ✅ — konfigurasi KPI/SLA/jam layanan/WA/hari libur ✅ perubahan teraudit & tidak mengubah data final historis ✅ lint/typecheck/test/build + browser ✅.
 - **Catatan/Masalah:** `settings` ber-PK `key`, sehingga `audit_logs.entity_id` kosong (Q-017); nilai lama/baru tetap tercatat. `developer_capacity` masih mock; kalender libur sudah memakai tabel `holidays`.
 - **Langkah berikutnya:** merge `feature/US-041-pengaturan-kpi-sla` ke `develop`; lanjut US-043; sisa keputusan Q-015/Q-016/Q-017 dan US-003 (Q-014).
+
+---
+
+## 2026-10-27 — Tahap 6 — US-043 Arsip Data & Backup (DONE 4/4)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-043-arsip-backup
+- **Commit:** 45d84bc (implementasi) + commit docs ini
+- **Yang dilakukan:**
+  - Fondasi: `types/archive.ts` (kontrak `ArchiveEntityType`, `ArchiveItem`, definisi modul, CSV), `services/archive.ts` (daftar data aktif/arsip, archive/restore via RPC `archive_entity`/`restore_entity` + verifikasi `archived_at`, ekspor CSV per modul dengan paging 1.000 baris, `buildCsv` RFC 4180 + BOM UTF-8).
+  - Halaman `/pengaturan/arsip` (Super Admin) + `ArchiveManager`: kartu ringkasan per modul, ekspor CSV, pencarian/filter modul, tab Aktif/Arsip, dialog konfirmasi Arsipkan/Pulihkan, dan tombol muat ulang.
+  - Nav "Arsip & Backup" di `mocks/dashboard.ts`; `test/supabase-fake.ts` diperluas dengan `rpc`, `range`, dan `rpcError`.
+  - Test baru `services/archive.test.ts` (10 kasus: pemetaan daftar, archive/restore, 0 baris/RLS tidak dianggap sukses, CSV escaping/BOM, ekspor tiga modul, nama file).
+  - Docs: `DEPLOYMENT.md` (backup platform/PITR, `supabase db dump`, `supabase storage cp`, restore + checklist, retensi), `API.md`, `DATABASE.md`, `DECISIONS.md` (DEC-016), `QUESTIONS.md` (Q-018), PROGRESS, CHANGELOG.
+- **File berubah:** `frontend/src/{types,services}/archive*`, `frontend/src/components/pengaturan/archive-manager.tsx`, `frontend/src/app/(portal)/pengaturan/arsip/page.tsx`, `frontend/src/test/supabase-fake.ts`, `frontend/src/mocks/dashboard.ts`, `.gitignore`, dokumen.
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (255/255, 55 file) · build ✅ (`/pengaturan/arsip` terdaftar) · browser ✅ — dengan sesi Super Admin: tiga data uji (lead, proyek, materi) tampil di tab Aktif; arsip lead mengubah tab menjadi Aktif (2)/Arsip (1) dan data muncul di tab Arsip; pulihkan mengembalikan ke Aktif (3)/Arsip (0); ekspor Lead CRM, Proyek, dan Materi Konten menghasilkan tiga CSV berisi data + kolom `Diarsipkan`; console error 0. Data uji live dibersihkan setelah verifikasi (termasuk audit log/lead history terkait), sehingga daftar kembali kosong.
+- **Acceptance Criteria:** 4/4 ✅ — soft archive + restore proyek/lead/konten ✅ · ekspor CSV per modul ✅ · prosedur backup Supabase terdokumentasi ✅ · lint/typecheck/test/build + browser ✅.
+- **Catatan/Masalah:** Tidak ada migrasi/tabel baru (RPC + `archived_at` sudah ada). Modul lead/proyek/materi masih mock, jadi penyaringan data terarsip baru berlaku saat modul membaca database; halaman arsip adalah UI backend langsung. Job purge belum dibuat karena retensi menunggu Q-018. Backup manual membutuhkan Docker/`pg_dump` + akses Storage sesuai `docs/DEPLOYMENT.md`.
+- **Langkah berikutnya:** merge `feature/US-043-arsip-backup` ke `develop`; lanjut US-003 setelah Q-014, lalu sisa Q-015/Q-016/Q-017/Q-018 sebelum Gate 3.

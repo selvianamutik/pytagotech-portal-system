@@ -36,6 +36,7 @@ export const dashboardSnapshot: DashboardSnapshot = {
     { label: "Asset Library", module: "Sosmed", href: "/sosmed/aset", roles: ["Social Media Specialist", "Executive / Leader"] },
     { label: "Pengguna", module: "Pengaturan", href: "/pengaturan/pengguna", roles: ["Super Admin"] },
     { label: "Audit Log", module: "Pengaturan", href: "/pengaturan/audit-log", roles: ["Super Admin", "Executive / Leader"] },
+    { label: "Arsip & Backup", module: "Pengaturan", href: "/pengaturan/arsip", roles: ["Super Admin"] },
     { label: "Panduan & RACI", module: "Pengaturan", href: "/pengaturan/panduan", roles: ["Super Admin"] },
     { label: "Master Data", module: "Pengaturan", href: "/pengaturan/master-data", roles: ["Super Admin"] },
     { label: "KPI, SLA & Routing", module: "Pengaturan", href: "/pengaturan/kpi-sla", roles: ["Super Admin"] },

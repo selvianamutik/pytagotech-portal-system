@@ -207,3 +207,19 @@
 - **Alternatif yang dipertimbangkan:** Satu tabel per dropdown (ditolak â€” duplikasi RLS/halaman/service); filter `is_active` di client setelah membaca semua baris (ditolak â€” RLS sudah menyembunyikan nonaktif untuk user biasa); menambah `team_members.is_active` sekarang (ditolak sementara â€” butuh CR + migration dan verifikasi DB belum tersedia).
 - **Alasan:** Satu kontrak tipe/service untuk semua dropdown, perubahan opsi langsung terlihat di form, dan tidak ada perubahan skema tanpa persetujuan.
 - **Konsekuensi:** Service modul yang masih mock (lead/interest/feature/sosmed) tetap memvalidasi nilai terhadap konstanta lama saat menyimpan, sehingga opsi baru bisa tampil di dropdown tetapi ditolak service sampai modul tersebut dimigrasikan ke Supabase. Verifikasi hapus-terjaga memakai query referensi per tabel; tabel referensi harus cocok dengan skema (sudah divalidasi terhadap `20261005000000_initial_schema.sql`). Penghapusan memakai `.delete().select(...)`; 0 baris dianggap gagal agar RLS yang menyaring DELETE tidak tampil sebagai sukses. Cek referensi dijalankan paralel (`Promise.all`) agar 19 query tim/PIC tidak berurutan.
+
+---
+
+## DEC-016 — Arsip Soft-Delete via RPC + Ekspor CSV Client-Side
+
+- **Tanggal:** 2026-10-27
+- **Terkait:** US-043, FR-5
+- **Konteks:** Kolom `archived_at` dan RPC `archive_entity`/`restore_entity` sudah ada di migration, tetapi belum ada service/UI, ekspor CSV, atau prosedur backup terdokumentasi. Modul lead/proyek/materi masih memakai mock di Fase 1, sehingga daftar arsip harus membaca tabel database secara langsung.
+- **Keputusan:**
+  - Archive/restore hanya lewat RPC database (security invoker + cek Super Admin); service memverifikasi `archived_at` setelah RPC agar kegagalan 0 baris/RLS tidak tampil sebagai sukses.
+  - Halaman `/pengaturan/arsip` menampilkan data aktif dan arsip dari `leads`, `projects`, `content_materials` (maks. 500 terbaru per modul) dengan filter modul/pencarian.
+  - Ekspor CSV dibuat client-side dari query penuh per modul dengan paging 1.000 baris; CSV memuat data aktif + arsip dan kolom `Diarsipkan`. Tidak menambah dependensi baru (tanpa SheetJS untuk CSV).
+  - Backup memakai prosedur Supabase di `docs/DEPLOYMENT.md` (backup platform/PITR, `supabase db dump`, dan `supabase storage cp`). Tidak ada job purge sebelum Q-018 dijawab.
+- **Alternatif yang dipertimbangkan:** Menambah tabel arsip terpisah (ditolak — duplikasi relasi/RLS); menghapus permanen (ditolak — melanggar soft archive dan Q-010); ekspor Excel/PDF (ditolak — AC hanya CSV dan SheetJS sudah dipakai dashboard produksi).
+- **Alasan:** Memakai kontrak DB yang sudah disetujui, menjaga data & relasi tetap utuh, dan memberi jalur cadangan logis tanpa perubahan skema.
+- **Konsekuensi:** Modul yang masih mock belum otomatis menyaring data terarsip; penyaringan berlaku saat modul membaca database. Retensi/purge menunggu Q-018. Backup manual membutuhkan Docker/`pg_dump` dan akses Storage.
