@@ -185,3 +185,57 @@
   - C) Keluarkan tim/PIC dari US-005 dan jadikan US terpisah
 - **Dampak jika salah:** Opsi A menambah kolom + migration baru dan menunda verifikasi karena `db reset` belum bisa dijalankan. Opsi B membuat perilaku tim/PIC sedikit berbeda dari opsi master lain (tidak ada tombol nonaktifkan).
 - **Jawaban:** _(diisi pemilik proyek)_
+
+---
+
+## Q-016 — [OPEN]
+
+- **Terkait:** US-005 / FR-3
+- **Pertanyaan:** Di database live, DELETE `master_options` oleh Super Admin mengembalikan HTTP 200 dengan 0 baris tanpa error, sehingga opsi tidak terhapus. INSERT/PATCH `master_options` dan DELETE `team_members` berhasil. Dengan service role, DELETE `master_options` berhasil. Apakah pemilik menyetujui perbaikan policy RLS live + migration pengaman di repo, atau menonaktifkan tombol hapus sementara?
+- **Bukti (2026-10-27):**
+  - REST DELETE `master_options?category=eq.industry&value=eq.Verifikasi%20US005` → `200 []`; baris tetap ada setelah reload.
+  - REST DELETE `team_members?id=eq.<uuid>` → `200` + 1 baris terhapus.
+  - Service role DELETE tiga baris uji `master_options` → `200` + 1 baris per request; data uji sudah bersih.
+  - `audit_logs` mencatat insert/update `master_options`, tetapi tidak ada delete karena 0 baris terhapus.
+  - Repo `20261005001000_backend_foundation.sql` sudah punya policy `master_options_manage_admin for all ... using (private.is_super_admin())`; kemungkinan policy live tertinggal/berbeda.
+- **Opsi yang dipertimbangkan:**
+  - A) Pemilik menjalankan diagnostik SQL, menerapkan ulang policy live, dan menambahkan migration pengaman di repo; lalu ulangi browser test.
+  - B) Sembunyikan tombol hapus `master_options` sementara (hanya tambah/ubah/aktif/nonaktif) sampai policy diperbaiki.
+  - C) Tunggu US-003 (`db reset` + verifikasi RLS) selesai, baru perbaiki live.
+- **Dampak jika salah:** A memulihkan CRUD penuh; B menurunkan AC (tidak ada delete) tetapi tidak menyesatkan user; C menunda penutupan US-005.
+- **Diagnostik yang diminta:**
+  ```sql
+  select policyname, permissive, roles, cmd, qual, with_check
+  from pg_policies
+  where schemaname = 'public' and tablename = 'master_options';
+
+  select grantee, privilege_type
+  from information_schema.role_table_grants
+  where table_schema = 'public' and table_name = 'master_options';
+
+  select tgname, pg_get_triggerdef(oid)
+  from pg_trigger
+  where tgrelid = 'public.master_options'::regclass and not tgisinternal;
+  ```
+- **Usulan perbaikan (setelah disetujui):**
+  ```sql
+  drop policy if exists "master_options_manage_admin" on public.master_options;
+  create policy "master_options_manage_admin" on public.master_options
+  for all to authenticated
+  using (private.is_super_admin())
+  with check (private.is_super_admin());
+  ```
+- **Jawaban:** _(diisi pemilik proyek)_
+
+---
+
+## Q-017 — [OPEN]
+
+- **Terkait:** US-004 / FR-2
+- **Pertanyaan:** `audit_logs.entity_id` kosong untuk tabel ber-PK komposit seperti `master_options(category, value)` dan `user_roles(user_id, role_name)`. Trigger audit hanya membaca kolom `id`/`display_id`. Apakah perlu diperbaiki sekarang atau dicatat sebagai keterbatasan?
+- **Bukti:** Audit log `master_options` insert/update menampilkan kolom Entitas kosong; baris seed `user_roles` juga kosong.
+- **Opsi yang dipertimbangkan:**
+  - A) Perbaiki `private.audit_row_change()` agar membangun `entity_id` dari kolom PK komposit (butuh migration + verifikasi `db reset`).
+  - B) Biarkan; nilai lama/baru di `old_value`/`new_value` sudah cukup untuk audit.
+- **Dampak jika salah:** A memperbaiki keterlacakan audit; B menyisakan kolom entitas kosong untuk beberapa tabel.
+- **Jawaban:** _(diisi pemilik proyek)_

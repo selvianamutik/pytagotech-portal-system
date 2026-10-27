@@ -28,10 +28,10 @@ import {
 } from "@/services/lead-activities";
 import { setNextFollowUp, updateLead } from "@/services/leads";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import { useAuthStore } from "@/store/auth";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import type { Lead } from "@/types/lead";
-import { LEAD_STATUSES } from "@/types/lead";
 
 const kindIcons: Record<TimelineKind, typeof MessageSquareIcon> = {
   note: MessageSquareIcon,
@@ -57,6 +57,7 @@ export function LeadActivityDialog({
   onChanged: () => void;
 }) {
   const currentUser = useAuthStore((state) => state.user);
+  const { options } = useMasterOptions();
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState("");
@@ -180,7 +181,7 @@ export function LeadActivityDialog({
                   label="Ubah ke status"
                   value={newStatus}
                   onChange={setNewStatus}
-                  options={LEAD_STATUSES.filter((status) => status !== currentStatus)}
+                  options={options.lead_status.filter((status) => status !== currentStatus)}
                 />
               </div>
             </div>

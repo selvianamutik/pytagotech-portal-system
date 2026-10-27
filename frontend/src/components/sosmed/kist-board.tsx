@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import {
   createEvaluation,
   deleteEvaluation,
   listEvaluations,
 } from "@/services/evaluations";
-import { SOSMED_BRANDS } from "@/types/sosmed";
 import { KIST_CATEGORIES } from "@/types/evaluation";
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -37,6 +37,7 @@ const CATEGORY_STYLES: Record<string, string> = {
  * + hipotesis dkk. untuk Test + filter periode & lini bisnis.
  */
 export function KistBoard() {
+  const { options } = useMasterOptions();
   const [items, setItems] = useState<Awaited<ReturnType<typeof listEvaluations>>["data"]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("");
@@ -138,7 +139,7 @@ export function KistBoard() {
 
       <div className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-3">
         <FormSelect id="kist-category" label="Kategori" value={category} onChange={setCategory} options={KIST_CATEGORIES} />
-        <FormSelect id="kist-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={SOSMED_BRANDS} />
+        <FormSelect id="kist-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={options.brand} />
         <div className="space-y-2">
           <label htmlFor="kist-period" className="text-sm font-medium">
             Periode
@@ -203,11 +204,8 @@ export function KistBoard() {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
             <FormSelect id="eval-category" label="Kategori" value={formCategory} onChange={setFormCategory} options={KIST_CATEGORIES} />
-            <FormSelect id="eval-brand" label="Lini bisnis" value={formBrand} onChange={setFormBrand} options={SOSMED_BRANDS} required />
-            <div className="space-y-2">
-              <label htmlFor="eval-pillar" className="text-sm font-medium">Pillar</label>
-              <Input id="eval-pillar" value={pillar} onChange={(event) => setPillar(event.target.value)} required />
-            </div>
+            <FormSelect id="eval-brand" label="Lini bisnis" value={formBrand} onChange={setFormBrand} options={options.brand} required />
+            <FormSelect id="eval-pillar" label="Pillar" value={pillar} onChange={setPillar} options={options.pillar} required />
             <div className="space-y-2">
               <label htmlFor="eval-format" className="text-sm font-medium">Format</label>
               <Input id="eval-format" placeholder="Carousel, Reels, ..." value={format} onChange={(event) => setFormat(event.target.value)} />

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
 import { AssigneeSelect } from "@/components/proyek/assignee-select";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import {
   convertFeatureToTask,
   createFeature,
@@ -34,7 +35,6 @@ import {
   updateFeature,
 } from "@/services/features";
 import type { FeatureInput, ProjectFeature } from "@/types/feature";
-import { FEATURE_PRIORITIES } from "@/types/feature";
 
 const PRIORITY_STYLES: Record<string, string> = {
   High: "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300",
@@ -54,6 +54,7 @@ export function FeatureBacklog({
   projectId: string;
   handoverId: string;
 }) {
+  const { options } = useMasterOptions();
   const [features, setFeatures] = useState<ProjectFeature[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ProjectFeature | null>(null);
@@ -266,24 +267,20 @@ export function FeatureBacklog({
                 </label>
                 <Input id="feature-name" value={name} onChange={(event) => setName(event.target.value)} required />
               </div>
-              <div className="space-y-2">
-                <label htmlFor="feature-category" className="text-sm font-medium">
-                  Kategori
-                </label>
-                <Input
-                  id="feature-category"
-                  placeholder="Modul, integrasi, ..."
-                  value={category}
-                  onChange={(event) => setCategory(event.target.value)}
-                  required
-                />
-              </div>
+              <FormSelect
+                id="feature-category"
+                label="Kategori"
+                value={category}
+                onChange={setCategory}
+                options={options.feature_category}
+                required
+              />
               <FormSelect
                 id="feature-priority"
                 label="Prioritas"
                 value={priority}
                 onChange={setPriority}
-                options={FEATURE_PRIORITIES}
+                options={options.priority}
               />
               <AssigneeSelect
                 id="feature-dev"

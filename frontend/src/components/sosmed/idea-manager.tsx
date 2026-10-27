@@ -24,8 +24,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import { briefScore, IDEA_FUNNELS, IDEA_READINESS, type ContentBrief, type ContentIdea, type IdeaInput } from "@/types/content-idea";
-import { SOSMED_BRANDS, SOSMED_PLATFORMS } from "@/types/sosmed";
 import { createIdea, listIdeas, updateIdea } from "@/services/ideas";
 
 const EMPTY_BRIEF: ContentBrief = { hook: "", angle: "", keyPoints: "", cta: "", assetRef: "" };
@@ -43,6 +43,7 @@ const BRIEF_FIELDS: { key: keyof ContentBrief; label: string }[] = [
  * + validasi ambang Siap Masuk Produksi 5/5.
  */
 export function IdeaManager() {
+  const { options } = useMasterOptions();
   const [ideas, setIdeas] = useState<ContentIdea[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -214,13 +215,8 @@ export function IdeaManager() {
               </label>
               <Input id="idea-title" value={title} onChange={(event) => setTitle(event.target.value)} required />
             </div>
-            <FormSelect id="idea-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={SOSMED_BRANDS} required />
-            <div className="space-y-2">
-              <label htmlFor="idea-pillar" className="text-sm font-medium">
-                Pillar
-              </label>
-              <Input id="idea-pillar" value={pillar} onChange={(event) => setPillar(event.target.value)} required />
-            </div>
+            <FormSelect id="idea-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={options.brand} required />
+            <FormSelect id="idea-pillar" label="Pillar" value={pillar} onChange={setPillar} options={options.pillar} required />
             <FormSelect id="idea-funnel" label="Funnel" value={funnel} onChange={setFunnel} options={IDEA_FUNNELS} required />
             <FormSelect
               id="idea-readiness"
@@ -233,7 +229,7 @@ export function IdeaManager() {
             <fieldset className="space-y-2 sm:col-span-2">
               <legend className="text-sm font-medium">Platform target</legend>
               <div className="flex flex-wrap gap-3">
-                {SOSMED_PLATFORMS.map((platform) => (
+                {options.platform.map((platform) => (
                   <label key={platform} className="flex cursor-pointer items-center gap-1.5 text-sm">
                     <input
                       type="checkbox"

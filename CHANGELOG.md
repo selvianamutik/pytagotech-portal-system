@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Master data & dropdown terpusat (US-005): halaman `/pengaturan/master-data` untuk 8 kategori `master_options` + tim/PIC, CRUD, aktif/nonaktif, hapus terjaga; form lead, interest, fitur, dan sosmed membaca opsi aktif dari database
 - Halaman Audit Log (US-004): baca `audit_logs` trigger DB + filter aktor/modul/tanggal, tanpa aksi ubah/hapus
 - Wiring Supabase Auth (US-002 backend): login/logout/reset/password-baru via Auth nyata, manajemen user via `profiles`/`user_roles`, Route Handler admin, redirect proxy, halaman error auth, template email ID
 - Migrasi parity-fix backend (`20261005002000`): RLS role-based selaras kontrak UI, RPC `convert_inquiry_to_lead`, notifikasi handover ke Sales, trigger `handle_new_user`, hapus policy INSERT pemalsu audit
@@ -41,6 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Layout portal (sidebar + header + menu aktif) menjadi global via grup route `(portal)`; URL tidak berubah; `/login` dan `/403` tetap tanpa shell
 - Penyesuaian alur kerja: `Frontend → Skema Database → Backend → Deploy Ready` (Gate 2–4, tag database/backend); scaffold `docs/DATABASE.md` (DRAFT) + `database/schema.sql`
+
+### Fixed
+- Master data (US-005): DELETE yang menghasilkan 0 baris (mis. disaring RLS) kini dilaporkan sebagai error, bukan sukses palsu; cek referensi tim/PIC dijalankan paralel agar hapus tidak menunggu 19 query berurutan.
+
+### Known Issues
+- Policy DELETE `master_options` di DB live masih menyaring semua baris untuk role `authenticated` (Q-016); UI sudah menampilkan error, tetapi penghapusan baru berfungsi setelah policy diperbaiki.
+- `audit_logs.entity_id` kosong untuk tabel ber-PK komposit seperti `master_options` dan `user_roles` (Q-017).
 
 ## [0.1.0] - 2026-10-05
 

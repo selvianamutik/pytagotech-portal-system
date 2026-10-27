@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import { listIdeas } from "@/services/ideas";
 import {
   createMaterial,
@@ -33,13 +34,13 @@ import {
 } from "@/services/materials";
 import type { ContentIdea } from "@/types/content-idea";
 import type { ContentMaterial } from "@/types/material";
-import { SOSMED_BRANDS } from "@/types/sosmed";
 
 /**
  * Database produksi konten (US-028): tabel materi + form +
  * pembuatan dari ide Disetujui. Quality gate & approval menyusul.
  */
 export function MaterialManager() {
+  const { options } = useMasterOptions();
   const [materials, setMaterials] = useState<ContentMaterial[]>([]);
   const [ideas, setIdeas] = useState<ContentIdea[]>([]);
   const [loading, setLoading] = useState(true);
@@ -245,7 +246,7 @@ export function MaterialManager() {
               </label>
               <Input id="mat-title" value={title} onChange={(event) => setTitle(event.target.value)} required />
             </div>
-            <FormSelect id="mat-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={SOSMED_BRANDS} required />
+            <FormSelect id="mat-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={options.brand} required />
             <div className="space-y-2">
               <label htmlFor="mat-link" className="text-sm font-medium">
                 Link draft
