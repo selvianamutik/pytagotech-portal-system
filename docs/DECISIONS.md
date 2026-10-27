@@ -235,3 +235,27 @@
 - **Alternatif yang dipertimbangkan:** Owner-only + guard frontend (ditolak — melanggar kontrak US-009/US-020); hybrid owner-only + RPC reassignment (ditolak — menambah migration/RPC/service tanpa kebutuhan yang disepakati).
 - **Alasan:** Policy yang ada sudah sesuai perilaku aplikasi dan kebutuhan operasional (bulk assign PIC, kolaborasi antar-PM); perubahan AC lebih kecil risikonya daripada mengubah policy + frontend.
 - **Konsekuensi:** Sales/PM dapat mengubah data rekan dalam modulnya; batas antar-modul dan user tanpa role tetap ditegakkan. PRD telah diperbarui manusia pada 2026-10-27; US-003 `DONE`. `db reset` tetap wajib sebelum Gate 3 bila environment tersedia.
+
+---
+
+## DEC-018 - Status Aktif Tim/PIC via `team_members.is_active` (Q-015/CR-004)
+
+- **Tanggal:** 2026-10-27
+- **Terkait:** US-005, US-022 / FR-3
+- **Konteks:** AC3 US-005 meminta opsi yang dipakai hanya dinonaktifkan. `master_options` sudah punya `is_active`, tetapi `team_members` belum. Menghapus anggota yang direferensikan akan membuat FK `ON DELETE SET NULL` menghapus jejak PIC/PM/assignee lama.
+- **Keputusan:** Pemilik memilih opsi A (Q-015): tambah `team_members.is_active boolean NOT NULL DEFAULT true` lewat CR-004 + migration `20261027000000_team_members_is_active.sql`. Semua anggota tetap bisa dibaca user terautentikasi (policy SELECT tidak diubah) agar nama historis resolve; service dropdown memakai `listActiveTeamMembers()` yang memfilter `is_active = true`. Anggota terpakai dinonaktifkan lewat `setTeamMemberActive()`, sedangkan DELETE tetap hanya untuk baris tanpa referensi.
+- **Alternatif yang dipertimbangkan:** Tanpa perubahan skema (ditolak - tidak memenuhi AC3); memisahkan tim/PIC ke US baru (ditolak - menunda US-005 tanpa manfaat); mempersempit policy SELECT ke aktif (ditolak - nama PIC pada data lama bisa hilang dari tampilan).
+- **Alasan:** Perubahan kolom minimal, tidak merusak relasi, dan memberi perilaku yang sama dengan opsi master lain.
+- **Konsekuensi:** Form/dropdown hanya menampilkan anggota aktif; halaman pengelolaan menampilkan semua dengan badge Aktif/Nonaktif. Migration harus dijalankan di live sebelum verifikasi browser diulang.
+
+---
+
+## DEC-019 - Perbaikan Policy DELETE `master_options` (Q-016)
+
+- **Tanggal:** 2026-10-27
+- **Terkait:** US-005, US-003 / FR-3, FR-1
+- **Konteks:** DELETE `master_options` oleh Super Admin di live mengembalikan `200 []`, sedangkan INSERT/UPDATE dan DELETE `team_members` berhasil. Service role berhasil, sehingga kegagalan berada di policy/grant role `authenticated`, bukan di kode service.
+- **Keputusan:** Pemilik memilih opsi A (Q-016): perbaiki live + migration pengaman. Migration `20261027000100_master_options_delete_policy.sql` memberi grant DELETE ke `authenticated` dan membuat ulang policy SELECT serta `master_options_manage_admin FOR ALL` dengan `private.is_super_admin()`. Service tetap memakai `.delete().select()` dan memperlakukan 0 baris sebagai kegagalan agar sukses palsu tidak tampil.
+- **Alternatif yang dipertimbangkan:** Menyembunyikan tombol hapus (ditolak - menurunkan AC3); menunda sampai `db reset` (ditolak - memblokir penutupan US-005).
+- **Alasan:** RLS tetap menjadi lapisan otorisasi; grant role tidak memperluas akses karena policy membatasi ke Super Admin.
+- **Konsekuensi:** Policy live harus dijalankan manual oleh pemilik; verifikasi REST + browser diulang setelahnya. Migration ini juga menjaga hasil `db reset` tetap konsisten.

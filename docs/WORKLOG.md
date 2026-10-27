@@ -1415,3 +1415,24 @@
 - **Acceptance Criteria:** 4/4 ✅ — AC1 42 tabel + policy per role terdokumentasi; AC2 role-based sesuai CR-003/PRD; AC3 user tanpa role 0 baris; AC4 lint/typecheck lulus.
 - **Catatan/Masalah:** `db reset` dari database kosong masih belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia; verifikasi live dipakai dan Gate 3 tetap wajib menjalankan `db reset` bila environment tersedia.
 - **Langkah berikutnya:** lanjut US-005 (Q-015/Q-016) dan sisa Q-017/Q-018 sebelum Gate 3/tag `v0.3.0-backend`.
+
+---
+
+## 2026-10-27 - Tahap 10 - US-005 Implementasi Tim/PIC Aktif + Policy DELETE
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** develop
+- **Commit:** commit kode + docs ini
+- **Yang dilakukan:**
+  - Menjawab Q-015/Q-016 (opsi A): tambah `team_members.is_active` dan perbaiki policy DELETE `master_options`.
+  - Migration `20261027000000_team_members_is_active.sql`: kolom `is_active boolean NOT NULL DEFAULT true` + komentar; policy SELECT `team_members` sengaja tidak diubah.
+  - Migration `20261027000100_master_options_delete_policy.sql`: grant DELETE untuk `authenticated`, buat ulang policy SELECT + `master_options_manage_admin FOR ALL` (Super Admin).
+  - Tipe `TeamMember.isActive`; service `listActiveTeamMembers()` memfilter `is_active`, `setTeamMemberActive()`, insert anggota default aktif, pesan delete mengarahkan ke nonaktifkan.
+  - `listLeadPICs()` kini memakai hasil `team_members` aktif; fallback mock hanya saat query gagal, bukan saat tabel kosong.
+  - UI tim/PIC: kolom Keaktifan + badge Aktif/Nonaktif + tombol Nonaktifkan/Aktifkan; hitungan aktif menyesuaikan.
+  - Test service/UI/fake diperbarui untuk aktif/nonaktif dan dropdown PIC.
+- **File berubah:** `frontend/supabase/migrations/{20261027000000_team_members_is_active,20261027000100_master_options_delete_policy}.sql`, `frontend/src/{types/master-data.ts,services/master-data.ts,services/leads.ts,components/pengaturan/master-data-manager.tsx,test/supabase-fake.ts}`, test terkait, `docs/{QUESTIONS,CHANGE_REQUESTS,DECISIONS,DATABASE,API,PROGRESS,WORKLOG}.md`, `CHANGELOG.md`, `frontend/supabase/README.md`
+- **Verifikasi:** lint OK, type-check OK, test 258/258 (55 file). Verifikasi live belum dijalankan karena kolom/policy belum ada di database live.
+- **Acceptance Criteria:** AC1 CRUD 9 kelompok OK; AC2 dropdown membaca master data OK; AC3 opsi terpakai hanya dinonaktifkan (termasuk tim/PIC) OK di kode/test; AC4 lint/typecheck OK; AC5 verifikasi browser menunggu SQL live.
+- **Catatan/Masalah:** Pemilik perlu menjalankan SQL migration `is_active` dan policy `master_options` di Supabase live. Setelah itu ulangi REST + browser test; US-005 baru bisa `DONE` 5/5.
+- **Langkah berikutnya:** minta pemilik menjalankan SQL live, verifikasi browser `/pengaturan/master-data`, lalu tutup US-005/FR-3 dan lanjut Q-017/Q-018 + Gate 3.

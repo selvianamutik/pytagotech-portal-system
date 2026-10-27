@@ -138,7 +138,7 @@ Halaman tanpa izin menampilkan konten 403 (`/403`, komponen `RequireRole`), buka
 > berasal dari database.
 >
 > Tabel: `master_options(category, value, is_active)` untuk 8 kelompok dropdown;
-> `team_members(id, profile_id, name, status)` untuk tim/PIC.
+> `team_members(id, profile_id, name, status, is_active)` untuk tim/PIC.
 > RLS: user terautentikasi hanya melihat opsi aktif; Super Admin boleh melihat
 > nonaktif dan satu-satunya yang boleh menulis.
 
@@ -162,9 +162,11 @@ Halaman tanpa izin menampilkan konten 403 (`/403`, komponen `RequireRole`), buka
 | `updateMasterOption(category, currentValue, {value, isActive?})` | Rename ditolak bila opsi sedang dipakai (FK komposit tanpa ON UPDATE CASCADE); status aktif bisa diubah |
 | `setMasterOptionActive(category, value, isActive)` | Nonaktifkan/aktifkan tanpa menghapus; opsi nonaktif hilang dari form user biasa |
 | `deleteMasterOption(category, value)` | Hanya opsi tanpa referensi; opsi terpakai → pesan untuk menonaktifkan; DELETE 0 baris → error, bukan sukses |
-| `listTeamMembers()` | Semua anggota tim/PIC, urut nama |
-| `createTeamMember({name, status})` / `updateTeamMember(id, input)` | Nama unik 1–100 karakter; status `internal`/`external` |
-| `deleteTeamMember(id)` | Ditolak bila direferensikan lead, proyek, task, fitur, materi, komentar, dsb. (Q-015); DELETE 0 baris → error |
+| `listTeamMembers()` | Semua anggota tim/PIC termasuk nonaktif (halaman pengelolaan), urut nama |
+| `listActiveTeamMembers()` | Hanya anggota `is_active = true` untuk dropdown penugasan |
+| `createTeamMember({name, status})` / `updateTeamMember(id, input)` | Nama unik 1-100 karakter; status `internal`/`external`; anggota baru aktif secara default |
+| `setTeamMemberActive(id, isActive)` | Nonaktifkan/aktifkan tanpa menghapus; anggota nonaktif hilang dari dropdown form |
+| `deleteTeamMember(id)` | Hanya anggota tanpa referensi; anggota terpakai → pesan untuk menonaktifkan (US-005 AC3); DELETE 0 baris → error |
 | Hook `useMasterOptions()` | Mengambil opsi aktif sekali saat komponen dipasang; fallback ke konstanta bila database belum bisa dibaca |
 
 ```ts
@@ -172,20 +174,23 @@ type MasterOptionCategory = "industry" | "lead_status" | "interest_stage"
   | "brand" | "platform" | "pillar" | "feature_category" | "priority";
 
 interface MasterOption { category: MasterOptionCategory; value: string; isActive: boolean; }
-interface TeamMember { id: string; profileId: string | null; name: string; status: "internal" | "external"; createdAt: string; updatedAt: string; }
+interface TeamMember { id: string; profileId: string | null; name: string; status: "internal" | "external"; isActive: boolean; createdAt: string; updatedAt: string; }
 ```
 
-**Catatan tim/PIC:** skema `team_members` yang disetujui belum memiliki kolom
-`is_active`, sehingga belum ada tombol nonaktifkan. Penghapusan dijaga dengan
-cek referensi; keputusan penambahan kolom aktif menunggu Q-015.
+**Catatan tim/PIC:** kolom `team_members.is_active` ditambahkan lewat CR-004
+(migration `20261027000000_team_members_is_active.sql`). Dropdown memakai
+`listActiveTeamMembers()` yang memfilter `is_active = true`; halaman pengelolaan
+menampilkan semua anggota dengan tombol Nonaktifkan/Aktifkan. Policy SELECT
+`team_members` tetap `using (true)` agar nama PIC/PM pada data historis tetap
+resolve; penghapusan anggota yang sudah dipakai tetap ditolak.
 
 **Catatan DELETE:** Supabase/PostgREST mengembalikan `200` + array kosong bila
-RLS menyaring semua baris DELETE, bukan error. Service kini memakai
+RLS menyaring semua baris DELETE, bukan error. Service memakai
 `.delete().select(...)` dan menganggap 0 baris sebagai kegagalan agar UI tidak
-menampilkan sukses palsu. Di database live saat ini DELETE `master_options`
-oleh role `authenticated` masih 0 baris (Q-016); INSERT/PATCH dan DELETE
-`team_members` berfungsi. Cek referensi tim/PIC dijalankan paralel agar hapus
-tidak menunggu 19 query berurutan.
+menampilkan sukses palsu. Migration
+`20261027000100_master_options_delete_policy.sql` memberi grant DELETE dan
+membuat ulang policy `master_options_manage_admin FOR ALL` untuk Super Admin
+(Q-016). Verifikasi live diulang setelah migration dijalankan pemilik.
 
 ---
 
@@ -204,7 +209,7 @@ tidak menunggu 19 query berurutan.
 | `createLead(input)` | Field wajib: perusahaan, industri (`INDUSTRY_CATEGORIES`), WhatsApp, email, PIC, status, tanggal; Instagram opsional (`@nama`); **peringatan duplikat non-blokir** via WhatsApp ternormalisasi atau nama perusahaan |
 | `updateLead(id, partial)` | Validasi ulang field yang diubah; duplikat mengecualikan diri sendiri |
 | `findDuplicates(whatsapp, companyName, excludeId?)` | Deteksi FR-7 |
-| `listLeadPICs()` | User aktif (dropdown PIC) |
+| `listLeadPICs()` | Tim/PIC aktif (`team_members.is_active`) untuk dropdown PIC |
 | `queryLeads(query)` (US-008) | Pencarian teks (perusahaan/email/WA/IG) + filter status/PIC/industri/rentang tanggal + sort (`companyName`/`contactDate`/`status`/`picName`) + paginasi (`page`, `limit` default 5) → `{items, total, page, limit, pageCount}` |
 | `assignLeadPIC(ids, picName, actor)` (US-009) | Assign/reassign satuan & massal; tiap perubahan PIC dicatat ke audit trail (`lead.assign-pic`, pratinjau US-004) |
 | `previewLeadImport(csv)` / `importLeads(preview, {skipDuplicates})` (US-010) | Template header `companyName,industry,contactDate,whatsapp,instagram,email,picName,status`; preview tandai valid/tidak-valid/duplikat (vs data + dalam file); impor lewati duplikat bila diminta |

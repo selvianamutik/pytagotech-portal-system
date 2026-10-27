@@ -85,6 +85,7 @@ erDiagram
         uuid profile_id FK "UNIQUE NULL, SET NULL"
         string name UK "NOT NULL"
         string status "internal|external"
+        boolean is_active "default true"
     }
     LEADS {
         uuid id PK
@@ -473,6 +474,7 @@ erDiagram
 | team_members.profile_id | uuid | YES | - | UK + FK → profiles.id, SET NULL | NULL = freelance/magang tanpa akun; UNIQUE = 1 user max 1 tim | US-003 |
 | team_members.name | text | NO | - | UK | Pool assignee | US-022, FR-3 |
 | team_members.status | text | NO | - | CHECK IN (internal, external) | Satu nama kolom di ERD & kamus | US-022 |
+| team_members.is_active | boolean | NO | true | - | Nonaktif = tidak muncul di dropdown penugasan; baris & histori tetap ada (CR-004) | US-005, FR-3 |
 
 > `profile_id` memungkinkan RLS (US-003: Sales⇄lead miliknya via `leads.pic_id → team_members → profile_id = auth.uid()`),
 > notifikasi assign ke user yang tepat, dan "Tugas saya" (US-044).
@@ -798,7 +800,7 @@ erDiagram
 | roles | auth | SA | SA | SA |
 | profiles | self atau SA/EX (`can_manage_platform`) | self atau SA | self atau SA | — |
 | user_roles | self atau SA | SA | SA | SA |
-| team_members | auth | SA | SA | SA |
+| team_members | auth (termasuk nonaktif; dropdown filter `is_active`) | SA | SA | SA |
 | master_options | aktif atau SA | SA | SA | SA |
 | settings | auth | SA | SA | SA |
 | leads | SA, EX, SM, PM | SA, SM | SA, SM (**role-based — Q-019**) | — |
@@ -855,7 +857,7 @@ erDiagram
 - **US-002:** `INSERT profiles + user_roles`; login via Supabase Auth; `UPDATE profiles.is_active`. Trigger `trg_handle_new_user` di `auth.users` membuat baris `profiles` otomatis saat sign-up (nama dari `raw_user_meta_data->>'name'`, fallback prefix email); role tetap ditetapkan Super Admin via `user_roles` (tanpa role default).
 - **US-003:** RLS: `team_members.profile_id = auth.uid()` → PIC/PM/assignee miliknya; test: user tanpa role `SELECT` → 0 baris.
 - **US-004:** trigger `INSERT audit_logs(actor, action, entity, old, new)` tiap CUD entitas utama. Satu-satunya penulis sah adalah trigger `SECURITY DEFINER` (bypass RLS); policy INSERT langsung `WITH CHECK (true)` di `audit_logs`/`lead_status_history` **dihapus** agar baris audit/history tak bisa dipalsukan via API.
-- **US-005:** CRUD `master_options`; dropdown baca `WHERE category=? AND is_active` (FK generated menjamin validitas).
+- **US-005:** CRUD `master_options`; dropdown baca `WHERE category=? AND is_active` (FK generated menjamin validitas). Tim/PIC memakai `team_members.is_active` (CR-004): semua baris tetap terbaca untuk histori, dropdown form memfilter yang aktif, dan anggota terpakai dinonaktifkan alih-alih dihapus.
 - **US-006:** `INSERT/SELECT comments(entity_type, entity_id)` [index komposit]; `attachments` + Storage; `notifications(recipient_id)` [index].
 - **US-007:** `INSERT leads`; duplikat: `SELECT ... WHERE whatsapp=?` [index] (peringatan).
 - **US-008:** `SELECT leads WHERE status/PIC/industry/date + search` [index status/pic/industry/date]; badge dari `status`.
@@ -918,3 +920,4 @@ erDiagram
 - **Oleh:** pemilik proyek
 - **Tanggal:** 2026-10-05
 - **Catatan:** Setelah `APPROVED`, skema dikunci untuk Fase 3. Perubahan apa pun = CR + migration + update dokumen ini dalam commit yang sama.
+- **Perubahan pasca-approval (2026-10-27):** `team_members.is_active` ditambahkan lewat CR-004 untuk memenuhi AC3 US-005; lihat migration `20261027000000_team_members_is_active.sql`.
