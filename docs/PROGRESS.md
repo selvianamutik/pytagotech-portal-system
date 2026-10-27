@@ -92,7 +92,7 @@
 
 | ID | Judul | Fase | Status | AC Terpenuhi | Commit/Tag |
 |----|-------|------|--------|--------------|------------|
-| US-041 | Pengaturan KPI, SLA, dan routing | Backend | DONE | 3/3 ✅ | ca485a4 |
+| US-041 | Pengaturan KPI, SLA, dan routing | Backend | DONE | 3/3 ✅ | 4163c88 |
 | US-042 | SOP, panduan, dan matriks RACI | Frontend | DONE | 3/3 ✅ | eba2031 |
 | US-043 | Arsip data & backup | Backend | IN_PROGRESS | 2/4 | `frontend/supabase/migrations/20261005001000_backend_foundation.sql` |
 | US-044 | Pencarian global & beranda per role | Frontend | DONE | 4/4 ✅ | ac3b400 |
