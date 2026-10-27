@@ -25,33 +25,61 @@ export interface FakeAuthUser {
   password: string;
 }
 
+export interface FakeAuditLog {
+  id: string;
+  actor_id: string | null;
+  actor_name: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  old_value: unknown | null;
+  new_value: unknown | null;
+  created_at: string;
+}
+
 export interface FakeDb {
   profiles: FakeProfile[];
   userRoles: FakeUserRole[];
   authUsers: FakeAuthUser[];
+  auditLogs?: FakeAuditLog[];
   sessionUserId: string | null;
   sessionExpiresAt: number | null;
   resetError: string | null;
   listeners: ((event: string) => void)[];
 }
 
-type TableName = "profiles" | "user_roles";
+type TableName = "profiles" | "user_roles" | "audit_logs";
+
+type FilterOp = "eq" | "in" | "ilike" | "gte" | "lte";
 
 function matches<T extends Record<string, unknown>>(
   row: T,
-  filters: { column: string; op: "eq" | "in"; value: unknown }[]
+  filters: { column: string; op: FilterOp; value: unknown }[]
 ): boolean {
   return filters.every((filter) => {
+    const actual = row[filter.column];
     if (filter.op === "eq") {
-      return row[filter.column] === filter.value;
+      return actual === filter.value;
     }
-    return (filter.value as unknown[]).includes(row[filter.column]);
+    if (filter.op === "ilike") {
+      const needle = String(filter.value).replace(/%/g, "").toLowerCase();
+      return String(actual ?? "").toLowerCase().includes(needle);
+    }
+    if (filter.op === "gte") {
+      return String(actual ?? "") >= String(filter.value);
+    }
+    if (filter.op === "lte") {
+      return String(actual ?? "") <= String(filter.value);
+    }
+    return (filter.value as unknown[]).includes(actual);
   });
 }
 
 class FakeQuery {
-  private filters: { column: string; op: "eq" | "in"; value: unknown }[] = [];
+  private filters: { column: string; op: FilterOp; value: unknown }[] = [];
   private orderColumn: string | null = null;
+  private orderAscending = true;
+  private limitCount: number | null = null;
   private singleRow = false;
   private insertRows: Record<string, unknown>[] | null = null;
   private updatePatch: Record<string, unknown> | null = null;
@@ -77,8 +105,29 @@ class FakeQuery {
     return this;
   }
 
-  order(column: string): this {
+  ilike(column: string, value: unknown): this {
+    this.filters.push({ column, op: "ilike", value });
+    return this;
+  }
+
+  gte(column: string, value: unknown): this {
+    this.filters.push({ column, op: "gte", value });
+    return this;
+  }
+
+  lte(column: string, value: unknown): this {
+    this.filters.push({ column, op: "lte", value });
+    return this;
+  }
+
+  order(column: string, options?: { ascending?: boolean }): this {
     this.orderColumn = column;
+    this.orderAscending = options?.ascending ?? true;
+    return this;
+  }
+
+  limit(count: number): this {
+    this.limitCount = count;
     return this;
   }
 
@@ -109,6 +158,11 @@ class FakeQuery {
   }
 
   private rows(): Record<string, unknown>[] {
+    const db = this.db as unknown as Record<string, Record<string, unknown>[]>;
+    if (this.table === "audit_logs") {
+      db["auditLogs"] ??= [];
+      return db["auditLogs"];
+    }
     return (
       this.table === "profiles"
         ? (this.db.profiles as unknown as Record<string, unknown>[])
@@ -156,9 +210,14 @@ class FakeQuery {
     let result = rows.filter((row) => matches(row, this.filters));
     if (this.orderColumn) {
       const column = this.orderColumn;
-      result = [...result].sort((a, b) =>
-        String(a[column]).localeCompare(String(b[column]))
-      );
+      const ascending = this.orderAscending;
+      result = [...result].sort((a, b) => {
+        const compared = String(a[column]).localeCompare(String(b[column]));
+        return ascending ? compared : -compared;
+      });
+    }
+    if (this.limitCount !== null) {
+      result = result.slice(0, this.limitCount);
     }
     if (this.singleRow) {
       if (result.length === 0) {

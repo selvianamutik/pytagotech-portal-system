@@ -13,7 +13,7 @@
 | US-001 | Setup proyek & desain sistem | Frontend | DONE | 6/6 ✅ | 2b04163 |
 | US-002 | Autentikasi & manajemen user | Frontend | DONE | 6/6 ✅ | 9c1834f |
 | US-003 | Row Level Security per role | Backend | IN_PROGRESS | 2/4 | `frontend/supabase/migrations/20261005001000_backend_foundation.sql` |
-| US-004 | Audit trail | Backend | IN_PROGRESS | 3/5 | `frontend/supabase/migrations/20261005001000_backend_foundation.sql` |
+| US-004 | Audit trail | Backend | IN_PROGRESS | 4/5 | `feature/US-004-audit-log-viewer` |
 | US-005 | Pengaturan master data & dropdown | Backend | IN_PROGRESS | 3/5 | `frontend/supabase/seed.sql` |
 | US-006 | Komentar, lampiran, dan notifikasi | Frontend | DONE | 5/5 ✅ | 52af09f |
 

@@ -1220,3 +1220,19 @@
 - **Verifikasi kumulatif:** lint ✅ typecheck ✅ test ✅ (213/213) · build ✅ · browser ✅ · live hosted ✅ (seed, RPC, trigger, role) · E2E user ✅ · login pemilik ✅
 - **Sisa verifikasi:** `POST /api/admin/users` via browser (buat user kedua) — dicoba saat popup ganti password dibangun.
 - **Langkah berikutnya:** popup ganti password di dalam aplikasi (permintaan pemilik).
+
+---
+
+## 2026-10-06 02:00 — Fase 3 — US-004 Audit Log Viewer (IN_PROGRESS 4/5)
+
+- **Branch:** feature/US-004-audit-log-viewer dari develop (pekerjaan US-005 di branch-nya sendiri — tidak disentuh).
+- **Yang dilakukan:**
+  - `queryAuditLogs()` aditif di `services/audit.ts` (mock lama utuh): baca `audit_logs` terbaru-dulu, filter aktor/modul/rentang WIB, limit 1–200, jsonb → string.
+  - Halaman `/pengaturan/audit-log` (Super Admin + Leader) + nav: filter + tabel + `<details>` nilai; tanpa aksi ubah/hapus (AC3, RLS juga tanpa policy tulis).
+  - Fake: tabel `audit_logs` + op `ilike`/`gte`/`lte`/`limit` + `order` arah.
+  - Test: service (urutan + 3 filter + limit) + komponen (render + filter kosong + tanpa tombol ubah/hapus).
+  - Docs: `API.md` Audit Log, PROGRESS 4/5, CHANGELOG.
+- **File berubah:** services/audit(+test baru), test/supabase-fake, pengaturan/audit-log-viewer(+test)+page, mocks/dashboard, API/PROGRESS/CHANGELOG/WORKLOG
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (217/217) · build ✅ · browser ✅ (307→login; konten via component test)
+- **Catatan/Masalah:** uji klik bersesi menunggu pemilik (butuh sesi Super Admin/Leader).
+- **Langkah berikutnya:** uji bersesi → US-004 DONE + merge → US-041/popup password/swap CRM.

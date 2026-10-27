@@ -35,6 +35,7 @@ export const dashboardSnapshot: DashboardSnapshot = {
     { label: "Evaluasi KIST", module: "Sosmed", href: "/sosmed/evaluasi", roles: ["Social Media Specialist", "Executive / Leader"] },
     { label: "Asset Library", module: "Sosmed", href: "/sosmed/aset", roles: ["Social Media Specialist", "Executive / Leader"] },
     { label: "Pengguna", module: "Pengaturan", href: "/pengaturan/pengguna", roles: ["Super Admin"] },
+    { label: "Audit Log", module: "Pengaturan", href: "/pengaturan/audit-log", roles: ["Super Admin", "Executive / Leader"] },
     { label: "Panduan & RACI", module: "Pengaturan", href: "/pengaturan/panduan", roles: ["Super Admin"] },
     { label: "Master Data", module: "Pengaturan", href: "#pengaturan", roles: ["Super Admin"] },
   ],
