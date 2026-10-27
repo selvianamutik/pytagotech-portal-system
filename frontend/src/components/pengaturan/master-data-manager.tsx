@@ -31,6 +31,7 @@ import {
   listAllMasterOptions,
   listTeamMembers,
   setMasterOptionActive,
+  setTeamMemberActive,
   updateMasterOption,
   updateTeamMember,
 } from "@/services/master-data";
@@ -74,8 +75,8 @@ function groupLabel(group: MasterDataGroup): string {
  * Pengelolaan master data & dropdown (US-005, FR-3) — khusus Super Admin.
  *
  * Delapan kategori `master_options` memakai CRUD + aktif/nonaktif. Tim/PIC
- * memakai `team_members`; karena skema belum punya flag aktif, tombol hapus
- * dijaga cek referensi (Q-015).
+ * memakai `team_members` dengan flag `is_active` (CR-004): anggota yang sudah
+ * dipakai dinonaktifkan agar hilang dari dropdown tanpa kehilangan histori.
  */
 export function MasterDataManager() {
   const [activeGroup, setActiveGroup] = useState<MasterDataGroup>("industry");
@@ -142,7 +143,7 @@ export function MasterDataManager() {
     ? options.filter((option) => option.category === activeGroup)
     : [];
   const activeCount = isTeamGroup
-    ? members.length
+    ? members.filter((member) => member.isActive).length
     : groupOptions.filter((option) => option.isActive).length;
 
   function resetForm() {
@@ -224,6 +225,20 @@ export function MasterDataManager() {
     }
     setNotice(
       `Opsi "${option.value}" ${option.isActive ? "dinonaktifkan" : "diaktifkan"}.`
+    );
+    await refresh();
+  }
+
+  async function handleMemberToggle(member: TeamMember) {
+    setActionError(null);
+    setNotice(null);
+    const result = await setTeamMemberActive(member.id, !member.isActive);
+    if (result.error) {
+      setActionError(result.error);
+      return;
+    }
+    setNotice(
+      `Tim/PIC "${member.name}" ${member.isActive ? "dinonaktifkan" : "diaktifkan"}.`
     );
     await refresh();
   }
@@ -364,6 +379,7 @@ export function MasterDataManager() {
                     <TableRow className="bg-muted/40">
                       <TableHead className="px-4">Nama</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Keaktifan</TableHead>
                       <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -377,7 +393,12 @@ export function MasterDataManager() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex justify-end gap-2">
+                          <Badge variant={member.isActive ? "default" : "outline"}>
+                            {member.isActive ? "Aktif" : "Nonaktif"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap justify-end gap-2">
                             <Button
                               type="button"
                               variant="outline"
@@ -385,6 +406,14 @@ export function MasterDataManager() {
                               onClick={() => openEditMember(member)}
                             >
                               <PencilIcon aria-hidden="true" /> Ubah
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void handleMemberToggle(member)}
+                            >
+                              {member.isActive ? "Nonaktifkan" : "Aktifkan"}
                             </Button>
                             <Button
                               type="button"
@@ -472,7 +501,7 @@ export function MasterDataManager() {
         Opsi yang sudah dipakai modul lain tidak bisa dihapus; nonaktifkan agar tidak
         muncul di form. Perubahan langsung dipakai saat form dibuka.
         {isTeamGroup
-          ? " Tim/PIC belum punya tombol nonaktifkan karena skema belum menyimpan status aktif (Q-015)."
+          ? " Tim/PIC yang sudah dipakai juga hanya bisa dinonaktifkan; nama historis tetap tampil di data lama."
           : ""}
       </p>
 

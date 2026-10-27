@@ -70,6 +70,7 @@ export interface TeamMember {
   profileId: string | null;
   name: string;
   status: TeamMemberStatus;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

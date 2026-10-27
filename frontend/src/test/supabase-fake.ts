@@ -48,6 +48,7 @@ export interface FakeTeamMember {
   profile_id: string | null;
   name: string;
   status: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -232,6 +233,7 @@ class FakeQuery {
         if (this.table === "team_members") {
           stored["id"] ??= `tm-${rows.length + 1}`;
           stored["profile_id"] ??= null;
+          stored["is_active"] ??= true;
           stored["created_at"] ??= new Date().toISOString();
           stored["updated_at"] ??= stored["created_at"];
         }

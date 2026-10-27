@@ -6,9 +6,11 @@ import {
   deleteMasterOption,
   deleteTeamMember,
   getActiveMasterOptions,
+  listActiveTeamMembers,
   listAllMasterOptions,
   listTeamMembers,
   setMasterOptionActive,
+  setTeamMemberActive,
   updateMasterOption,
   updateTeamMember,
 } from "@/services/master-data";
@@ -44,6 +46,7 @@ function seedDb(): FakeDb {
         profile_id: null,
         name: "Nabila",
         status: "internal",
+        is_active: true,
         created_at: "2026-10-01T02:00:00Z",
         updated_at: "2026-10-01T02:00:00Z",
       },
@@ -172,6 +175,7 @@ describe("tim/PIC", () => {
     });
     expect(created.error).toBeNull();
     expect(created.data?.status).toBe("external");
+    expect(created.data?.isActive).toBe(true);
 
     const updated = await updateTeamMember(created.data!.id, {
       name: "Ayu Magang",
@@ -179,6 +183,42 @@ describe("tim/PIC", () => {
     });
     expect(updated.error).toBeNull();
     expect(updated.data?.name).toBe("Ayu Magang");
+    expect(updated.data?.isActive).toBe(true);
+  });
+
+  it("menonaktifkan anggota tanpa menghapus baris atau referensi", async () => {
+    fake.db.tables = { leads: [{ pic_id: "tm-1" }] };
+
+    const toggled = await setTeamMemberActive("tm-1", false);
+    expect(toggled.error).toBeNull();
+    expect(toggled.data?.isActive).toBe(false);
+    expect(fake.db.teamMembers).toHaveLength(1);
+
+    const active = await listActiveTeamMembers();
+    expect(active.data).toEqual([]);
+
+    const all = await listTeamMembers();
+    expect(all.data?.map((member) => member.name)).toEqual(["Nabila"]);
+
+    const reactivated = await setTeamMemberActive("tm-1", true);
+    expect(reactivated.data?.isActive).toBe(true);
+  });
+
+  it("menyembunyikan anggota nonaktif dari dropdown PIC", async () => {
+    fake.db.teamMembers?.push({
+      id: "tm-2",
+      profile_id: null,
+      name: "Bimo",
+      status: "external",
+      is_active: false,
+      created_at: "2026-10-01T03:00:00Z",
+      updated_at: "2026-10-01T03:00:00Z",
+    });
+
+    const result = await listLeadPICs();
+
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual([{ id: "tm-1", name: "Nabila" }]);
   });
 
   it("menolak nama duplikat", async () => {

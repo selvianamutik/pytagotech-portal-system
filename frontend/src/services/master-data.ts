@@ -20,8 +20,8 @@ import {
  *
  * - `master_options`: delapan kelompok dropdown terpusat. RLS hanya
  *   menampilkan opsi aktif ke user biasa; Super Admin boleh melihat nonaktif.
- * - `team_members`: pool tim/PIC. Skema yang disetujui belum punya flag aktif,
- *   sehingga penghapusan dijaga dengan cek referensi (lihat Q-015).
+ * - `team_members`: pool tim/PIC dengan flag `is_active` (CR-004). Anggota yang
+ *   sudah dipakai tidak dihapus; dinonaktifkan agar hilang dari dropdown form.
  *
  * Komponen hanya boleh memanggil fungsi dari file ini.
  */
@@ -39,6 +39,7 @@ interface TeamMemberRow {
   profile_id: string | null;
   name: string;
   status: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -145,6 +146,7 @@ function toTeamMember(row: TeamMemberRow): TeamMember | null {
     profileId: row.profile_id,
     name: row.name,
     status: row.status,
+    isActive: row.is_active,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -458,12 +460,17 @@ export async function listAllMasterOptions(): Promise<
   return listMasterOptions({ includeInactive: true });
 }
 
-export async function listTeamMembers(): Promise<ServiceResult<TeamMember[]>> {
+async function fetchTeamMembers(
+  activeOnly: boolean
+): Promise<ServiceResult<TeamMember[]>> {
   const supabase = createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("team_members")
-    .select("id, profile_id, name, status, created_at, updated_at")
-    .order("name", { ascending: true });
+    .select("id, profile_id, name, status, is_active, created_at, updated_at");
+  if (activeOnly) {
+    query = query.eq("is_active", true);
+  }
+  const { data, error } = await query.order("name", { ascending: true });
   if (error) {
     return { data: null, error: errorMessage(error, "Gagal memuat tim/PIC.") };
   }
@@ -475,13 +482,18 @@ export async function listTeamMembers(): Promise<ServiceResult<TeamMember[]>> {
   };
 }
 
+/** Semua anggota tim/PIC (termasuk nonaktif) untuk halaman pengelolaan. */
+export async function listTeamMembers(): Promise<ServiceResult<TeamMember[]>> {
+  return fetchTeamMembers(false);
+}
+
 async function findTeamMemberByName(
   supabase: BrowserSupabase,
   name: string
 ): Promise<TeamMember | null> {
   const { data } = await supabase
     .from("team_members")
-    .select("id, profile_id, name, status, created_at, updated_at")
+    .select("id, profile_id, name, status, is_active, created_at, updated_at")
     .eq("name", name)
     .limit(1);
   const row = ((data ?? []) as TeamMemberRow[])[0];
@@ -508,12 +520,17 @@ export async function createTeamMember(
   const supabase = createClient();
   const existing = await findTeamMemberByName(supabase, name);
   if (existing) {
-    return { data: null, error: "Nama tim/PIC tersebut sudah ada." };
+    return {
+      data: null,
+      error:
+        "Nama tim/PIC tersebut sudah ada. Aktifkan kembali bila sebelumnya dinonaktifkan.",
+    };
   }
 
   const { error } = await supabase.from("team_members").insert({
     name,
     status: input.status,
+    is_active: true,
   });
   if (error) {
     return {
@@ -570,8 +587,36 @@ export async function updateTeamMember(
 }
 
 /**
+ * Nonaktifkan/aktifkan anggota tim/PIC tanpa menghapus baris. Referensi lama
+ * tetap utuh sehingga nama historis pada lead/proyek tidak hilang.
+ */
+export async function setTeamMemberActive(
+  id: string,
+  isActive: boolean
+): Promise<ServiceResult<TeamMember>> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("team_members")
+    .update({ is_active: isActive })
+    .eq("id", id)
+    .select("id, profile_id, name, status, is_active, created_at, updated_at");
+  if (error) {
+    return {
+      data: null,
+      error: errorMessage(error, "Gagal mengubah status tim/PIC."),
+    };
+  }
+  const row = ((data ?? []) as TeamMemberRow[])[0];
+  const member = row ? toTeamMember(row) : null;
+  if (!member) {
+    return { data: null, error: "Tim/PIC tidak ditemukan." };
+  }
+  return { data: member, error: null };
+}
+
+/**
  * Hapus anggota tim yang belum direferensikan. Anggota yang sudah dipakai
- * tidak dihapus agar penugasan lama tidak menjadi NULL (lihat Q-015).
+ * tidak dihapus agar penugasan lama tidak menjadi NULL (US-005 AC3).
  */
 export async function deleteTeamMember(
   id: string
@@ -584,7 +629,7 @@ export async function deleteTeamMember(
     return {
       data: null,
       error:
-        "Tim/PIC ini sudah dipakai pada data lain dan tidak bisa dihapus. Ubah namanya bila perlu.",
+        "Tim/PIC ini sudah dipakai pada data lain dan tidak bisa dihapus. Nonaktifkan agar tidak muncul di dropdown.",
     };
   }
 
@@ -610,9 +655,9 @@ export async function deleteTeamMember(
   return { data: null, error: null };
 }
 
-/** Daftar tim/PIC untuk dropdown form. */
+/** Daftar tim/PIC aktif untuk dropdown form (US-005 AC2/AC3). */
 export async function listActiveTeamMembers(): Promise<
   ServiceResult<TeamMember[]>
 > {
-  return listTeamMembers();
+  return fetchTeamMembers(true);
 }

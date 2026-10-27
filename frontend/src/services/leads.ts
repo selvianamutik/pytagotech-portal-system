@@ -51,17 +51,18 @@ export async function getLead(leadId: string): Promise<ServiceResult<Lead>> {
 
 /**
  * Daftar PIC untuk dropdown penugasan (US-005, AC2).
- * Sumber utama `team_members`; bila belum bisa dibaca (mis. sesi/database
- * demo belum siap), pakai user aktif dari mock agar form tetap berjalan.
+ * Sumber utama `team_members` aktif; bila database belum bisa dibaca
+ * (mis. sesi/demo belum siap), pakai user aktif dari mock agar form tetap
+ * berjalan. Tabel yang kosong tetap menghasilkan daftar kosong, bukan mock.
  */
 export async function listLeadPICs(): Promise<
   ServiceResult<{ id: string; name: string }[]>
 > {
   try {
     const team = await listActiveTeamMembers();
-    if (team.data && team.data.length > 0) {
+    if (!team.error) {
       return {
-        data: team.data.map((member) => ({
+        data: (team.data ?? []).map((member) => ({
           id: member.id,
           name: member.name,
         })),

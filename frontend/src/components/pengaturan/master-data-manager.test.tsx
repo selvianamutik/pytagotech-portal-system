@@ -24,8 +24,18 @@ beforeEach(() => {
         profile_id: null,
         name: "Nabila",
         status: "internal",
+        is_active: true,
         created_at: "2026-10-01T02:00:00Z",
         updated_at: "2026-10-01T02:00:00Z",
+      },
+      {
+        id: "tm-2",
+        profile_id: null,
+        name: "Bimo",
+        status: "external",
+        is_active: false,
+        created_at: "2026-10-01T03:00:00Z",
+        updated_at: "2026-10-01T03:00:00Z",
       },
     ],
   }) as unknown as typeof fake;
@@ -73,5 +83,24 @@ describe("MasterDataManager", () => {
     expect(await screen.findByText("Nabila")).toBeDefined();
     expect(screen.getByText("Internal")).toBeDefined();
     expect(screen.getByRole("button", { name: "Tambah tim/PIC" })).toBeDefined();
+  });
+
+  it("menampilkan status aktif tim/PIC dan bisa mengaktifkannya kembali", async () => {
+    render(<MasterDataManager />);
+    expect(await screen.findByText("Teknologi")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: /Tim \/ PIC/ }));
+
+    expect(await screen.findByText("Bimo")).toBeDefined();
+    expect(screen.getByText("Nonaktif")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Aktifkan" }));
+
+    expect(
+      await screen.findByText('Tim/PIC "Bimo" diaktifkan.')
+    ).toBeDefined();
+    expect(
+      fake.db.teamMembers?.find((member) => member.id === "tm-2")?.is_active
+    ).toBe(true);
   });
 });
