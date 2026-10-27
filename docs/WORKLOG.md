@@ -1251,3 +1251,18 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ (217/217) build ✅ (`/pengaturan/audit-log` terdaftar)
 - **Catatan/Masalah:** US-004 tetap 4/5 — uji klik dengan sesi Super Admin/Leader belum dilakukan.
 - **Langkah berikutnya:** pemilik uji browser bersesi → US-004 DONE + merge; lalu Tahap 2 (US-003 RLS + `db reset`).
+
+---
+
+## 2026-10-27 — Tahap 1 — US-004 DONE (verifikasi pemilik) + merge develop
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-004-audit-log-viewer → develop
+- **Commit:** `19c6a6c` (implementasi) + commit docs ini
+- **Yang dilakukan:**
+  - Pemilik mengonfirmasi halaman `/pengaturan/audit-log` berjalan dengan sesi Super Admin/Leader.
+  - PROGRESS: US-004 4/5 → **5/5 DONE**.
+  - Merge feature branch ke `develop` (tanpa tag; Gate 3 belum lengkap).
+- **Verifikasi:** browser oleh pemilik ✅ · lint ✅ typecheck ✅ test ✅ (217/217) build ✅
+- **Catatan/Masalah:** Docker tidak tersedia di mesin ini; verifikasi `db reset` akan memakai jalur alternatif (PGlite/hosted) atau didefer ke mesin lain.
+- **Langkah berikutnya:** Tahap 2 — US-003 RLS tanpa Docker (test otomatis + verifikasi policy).
