@@ -1236,3 +1236,18 @@
 - **Verifikasi:** lint ✅ typecheck ✅ test ✅ (217/217) · build ✅ · browser ✅ (307→login; konten via component test)
 - **Catatan/Masalah:** uji klik bersesi menunggu pemilik (butuh sesi Super Admin/Leader).
 - **Langkah berikutnya:** uji bersesi → US-004 DONE + merge → US-041/popup password/swap CRM.
+
+---
+
+## 2026-10-27 — Tahap 1 — Commit US-004 + stabilisasi repo
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-004-audit-log-viewer
+- **Commit:** `19c6a6c` — feat(backend): tambah viewer audit log dari tabel audit_logs · `fca3f10` — chore(repo): normalisasi line ending dan tambah .gitattributes
+- **Yang dilakukan:**
+  - Commit halaman `/pengaturan/audit-log`, viewer, service `queryAuditLogs`, test service/komponen, fake tabel `audit_logs`, nav sidebar, dan docs terkait.
+  - Tambah `.gitattributes` + `git add --renormalize` untuk menghapus ±198 diff palsu akibat LF/CRLF. Working tree kembali bersih.
+- **File berubah:** lihat commit `19c6a6c`; `.gitattributes` di commit `fca3f10`
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (217/217) build ✅ (`/pengaturan/audit-log` terdaftar)
+- **Catatan/Masalah:** US-004 tetap 4/5 — uji klik dengan sesi Super Admin/Leader belum dilakukan.
+- **Langkah berikutnya:** pemilik uji browser bersesi → US-004 DONE + merge; lalu Tahap 2 (US-003 RLS + `db reset`).
