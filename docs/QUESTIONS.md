@@ -256,7 +256,7 @@
 
 ---
 
-## Q-019 — [OPEN]
+## Q-019 — [ANSWERED]
 
 - **Terkait:** US-003 AC2 vs US-009, US-020 / FR-1, FR-6, FR-15
 - **Pertanyaan:** AC2 US-003 meminta "Sales hanya dapat mengubah lead miliknya; PM hanya dapat mengubah proyek yang ia kelola". Namun migrasi `20261005002000_backend_parity_fixes.sql` sengaja mengganti policy owner-only menjadi role-based agar sesuai kontrak frontend US-009 (Sales boleh assign/reassign PIC massal) dan US-020 (semua PM/Admin boleh membuat/mengubah proyek). Policy live saat ini mengikuti role-based. Arah mana yang benar?
@@ -275,4 +275,4 @@
   - B: melanggar kontrak UI US-009/US-020; bulk assign dan edit proyek lintas PM gagal sampai frontend diubah.
   - C: paling sesuai AC2 + PRD, tetapi menambah migration, RPC, perubahan service, dan verifikasi ulang.
 - **Catatan:** Tidak ada policy, migration, atau frontend yang diubah sampai pemilik memilih. `db reset` dari database kosong masih belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia; verifikasi live dipakai sebagai bukti sementara.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban:** Pemilik memilih **opsi A (pertahankan role-based)** pada 2026-10-27. AC2 US-003 direvisi lewat **CR-003**: Sales/Marketing dapat mengubah lead dan Project Manager dapat mengubah proyek sesuai batas role modul; Super Admin penuh. PRD harus diperbarui oleh manusia terlebih dahulu; US-003 tetap `BLOCKED` sampai pembaruan itu selesai.

@@ -210,7 +210,7 @@
 
 ---
 
-## DEC-016 — Arsip Soft-Delete via RPC + Ekspor CSV Client-Side
+## DEC-016 ï¿½ Arsip Soft-Delete via RPC + Ekspor CSV Client-Side
 
 - **Tanggal:** 2026-10-27
 - **Terkait:** US-043, FR-5
@@ -220,6 +220,18 @@
   - Halaman `/pengaturan/arsip` menampilkan data aktif dan arsip dari `leads`, `projects`, `content_materials` (maks. 500 terbaru per modul) dengan filter modul/pencarian.
   - Ekspor CSV dibuat client-side dari query penuh per modul dengan paging 1.000 baris; CSV memuat data aktif + arsip dan kolom `Diarsipkan`. Tidak menambah dependensi baru (tanpa SheetJS untuk CSV).
   - Backup memakai prosedur Supabase di `docs/DEPLOYMENT.md` (backup platform/PITR, `supabase db dump`, dan `supabase storage cp`). Tidak ada job purge sebelum Q-018 dijawab.
-- **Alternatif yang dipertimbangkan:** Menambah tabel arsip terpisah (ditolak — duplikasi relasi/RLS); menghapus permanen (ditolak — melanggar soft archive dan Q-010); ekspor Excel/PDF (ditolak — AC hanya CSV dan SheetJS sudah dipakai dashboard produksi).
+- **Alternatif yang dipertimbangkan:** Menambah tabel arsip terpisah (ditolak ï¿½ duplikasi relasi/RLS); menghapus permanen (ditolak ï¿½ melanggar soft archive dan Q-010); ekspor Excel/PDF (ditolak ï¿½ AC hanya CSV dan SheetJS sudah dipakai dashboard produksi).
 - **Alasan:** Memakai kontrak DB yang sudah disetujui, menjaga data & relasi tetap utuh, dan memberi jalur cadangan logis tanpa perubahan skema.
 - **Konsekuensi:** Modul yang masih mock belum otomatis menyaring data terarsip; penyaringan berlaku saat modul membaca database. Retensi/purge menunggu Q-018. Backup manual membutuhkan Docker/`pg_dump` dan akses Storage.
+
+---
+
+## DEC-017 - RLS `leads`/`projects` Tetap Role-Based (Q-019/CR-003)
+
+- **Tanggal:** 2026-10-27
+- **Terkait:** US-003, US-009, US-020 / FR-1, FR-6, FR-15
+- **Konteks:** AC2 US-003 meminta Sales hanya mengubah lead miliknya dan PM hanya mengubah proyek yang dikelolanya. Policy `leads_update_sales_roles` dan `projects_update_pm_roles` di `20261005002000_backend_parity_fixes.sql` justru role-based agar sesuai kontrak frontend US-009 (bulk assign PIC) dan US-020 (semua PM/Admin membuat/mengubah proyek). Verifikasi live 2026-10-27 membuktikan Sales dapat mengubah lead PIC lain dan PM dapat mengubah proyek PM lain.
+- **Keputusan:** Pemilik memilih opsi A (Q-019): pertahankan policy role-based. AC2 US-003 direvisi lewat CR-003 menjadi batas akses per role modul; Super Admin penuh. Tidak ada perubahan skema/policy/kode.
+- **Alternatif yang dipertimbangkan:** Owner-only + guard frontend (ditolak â€” melanggar kontrak US-009/US-020); hybrid owner-only + RPC reassignment (ditolak â€” menambah migration/RPC/service tanpa kebutuhan yang disepakati).
+- **Alasan:** Policy yang ada sudah sesuai perilaku aplikasi dan kebutuhan operasional (bulk assign PIC, kolaborasi antar-PM); perubahan AC lebih kecil risikonya daripada mengubah policy + frontend.
+- **Konsekuensi:** Sales/PM dapat mengubah data rekan dalam modulnya; batas antar-modul dan user tanpa role tetap ditegakkan. PRD harus diperbarui manusia sebelum US-003 `DONE`; `db reset` tetap wajib sebelum Gate 3 bila environment tersedia.

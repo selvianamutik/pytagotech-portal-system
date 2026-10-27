@@ -1380,3 +1380,21 @@
 - **Acceptance Criteria:** 3/4 — AC1 42 tabel + policy per role terdokumentasi ✅; AC2 ❌ konflik role-based (Q-019); AC3 user tanpa role tidak dapat membaca data ✅; AC4 lint/typecheck ✅.
 - **Catatan/Masalah:** `db reset` dari database kosong belum bisa dijalankan (Docker/Supabase CLI/WSL tidak tersedia); verifikasi live dipakai sebagai bukti sementara. US-003 belum DONE sampai Q-019 diputuskan. Jangan mengubah policy/migration/frontend sebelum keputusan.
 - **Langkah berikutnya:** pemilik memilih opsi Q-019; setelah itu implementasi + verifikasi ulang, lalu lanjut US-005 (Q-015/Q-016) dan sisa Q-017/Q-018 sebelum Gate 3.
+
+---
+
+## 2026-10-27 — Tahap 8 — Keputusan Q-019: role-based dipertahankan (CR-003)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** develop
+- **Commit:** commit docs ini
+- **Yang dilakukan:**
+  - Menanyakan arah AC2 US-003 kepada pemilik. Pemilik memilih **opsi A: pertahankan policy role-based** pada 2026-10-27.
+  - Q-019 diubah menjadi `ANSWERED`; CR-003 dicatat sebagai `APPROVED` (revisi AC2 US-003 menjadi batas akses per role modul) dan DEC-017 mencatat keputusan RLS.
+  - Tidak ada perubahan skema, policy, migration, atau kode frontend. Matriks RLS di `DATABASE.md` §5.1 tetap berlaku; catatan konflik diganti dengan keputusan pemilik.
+  - US-003 tetap `BLOCKED` 3/4 karena `tasks/prd-pytagotech-integrated-portal.md` **hanya boleh diperbarui oleh manusia**; AC2 literal belum berubah sampai PRD diperbarui.
+- **File berubah:** `docs/QUESTIONS.md`, `docs/CHANGE_REQUESTS.md`, `docs/DECISIONS.md`, `docs/DATABASE.md`, `docs/PROGRESS.md`, `docs/WORKLOG.md`
+- **Verifikasi:** dokumen konsisten (Q-019 → CR-003 → DEC-017 → PROGRESS); tidak ada perubahan kode sehingga lint/typecheck/test terakhir tetap berlaku (255/255, 55 file).
+- **Acceptance Criteria:** 3/4 — AC1/AC3/AC4 ✅; AC2 disetujui role-based lewat CR-003 tetapi PRD belum diperbarui manusia.
+- **Catatan/Masalah:** PRD tidak boleh diedit agent. Setelah pemilik memperbarui AC2 US-003, US-003 dapat ditandai `DONE` 4/4. `db reset` dari database kosong tetap belum bisa dijalankan di mesin ini.
+- **Langkah berikutnya:** pemilik memperbarui AC2 US-003 di PRD; lalu tandai US-003 DONE + merge/commit, lanjut US-005 (Q-015/Q-016) dan sisa Q-017/Q-018 sebelum Gate 3.

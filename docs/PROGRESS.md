@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-27  
-> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 BLOCKED — verifikasi live 42 tabel/role tanpa role selesai, AC2 menunggu keputusan Q-019; US-005 4/5 — verifikasi browser selesai, delete opsi diblokir policy live (Q-016), AC3 tim/PIC menunggu Q-015; US-041 DONE 3/3; US-043 DONE 4/4)
+> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 BLOCKED — verifikasi live 42 tabel/role tanpa role selesai, keputusan Q-019 = role-based (CR-003), menunggu PRD diperbarui pemilik; US-005 4/5 — verifikasi browser selesai, delete opsi diblokir policy live (Q-016), AC3 tim/PIC menunggu Q-015; US-041 DONE 3/3; US-043 DONE 4/4)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -12,7 +12,7 @@
 |----|-------|------|--------|--------------|------------|
 | US-001 | Setup proyek & desain sistem | Frontend | DONE | 6/6 ✅ | 2b04163 |
 | US-002 | Autentikasi & manajemen user | Frontend | DONE | 6/6 ✅ | 9c1834f |
-| US-003 | Row Level Security per role | Backend | BLOCKED | 3/4 | — (verifikasi live 2026-10-27; AC2 — Q-019) |
+| US-003 | Row Level Security per role | Backend | BLOCKED | 3/4 | 000e34f (docs) — AC2 disetujui role-based (CR-003), menunggu PRD diperbarui pemilik |
 | US-004 | Audit trail | Backend | DONE | 5/5 ✅ | 19c6a6c |
 | US-005 | Pengaturan master data & dropdown | Backend | IN_PROGRESS | 4/5 | `feature/US-005-master-data` (AC3 tim/PIC — Q-015; delete opsi — Q-016) |
 | US-006 | Komentar, lampiran, dan notifikasi | Frontend | DONE | 5/5 ✅ | 52af09f |

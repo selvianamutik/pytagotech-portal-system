@@ -838,11 +838,11 @@ erDiagram
 | guides | auth | SA | SA | SA |
 | raci_matrix | auth | SA | SA | SA |
 
-> **Perhatian (US-003 AC2, Q-019):** `leads_update_sales_roles` dan
-> `projects_update_pm_roles` sengaja role-based agar paritas dengan US-009/US-020.
-> Akibatnya Sales dapat mengubah lead milik PIC lain dan PM dapat mengubah proyek
-> milik PM lain (terbukti di live 2026-10-27). Ini bertentangan dengan AC2 US-003;
-> jangan mengubah policy sampai pemilik memilih opsi di Q-019.
+> **Keputusan AC2 US-003 (Q-019/CR-003, 2026-10-27):** Pemilik mempertahankan
+> policy **role-based**. Sales/Marketing dapat mengubah lead dan Project Manager dapat
+> mengubah proyek sesuai batas role modul; Super Admin penuh. AC2 US-003 direvisi lewat
+> CR-003 dan **menunggu pembaruan PRD oleh pemilik**; tidak ada perubahan policy yang
+> diperlukan. Matriks di atas menggambarkan kondisi repo/live saat ini.
 
 ---
 
