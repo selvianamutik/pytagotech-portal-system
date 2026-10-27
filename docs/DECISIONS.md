@@ -195,6 +195,8 @@
 
 ## DEC-015: Master Data Terpusat — Satu Tabel Opsi, Fallback Hook, Tim/PIC Tanpa Flag Aktif
 
+> **Diperbarui 2026-10-27:** bagian tim/PIC dan fallback `listLeadPICs()` di bawah sudah digantikan **DEC-018** (Q-015/CR-004). `team_members` kini punya `is_active`; dropdown memfilter anggota aktif, dan fallback mock hanya dipakai saat query gagal, bukan saat tabel kosong.
+
 - **Tanggal:** 2026-10-27
 - **Terkait:** US-005, FR-3
 - **Konteks:** Sembilan kelompok dropdown masih hardcode di konstanta form. Skema sudah menyediakan `master_options(category, value, is_active)` dengan RLS (user biasa hanya melihat opsi aktif) dan `team_members`, tetapi `team_members` belum punya kolom `is_active`.
