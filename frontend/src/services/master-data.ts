@@ -168,6 +168,31 @@ async function hasReference(
 }
 
 /**
+ * Cek semua tabel referensi sekaligus. Pemeriksaan berurutan membuat hapus
+ * tim/PIC terasa hang (19 query × latensi jaringan); Promise.all memangkasnya
+ * menjadi satu gelombang query paralel.
+ */
+async function hasAnyReference(
+  supabase: BrowserSupabase,
+  references: { table: string; column: string }[],
+  value: string
+): Promise<{ referenced: boolean; error: string | null }> {
+  const results = await Promise.all(
+    references.map((reference) =>
+      hasReference(supabase, reference.table, reference.column, value)
+    )
+  );
+  const failed = results.find((result) => result.error);
+  if (failed) {
+    return { referenced: false, error: failed.error ?? "Gagal memeriksa referensi." };
+  }
+  return {
+    referenced: results.some((result) => result.referenced),
+    error: null,
+  };
+}
+
+/**
  * Cek apakah nilai master masih dipakai tabel lain. Dipakai sebelum rename
  * dan delete agar service memberi pesan yang jelas, bukan error FK mentah.
  */
@@ -176,43 +201,24 @@ export async function isMasterOptionInUse(
   value: string
 ): Promise<{ inUse: boolean; error: string | null }> {
   const supabase = createClient();
-  const references = MASTER_OPTION_USAGE[category];
-  for (const reference of references) {
-    const result = await hasReference(
-      supabase,
-      reference.table,
-      reference.column,
-      value
-    );
-    if (result.error) {
-      return { inUse: false, error: result.error };
-    }
-    if (result.referenced) {
-      return { inUse: true, error: null };
-    }
-  }
-  return { inUse: false, error: null };
+  const result = await hasAnyReference(
+    supabase,
+    MASTER_OPTION_USAGE[category],
+    value
+  );
+  return { inUse: result.referenced, error: result.error };
 }
 
 export async function isTeamMemberInUse(
   teamMemberId: string
 ): Promise<{ inUse: boolean; error: string | null }> {
   const supabase = createClient();
-  for (const reference of TEAM_MEMBER_USAGE) {
-    const result = await hasReference(
-      supabase,
-      reference.table,
-      reference.column,
-      teamMemberId
-    );
-    if (result.error) {
-      return { inUse: false, error: result.error };
-    }
-    if (result.referenced) {
-      return { inUse: true, error: null };
-    }
-  }
-  return { inUse: false, error: null };
+  const result = await hasAnyReference(
+    supabase,
+    TEAM_MEMBER_USAGE,
+    teamMemberId
+  );
+  return { inUse: result.referenced, error: result.error };
 }
 
 /** Baca opsi master. `includeInactive` hanya efektif untuk Super Admin (RLS). */
@@ -423,15 +429,23 @@ export async function deleteMasterOption(
   }
 
   const supabase = createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("master_options")
     .delete()
     .eq("category", category)
-    .eq("value", value);
+    .eq("value", value)
+    .select("category, value");
   if (error) {
     return {
       data: null,
       error: errorMessage(error, "Gagal menghapus opsi master."),
+    };
+  }
+  if (!data || data.length === 0) {
+    return {
+      data: null,
+      error:
+        "Opsi tidak terhapus (0 baris). Muat ulang halaman; bila opsi masih ada, database menolak penghapusan. Nonaktifkan opsi ini sebagai gantinya.",
     };
   }
   return { data: null, error: null };
@@ -575,11 +589,22 @@ export async function deleteTeamMember(
   }
 
   const supabase = createClient();
-  const { error } = await supabase.from("team_members").delete().eq("id", id);
+  const { data, error } = await supabase
+    .from("team_members")
+    .delete()
+    .eq("id", id)
+    .select("id");
   if (error) {
     return {
       data: null,
       error: errorMessage(error, "Gagal menghapus tim/PIC."),
+    };
+  }
+  if (!data || data.length === 0) {
+    return {
+      data: null,
+      error:
+        "Tim/PIC tidak terhapus (0 baris). Muat ulang halaman; bila data masih ada, database menolak penghapusan.",
     };
   }
   return { data: null, error: null };

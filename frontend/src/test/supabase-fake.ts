@@ -61,6 +61,8 @@ export interface FakeDb {
   teamMembers?: FakeTeamMember[];
   /** Tabel tambahan untuk cek referensi (leads, projects, dst.). */
   tables?: Record<string, Record<string, unknown>[]>;
+  /** Tabel yang menolak DELETE tanpa error (mensimulasikan RLS/trigger di DB live). */
+  blockedDeleteTables?: string[];
   sessionUserId: string | null;
   sessionExpiresAt: number | null;
   resetError: string | null;
@@ -104,6 +106,7 @@ class FakeQuery {
   private updatePatch: Record<string, unknown> | null = null;
   private isDelete = false;
   private isUpsert = false;
+  private returning = false;
 
   constructor(
     private readonly db: FakeDb,
@@ -111,6 +114,7 @@ class FakeQuery {
   ) {}
 
   select(): this {
+    this.returning = true;
     return this;
   }
 
@@ -241,10 +245,14 @@ class FakeQuery {
     }
 
     if (this.isDelete) {
+      if (this.db.blockedDeleteTables?.includes(this.table)) {
+        return { data: [], error: null };
+      }
+      const deleted = rows.filter((row) => matches(row, this.filters));
       const kept = rows.filter((row) => !matches(row, this.filters));
       rows.length = 0;
       rows.push(...kept);
-      return { data: [], error: null };
+      return { data: this.returning ? deleted : [], error: null };
     }
 
     let result = rows.filter((row) => matches(row, this.filters));

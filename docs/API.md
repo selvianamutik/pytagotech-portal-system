@@ -161,10 +161,10 @@ Halaman tanpa izin menampilkan konten 403 (`/403`, komponen `RequireRole`), buka
 | `createMasterOption({category, value, isActive?})` | Kategori harus terdaftar; nilai trim 1–80 karakter; duplikat per kategori ditolak |
 | `updateMasterOption(category, currentValue, {value, isActive?})` | Rename ditolak bila opsi sedang dipakai (FK komposit tanpa ON UPDATE CASCADE); status aktif bisa diubah |
 | `setMasterOptionActive(category, value, isActive)` | Nonaktifkan/aktifkan tanpa menghapus; opsi nonaktif hilang dari form user biasa |
-| `deleteMasterOption(category, value)` | Hanya opsi tanpa referensi; opsi terpakai → pesan untuk menonaktifkan |
+| `deleteMasterOption(category, value)` | Hanya opsi tanpa referensi; opsi terpakai → pesan untuk menonaktifkan; DELETE 0 baris → error, bukan sukses |
 | `listTeamMembers()` | Semua anggota tim/PIC, urut nama |
 | `createTeamMember({name, status})` / `updateTeamMember(id, input)` | Nama unik 1–100 karakter; status `internal`/`external` |
-| `deleteTeamMember(id)` | Ditolak bila direferensikan lead, proyek, task, fitur, materi, komentar, dsb. (Q-015) |
+| `deleteTeamMember(id)` | Ditolak bila direferensikan lead, proyek, task, fitur, materi, komentar, dsb. (Q-015); DELETE 0 baris → error |
 | Hook `useMasterOptions()` | Mengambil opsi aktif sekali saat komponen dipasang; fallback ke konstanta bila database belum bisa dibaca |
 
 ```ts
@@ -178,6 +178,14 @@ interface TeamMember { id: string; profileId: string | null; name: string; statu
 **Catatan tim/PIC:** skema `team_members` yang disetujui belum memiliki kolom
 `is_active`, sehingga belum ada tombol nonaktifkan. Penghapusan dijaga dengan
 cek referensi; keputusan penambahan kolom aktif menunggu Q-015.
+
+**Catatan DELETE:** Supabase/PostgREST mengembalikan `200` + array kosong bila
+RLS menyaring semua baris DELETE, bukan error. Service kini memakai
+`.delete().select(...)` dan menganggap 0 baris sebagai kegagalan agar UI tidak
+menampilkan sukses palsu. Di database live saat ini DELETE `master_options`
+oleh role `authenticated` masih 0 baris (Q-016); INSERT/PATCH dan DELETE
+`team_members` berfungsi. Cek referensi tim/PIC dijalankan paralel agar hapus
+tidak menunggu 19 query berurutan.
 
 ---
 

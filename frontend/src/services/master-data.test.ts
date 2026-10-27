@@ -148,6 +148,17 @@ describe("master options", () => {
       fake.db.masterOptions?.some((row) => row.value === "Retail")
     ).toBe(false);
   });
+
+  it("tidak melaporkan sukses saat database menghapus 0 baris", async () => {
+    fake.db.blockedDeleteTables = ["master_options"];
+
+    const result = await deleteMasterOption("industry", "Retail");
+
+    expect(result.error).toMatch(/0 baris/);
+    expect(
+      fake.db.masterOptions?.some((row) => row.value === "Retail")
+    ).toBe(true);
+  });
 });
 
 describe("tim/PIC", () => {
@@ -197,6 +208,15 @@ describe("tim/PIC", () => {
     const result = await deleteTeamMember(created.data!.id);
 
     expect(result.error).toBeNull();
+    expect(fake.db.teamMembers).toHaveLength(1);
+  });
+
+  it("tidak melaporkan sukses saat tim/PIC terhapus 0 baris", async () => {
+    fake.db.blockedDeleteTables = ["team_members"];
+
+    const result = await deleteTeamMember("tm-1");
+
+    expect(result.error).toMatch(/0 baris/);
     expect(fake.db.teamMembers).toHaveLength(1);
   });
 

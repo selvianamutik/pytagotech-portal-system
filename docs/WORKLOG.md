@@ -1301,3 +1301,23 @@
 - **Acceptance Criteria:** 4/5 — CRUD 9 kelompok ✅ · opsi langsung tampil di form ✅ · opsi terpakai tidak bisa dihapus (master ✅; tim/PIC tanpa nonaktifkan — Q-015) · lint/typecheck ✅ · browser ⏳.
 - **Catatan/Masalah:** (1) `team_members` belum punya `is_active`; hapus hanya diblokir bila direferensikan, tidak ada tombol nonaktifkan (Q-015). (2) Service modul yang masih mock tetap menolak nilai baru saat simpan sampai dimigrasikan. (3) Opsi master hanya terlihat aktif bagi user biasa (RLS), jadi halaman Super Admin wajib sesi nyata.
 - **Langkah berikutnya:** verifikasi browser dengan sesi Super Admin → bila lolos, US-005 DONE + merge; lalu jawab Q-015 sebelum menutup AC3 tim/PIC.
+
+---
+
+## 2026-10-27 — Tahap 4 — Verifikasi browser US-005 + perbaikan DELETE 0 baris
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-005-master-data
+- **Commit:** commit ini
+- **Yang dilakukan:**
+  - Verifikasi browser sesi Super Admin: 9 kelompok tampil dengan data seed; tambah opsi "Verifikasi US005" langsung muncul di form + filter lead; nonaktifkan opsi menghilangkannya dari form/filter; create/update/delete tim/PIC via UI berhasil.
+  - Temuan DB live: DELETE `master_options` oleh role `authenticated` (Super Admin) mengembalikan `200` + 0 baris tanpa error; baris tetap ada. INSERT/PATCH `master_options` dan DELETE `team_members` berhasil. Service role DELETE `master_options` berhasil → indikasi policy RLS DELETE live tidak efektif, bukan trigger/aplikasi.
+  - `deleteMasterOption`/`deleteTeamMember` kini memakai `.delete().select(...)` dan mengembalikan error bila 0 baris, sehingga UI tidak lagi menampilkan sukses palsu. Fake Supabase diperluas (`blockedDeleteTables`, mengembalikan baris terhapus).
+  - Cek referensi tim/PIC (19 tabel) diparallelkan (`Promise.all`); hapus tim/PIC turun dari ~17 detik menjadi ~1–2 detik.
+  - Data uji `master_options` (`Verifikasi US005`, `ZZ Aktif ...`, `ZZ Nonaktif ...`) dibersihkan via service role; tersisa 44 opsi seed, 0 baris uji.
+  - Docs: Q-016 (policy DELETE live), Q-017 (`entity_id` audit PK komposit), API, PROGRESS, CHANGELOG, DEC-015.
+- **File berubah:** `frontend/src/services/master-data.ts`, `frontend/src/services/master-data.test.ts`, `frontend/src/test/supabase-fake.ts`, `docs/{QUESTIONS,API,PROGRESS,DECISIONS,WORKLOG}.md`, `CHANGELOG.md`.
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (235/235, 53 file) · build ✅ (`/pengaturan/master-data` terdaftar) · browser ✅ (error 0 baris tampil + baris tetap; hapus tim/PIC sukses cepat).
+- **Acceptance Criteria:** 4/5 — CRUD 9 kelompok (create/update/toggle ✅; delete `master_options` terblokir policy live — Q-016) · opsi langsung tampil di form ✅ · opsi terpakai ditolak (unit test ✅; guard browser belum diuji karena tabel referensi live masih kosong) · lint/typecheck ✅ · browser ✅.
+- **Catatan/Masalah:** (1) AC3 tim/PIC tetap Q-015. (2) US-005 belum DONE sampai policy live diperbaiki/disetujui (Q-016). (3) `audit_logs.entity_id` kosong untuk PK komposit (Q-017).
+- **Langkah berikutnya:** jawab Q-015/Q-016/Q-017; setelah policy diperbaiki, ulangi browser test hapus opsi tak terpakai + guard opsi terpakai, lalu merge `feature/US-005-master-data` ke `develop`.
