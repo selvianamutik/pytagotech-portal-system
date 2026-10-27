@@ -543,7 +543,14 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Audit Log
 
-> _Akan didokumentasikan saat US-004 dimulai_
+> **Status:** Backend Fase 3 (US-004, FR-2) — baca dari tabel `audit_logs`
+> (trigger DB) via `queryAuditLogs`; tulis mock modul lain tetap sampai swap
+> masing-masing. Halaman `/pengaturan/audit-log` (Super Admin + Leader).
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `queryAuditLogs({actor?, entityType?, dateFrom?, dateTo?, limit?})` | Terbaru dulu, maks 200 (default 100); aktor contains case-insensitive; tanggal batas hari WIB; nilai jsonb → string |
+| Halaman Audit Log | Filter aktor/modul/rentang tanggal; nilai lama/baru di `<details>`; TANPA aksi ubah/hapus (AC3, RLS tanpa policy tulis)
 
 ---
 

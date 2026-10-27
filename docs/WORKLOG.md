@@ -1220,3 +1220,49 @@
 - **Verifikasi kumulatif:** lint ✅ typecheck ✅ test ✅ (213/213) · build ✅ · browser ✅ · live hosted ✅ (seed, RPC, trigger, role) · E2E user ✅ · login pemilik ✅
 - **Sisa verifikasi:** `POST /api/admin/users` via browser (buat user kedua) — dicoba saat popup ganti password dibangun.
 - **Langkah berikutnya:** popup ganti password di dalam aplikasi (permintaan pemilik).
+
+---
+
+## 2026-10-06 02:00 — Fase 3 — US-004 Audit Log Viewer (IN_PROGRESS 4/5)
+
+- **Branch:** feature/US-004-audit-log-viewer dari develop (pekerjaan US-005 di branch-nya sendiri — tidak disentuh).
+- **Yang dilakukan:**
+  - `queryAuditLogs()` aditif di `services/audit.ts` (mock lama utuh): baca `audit_logs` terbaru-dulu, filter aktor/modul/rentang WIB, limit 1–200, jsonb → string.
+  - Halaman `/pengaturan/audit-log` (Super Admin + Leader) + nav: filter + tabel + `<details>` nilai; tanpa aksi ubah/hapus (AC3, RLS juga tanpa policy tulis).
+  - Fake: tabel `audit_logs` + op `ilike`/`gte`/`lte`/`limit` + `order` arah.
+  - Test: service (urutan + 3 filter + limit) + komponen (render + filter kosong + tanpa tombol ubah/hapus).
+  - Docs: `API.md` Audit Log, PROGRESS 4/5, CHANGELOG.
+- **File berubah:** services/audit(+test baru), test/supabase-fake, pengaturan/audit-log-viewer(+test)+page, mocks/dashboard, API/PROGRESS/CHANGELOG/WORKLOG
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (217/217) · build ✅ · browser ✅ (307→login; konten via component test)
+- **Catatan/Masalah:** uji klik bersesi menunggu pemilik (butuh sesi Super Admin/Leader).
+- **Langkah berikutnya:** uji bersesi → US-004 DONE + merge → US-041/popup password/swap CRM.
+
+---
+
+## 2026-10-27 — Tahap 1 — Commit US-004 + stabilisasi repo
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-004-audit-log-viewer
+- **Commit:** `19c6a6c` — feat(backend): tambah viewer audit log dari tabel audit_logs · `fca3f10` — chore(repo): normalisasi line ending dan tambah .gitattributes
+- **Yang dilakukan:**
+  - Commit halaman `/pengaturan/audit-log`, viewer, service `queryAuditLogs`, test service/komponen, fake tabel `audit_logs`, nav sidebar, dan docs terkait.
+  - Tambah `.gitattributes` + `git add --renormalize` untuk menghapus ±198 diff palsu akibat LF/CRLF. Working tree kembali bersih.
+- **File berubah:** lihat commit `19c6a6c`; `.gitattributes` di commit `fca3f10`
+- **Verifikasi:** lint ✅ typecheck ✅ test ✅ (217/217) build ✅ (`/pengaturan/audit-log` terdaftar)
+- **Catatan/Masalah:** US-004 tetap 4/5 — uji klik dengan sesi Super Admin/Leader belum dilakukan.
+- **Langkah berikutnya:** pemilik uji browser bersesi → US-004 DONE + merge; lalu Tahap 2 (US-003 RLS + `db reset`).
+
+---
+
+## 2026-10-27 — Tahap 1 — US-004 DONE (verifikasi pemilik) + merge develop
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-004-audit-log-viewer → develop
+- **Commit:** `19c6a6c` (implementasi) + commit docs ini
+- **Yang dilakukan:**
+  - Pemilik mengonfirmasi halaman `/pengaturan/audit-log` berjalan dengan sesi Super Admin/Leader.
+  - PROGRESS: US-004 4/5 → **5/5 DONE**.
+  - Merge feature branch ke `develop` (tanpa tag; Gate 3 belum lengkap).
+- **Verifikasi:** browser oleh pemilik ✅ · lint ✅ typecheck ✅ test ✅ (217/217) build ✅
+- **Catatan/Masalah:** Docker tidak tersedia di mesin ini; verifikasi `db reset` akan memakai jalur alternatif (PGlite/hosted) atau didefer ke mesin lain.
+- **Langkah berikutnya:** Tahap 2 — US-003 RLS tanpa Docker (test otomatis + verifikasi policy).
