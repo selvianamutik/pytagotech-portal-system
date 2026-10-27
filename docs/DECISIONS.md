@@ -234,4 +234,4 @@
 - **Keputusan:** Pemilik memilih opsi A (Q-019): pertahankan policy role-based. AC2 US-003 direvisi lewat CR-003 menjadi batas akses per role modul; Super Admin penuh. Tidak ada perubahan skema/policy/kode.
 - **Alternatif yang dipertimbangkan:** Owner-only + guard frontend (ditolak — melanggar kontrak US-009/US-020); hybrid owner-only + RPC reassignment (ditolak — menambah migration/RPC/service tanpa kebutuhan yang disepakati).
 - **Alasan:** Policy yang ada sudah sesuai perilaku aplikasi dan kebutuhan operasional (bulk assign PIC, kolaborasi antar-PM); perubahan AC lebih kecil risikonya daripada mengubah policy + frontend.
-- **Konsekuensi:** Sales/PM dapat mengubah data rekan dalam modulnya; batas antar-modul dan user tanpa role tetap ditegakkan. PRD harus diperbarui manusia sebelum US-003 `DONE`; `db reset` tetap wajib sebelum Gate 3 bila environment tersedia.
+- **Konsekuensi:** Sales/PM dapat mengubah data rekan dalam modulnya; batas antar-modul dan user tanpa role tetap ditegakkan. PRD telah diperbarui manusia pada 2026-10-27; US-003 `DONE`. `db reset` tetap wajib sebelum Gate 3 bila environment tersedia.

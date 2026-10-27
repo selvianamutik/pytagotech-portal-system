@@ -1398,3 +1398,20 @@
 - **Acceptance Criteria:** 3/4 — AC1/AC3/AC4 ✅; AC2 disetujui role-based lewat CR-003 tetapi PRD belum diperbarui manusia.
 - **Catatan/Masalah:** PRD tidak boleh diedit agent. Setelah pemilik memperbarui AC2 US-003, US-003 dapat ditandai `DONE` 4/4. `db reset` dari database kosong tetap belum bisa dijalankan di mesin ini.
 - **Langkah berikutnya:** pemilik memperbarui AC2 US-003 di PRD; lalu tandai US-003 DONE + merge/commit, lanjut US-005 (Q-015/Q-016) dan sisa Q-017/Q-018 sebelum Gate 3.
+
+---
+
+## 2026-10-27 — Tahap 9 — PRD AC2 diperbarui; US-003 DONE 4/4
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** develop
+- **Commit:** commit docs ini
+- **Yang dilakukan:**
+  - Pemilik memperbarui AC2 US-003 di `tasks/prd-pytagotech-integrated-portal.md` menjadi batas akses per role modul (Sales/Marketing → lead, Project Manager → proyek, role lain read-only, Super Admin penuh), sesuai CR-003.
+  - US-003 di `PROGRESS.md` diubah menjadi `DONE` 4/4; FR-1 menjadi `DONE`. Q-019, CR-003, DEC-017, dan matriks RLS `DATABASE.md` §5.1 diselaraskan dengan status akhir.
+  - Tidak ada perubahan skema, policy, migration, atau kode aplikasi.
+- **File berubah:** `tasks/prd-pytagotech-integrated-portal.md` (diedit pemilik), `docs/{QUESTIONS,CHANGE_REQUESTS,DECISIONS,DATABASE,PROGRESS,WORKLOG}.md`, `CHANGELOG.md`
+- **Verifikasi:** 42/42 tabel RLS aktif; user tanpa role 0 baris; INSERT lead tanpa role ditolak 403; Sales/PM dapat mengubah modulnya, tidak lintas modul; lint ✅, typecheck ✅, test ✅ (255/255, 55 file).
+- **Acceptance Criteria:** 4/4 ✅ — AC1 42 tabel + policy per role terdokumentasi; AC2 role-based sesuai CR-003/PRD; AC3 user tanpa role 0 baris; AC4 lint/typecheck lulus.
+- **Catatan/Masalah:** `db reset` dari database kosong masih belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia; verifikasi live dipakai dan Gate 3 tetap wajib menjalankan `db reset` bila environment tersedia.
+- **Langkah berikutnya:** lanjut US-005 (Q-015/Q-016) dan sisa Q-017/Q-018 sebelum Gate 3/tag `v0.3.0-backend`.

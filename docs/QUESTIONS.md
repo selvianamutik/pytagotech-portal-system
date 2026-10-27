@@ -275,4 +275,4 @@
   - B: melanggar kontrak UI US-009/US-020; bulk assign dan edit proyek lintas PM gagal sampai frontend diubah.
   - C: paling sesuai AC2 + PRD, tetapi menambah migration, RPC, perubahan service, dan verifikasi ulang.
 - **Catatan:** Tidak ada policy, migration, atau frontend yang diubah sampai pemilik memilih. `db reset` dari database kosong masih belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia; verifikasi live dipakai sebagai bukti sementara.
-- **Jawaban:** Pemilik memilih **opsi A (pertahankan role-based)** pada 2026-10-27. AC2 US-003 direvisi lewat **CR-003**: Sales/Marketing dapat mengubah lead dan Project Manager dapat mengubah proyek sesuai batas role modul; Super Admin penuh. PRD harus diperbarui oleh manusia terlebih dahulu; US-003 tetap `BLOCKED` sampai pembaruan itu selesai.
+- **Jawaban:** Pemilik memilih **opsi A (pertahankan role-based)** pada 2026-10-27. AC2 US-003 direvisi lewat **CR-003**: Sales/Marketing dapat mengubah lead dan Project Manager dapat mengubah proyek sesuai batas role modul; Super Admin penuh. PRD telah diperbarui oleh pemilik pada 2026-10-27; **US-003 DONE 4/4**.

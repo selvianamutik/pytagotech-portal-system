@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Verifikasi RLS US-003 (FR-1): 42/42 tabel RLS aktif, user tanpa role 0 baris dan INSERT ditolak, batas role modul terverifikasi live; AC2 direvisi via CR-003 (role-based) dan PRD diperbarui pemilik
 - Arsip data & backup (US-043, FR-5): halaman `/pengaturan/arsip` untuk mengarsipkan dan memulihkan lead, proyek, dan materi konten via RPC `archive_entity`/`restore_entity` (soft archive, data & relasi tetap utuh); ekspor CSV per modul (termasuk data arsip + kolom `Diarsipkan`); prosedur backup/restore Supabase terdokumentasi di `docs/DEPLOYMENT.md`
 - Pengaturan KPI, SLA & routing (US-041, FR-30): halaman `/pengaturan/kpi-sla` untuk ambang SLA 30/15 menit, jam layanan, nomor WhatsApp resmi per brand, ambang kritis publikasi, target KPI per lini bisnis, dan kalender hari libur; nilai dipakai Komunitas, Inquiry, Scorecard, Kalender Publikasi, dan penjadwalan fitur; perubahan tercatat di audit log tanpa mengubah snapshot final historis
 - Master data & dropdown terpusat (US-005): halaman `/pengaturan/master-data` untuk 8 kategori `master_options` + tim/PIC, CRUD, aktif/nonaktif, hapus terjaga; form lead, interest, fitur, dan sosmed membaca opsi aktif dari database

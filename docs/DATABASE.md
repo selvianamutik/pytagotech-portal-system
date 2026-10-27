@@ -841,8 +841,8 @@ erDiagram
 > **Keputusan AC2 US-003 (Q-019/CR-003, 2026-10-27):** Pemilik mempertahankan
 > policy **role-based**. Sales/Marketing dapat mengubah lead dan Project Manager dapat
 > mengubah proyek sesuai batas role modul; Super Admin penuh. AC2 US-003 direvisi lewat
-> CR-003 dan **menunggu pembaruan PRD oleh pemilik**; tidak ada perubahan policy yang
-> diperlukan. Matriks di atas menggambarkan kondisi repo/live saat ini.
+> CR-003 dan PRD telah diperbarui pemilik pada 2026-10-27; **US-003 DONE 4/4**. Tidak ada
+> perubahan policy yang diperlukan. Matriks di atas menggambarkan kondisi repo/live saat ini.
 
 ---
 
