@@ -1321,3 +1321,23 @@
 - **Acceptance Criteria:** 4/5 — CRUD 9 kelompok (create/update/toggle ✅; delete `master_options` terblokir policy live — Q-016) · opsi langsung tampil di form ✅ · opsi terpakai ditolak (unit test ✅; guard browser belum diuji karena tabel referensi live masih kosong) · lint/typecheck ✅ · browser ✅.
 - **Catatan/Masalah:** (1) AC3 tim/PIC tetap Q-015. (2) US-005 belum DONE sampai policy live diperbaiki/disetujui (Q-016). (3) `audit_logs.entity_id` kosong untuk PK komposit (Q-017).
 - **Langkah berikutnya:** jawab Q-015/Q-016/Q-017; setelah policy diperbaiki, ulangi browser test hapus opsi tak terpakai + guard opsi terpakai, lalu merge `feature/US-005-master-data` ke `develop`.
+
+---
+
+## 2026-10-27 — Tahap 5 — US-041 Pengaturan KPI, SLA & Routing (DONE 3/3)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-041-pengaturan-kpi-sla
+- **Commit:** commit ini
+- **Yang dilakukan:**
+  - Fondasi: `types/settings.ts` (kontrak `PortalSettings`, default SLA 30/15, target KPI dasar, validasi tanggal/jam/WA, `resolveKpiTargets`), `services/settings.ts` (baca gabungan `settings` + `holidays`, simpan operasional, simpan target KPI, CRUD hari libur, guard DELETE 0 baris), `hooks/use-portal-settings.ts` (nilai default + reload).
+  - Halaman `/pengaturan/kpi-sla` (Super Admin) + `PortalSettingsManager`: tab SLA & Layanan, Target KPI per brand, dan Hari Libur; nav "KPI, SLA & Routing".
+  - Wiring runtime: `CommunityManager` memakai SLA respons, `InquiryManager` memakai SLA routing + nomor WA resmi per brand, `SosmedScorecard` memakai target KPI per brand, `PublicationCalendar` memakai ambang kritis, `FeatureScheduleSection` memakai kalender libur.
+  - Tabel KPI dibuat responsif (header membungkus, input lebih ringkas) agar keenam kolom muat tanpa terpotong.
+  - Test baru `services/settings.test.ts`; tambahan kasus target KPI per brand di `services/scorecard.test.ts`.
+  - Docs: API modul Pengaturan, PROGRESS (US-041 DONE, FR-30 DONE), DATABASE, CHANGELOG.
+- **File berubah:** `frontend/src/{types,services,hooks}/settings*`, `frontend/src/components/pengaturan/portal-settings-manager.tsx`, `frontend/src/app/(portal)/pengaturan/kpi-sla/page.tsx`, wiring di `components/{sosmed,proyek}` + `services/{scorecard,community,calendar,scheduling}.ts`, `mocks/dashboard.ts`, dokumen.
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (245/245, 54 file) · build ✅ (`/pengaturan/kpi-sla` terdaftar) · browser ✅ — nilai seed 30/15/24, jam layanan 09:00–18:00, tiga brand tampil; target KPI Pytagotech diubah 13 lalu dikembalikan 12 dan persist setelah reload; SLA respons diubah 31 → halaman Komunitas menampilkan "ambang 31 menit" → dikembalikan 30; nomor WA diisi → tampil di Inquiry (termasuk format ternormalisasi) → dikosongkan; hari libur 2026-12-24 ditambah, muncul di Pengaturan + penjadwalan proyek, lalu dihapus; Audit Log menampilkan update `settings` dan insert/delete `holidays` oleh Super Admin dengan nilai lama/baru.
+- **Acceptance Criteria:** 3/3 ✅ — konfigurasi KPI/SLA/jam layanan/WA/hari libur ✅ perubahan teraudit & tidak mengubah data final historis ✅ lint/typecheck/test/build + browser ✅.
+- **Catatan/Masalah:** `settings` ber-PK `key`, sehingga `audit_logs.entity_id` kosong (Q-017); nilai lama/baru tetap tercatat. `developer_capacity` masih mock; kalender libur sudah memakai tabel `holidays`.
+- **Langkah berikutnya:** merge `feature/US-041-pengaturan-kpi-sla` ke `develop`; lanjut US-043; sisa keputusan Q-015/Q-016/Q-017 dan US-003 (Q-014).

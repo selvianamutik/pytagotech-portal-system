@@ -5,11 +5,13 @@ import { listGrowth } from "@/services/growth";
 import { listInquiries } from "@/services/inquiries";
 import { listPublications } from "@/services/publications";
 import type { ServiceResult } from "@/services/result";
+import type { KpiTargetsByBrand } from "@/types/settings";
+import { KPI_DEFINITIONS, resolveKpiTargets } from "@/types/settings";
 
 /**
- * KPI Scorecard Sosmed (US-039). Target interim di bawah menunggu
- * Pengaturan resmi (US-041); status Data Terverifikasi bila didukung
- * snapshot Final, selain itu Monitoring Sementara.
+ * KPI Scorecard Sosmed (US-039). Target dibaca dari Pengaturan per lini
+ * bisnis (US-041); bila brand belum diatur, nilai dasar dipakai. Status Data
+ * Terverifikasi bila didukung snapshot Final, selain itu Monitoring Sementara.
  */
 
 export type ScorecardKpiKey =
@@ -26,16 +28,6 @@ export interface KpiTarget {
   target: number;
   unit: string;
 }
-
-/** Target interim per periode (placeholder — US-041 menjadi acuan). */
-const INTERIM_TARGETS: KpiTarget[] = [
-  { key: "production", label: "Content Production", target: 12, unit: "konten" },
-  { key: "reach", label: "Reach & Awareness", target: 500000, unit: "reach" },
-  { key: "engagement", label: "Engagement Rate", target: 3, unit: "%" },
-  { key: "growth", label: "Audience Growth", target: 500, unit: "followers" },
-  { key: "footprint", label: "Social Footprint", target: 50000, unit: "followers" },
-  { key: "handover", label: "WhatsApp Lead Handover", target: 20, unit: "handover" },
-];
 
 export interface KpiScore {
   key: ScorecardKpiKey;
@@ -54,12 +46,18 @@ export interface ScorecardFilter {
   month?: string;
 }
 
+export interface ScorecardOptions {
+  /** Target dari `settings.kpi.targets`; kosong = target dasar. */
+  kpiTargets?: KpiTargetsByBrand;
+}
+
 function inMonth(dateIso: string, month: string): boolean {
   return dateIso.slice(0, 7) === month;
 }
 
 export async function getScorecard(
-  filter: ScorecardFilter
+  filter: ScorecardFilter,
+  options?: ScorecardOptions
 ): Promise<ServiceResult<KpiScore[]>> {
   const [{ data: materials }, { data: publications }, { data: metrics }, { data: growth }, { data: inquiries }] =
     await Promise.all([
@@ -130,13 +128,19 @@ export async function getScorecard(
     handover: { value: handovers, verified: handovers > 0 },
   };
 
+  const targets = resolveKpiTargets(options?.kpiTargets ?? {}, filter.brand);
+
   return {
-    data: INTERIM_TARGETS.map((target) => {
-      const actual = actuals[target.key];
+    data: KPI_DEFINITIONS.map((definition) => {
+      const actual = actuals[definition.key];
+      const target = targets[definition.key];
       return {
-        ...target,
+        key: definition.key,
+        label: definition.label,
+        unit: definition.unit,
+        target,
         actual: actual.value,
-        achievement: target.target > 0 ? (actual.value / target.target) * 100 : 0,
+        achievement: target > 0 ? (actual.value / target) * 100 : 0,
         verified: actual.verified,
       };
     }),

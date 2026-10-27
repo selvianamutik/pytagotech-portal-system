@@ -104,10 +104,15 @@ function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: strin
 /**
  * Hitung jadwal seluruh fitur proyek. Urutan prioritas; durasi dari
  * estimasi × kapasitas; berurutan per developer.
+ *
+ * `holidays` berasal dari Pengaturan (US-041); bila tidak diberikan,
+ * nilai mock/cadangan dipakai agar test dan mode demo tetap berjalan.
  */
 export async function scheduleProjectFeatures(
-  projectId: string
+  projectId: string,
+  options?: { holidays?: string[] }
 ): Promise<ServiceResult<FeatureSchedule[]>> {
+  const holidays = options?.holidays ?? settingsStore.holidays;
   const [{ data: project }, { data: features }] = await Promise.all([
     getProject(projectId),
     listFeatures(projectId),
@@ -130,12 +135,12 @@ export async function scheduleProjectFeatures(
     const lane = feature.developer || "(belum ditetapkan)";
     const laneStart = nextWorkday(
       developerCursor.get(lane) ?? project.project.startDate,
-      settingsStore.holidays
+      holidays
     );
     const start = feature.scheduleOverride?.startDate ?? laneStart;
     const end =
       feature.scheduleOverride?.endDate ??
-      addWorkdays(start, durationDays - 1, settingsStore.holidays);
+      addWorkdays(start, durationDays - 1, holidays);
 
     schedules.set(feature.id, {
       featureId: feature.id,

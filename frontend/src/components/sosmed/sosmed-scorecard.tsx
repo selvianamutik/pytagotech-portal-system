@@ -7,14 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/crm/lead-table";
 import { useMasterOptions } from "@/hooks/use-master-options";
+import { usePortalSettings } from "@/hooks/use-portal-settings";
 import { getScorecard, type KpiScore } from "@/services/scorecard";
 
 /**
  * Dashboard eksekutif Sosmed / KPI Scorecard (US-039): 6 KPI dengan
- * target interim, capaian, dan status verifikasi + filter brand/periode.
+ * target per lini bisnis dari Pengaturan (US-041), capaian, dan status
+ * verifikasi + filter brand/periode.
  */
 export function SosmedScorecard() {
   const { options } = useMasterOptions();
+  const { settings } = usePortalSettings();
   const [scores, setScores] = useState<KpiScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [brand, setBrand] = useState("");
@@ -22,18 +25,19 @@ export function SosmedScorecard() {
 
   useEffect(() => {
     let cancelled = false;
-    void getScorecard({ brand: brand || undefined, month: month || undefined }).then(
-      ({ data }) => {
-        if (!cancelled) {
-          setScores(data ?? []);
-          setLoading(false);
-        }
+    void getScorecard(
+      { brand: brand || undefined, month: month || undefined },
+      { kpiTargets: settings.kpiTargets }
+    ).then(({ data }) => {
+      if (!cancelled) {
+        setScores(data ?? []);
+        setLoading(false);
       }
-    );
+    });
     return () => {
       cancelled = true;
     };
-  }, [brand, month]);
+  }, [brand, month, settings.kpiTargets]);
 
   return (
     <main className="mx-auto w-full max-w-6xl space-y-4 px-4 py-6 sm:px-6">
@@ -42,7 +46,8 @@ export function SosmedScorecard() {
           <p className="text-sm font-medium text-primary">Sosmed · Eksekutif</p>
           <h1 className="mt-1 text-2xl font-bold">KPI Scorecard Sosmed</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Target interim menunggu Pengaturan resmi (US-041).
+            Target mengikuti Pengaturan per lini bisnis (US-041); tanpa filter brand memakai
+            target dasar.
           </p>
         </div>
       </div>

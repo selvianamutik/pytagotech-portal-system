@@ -4,15 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormSelect } from "@/components/crm/lead-table";
 import { useMasterOptions } from "@/hooks/use-master-options";
+import { usePortalSettings } from "@/hooks/use-portal-settings";
 import {
   getCalendarEntries,
-  getReleaseThresholds,
   reschedulePublication,
-  setReleaseThresholds,
   type CalendarEntry,
 } from "@/services/calendar";
 import { APPROVAL_DECISIONS } from "@/types/material";
@@ -39,6 +37,8 @@ function toIso(date: Date): string {
  */
 export function PublicationCalendar() {
   const { options } = useMasterOptions();
+  const { settings } = usePortalSettings();
+  const criticalHours = settings.releaseCriticalHours;
   const [entries, setEntries] = useState<CalendarEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("bulan");
@@ -48,34 +48,35 @@ export function PublicationCalendar() {
   const [approval, setApproval] = useState("");
   const [gateReady, setGateReady] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [criticalHours, setCriticalHours] = useState("24");
 
   async function refresh() {
-    const [{ data }, { data: thresholds }] = await Promise.all([
-      getCalendarEntries({
+    const { data } = await getCalendarEntries(
+      {
         brand: brand || undefined,
         platform: platform || undefined,
         approval: approval || undefined,
         gateReady: gateReady === "" ? undefined : gateReady === "siap",
-      }),
-      getReleaseThresholds(),
-    ]);
+      },
+      new Date().toISOString(),
+      criticalHours
+    );
     if (data) {
       setEntries(data);
-    }
-    if (thresholds) {
-      setCriticalHours(String(thresholds.criticalHours));
     }
   }
 
   useEffect(() => {
     let cancelled = false;
-    void getCalendarEntries({
-      brand: brand || undefined,
-      platform: platform || undefined,
-      approval: approval || undefined,
-      gateReady: gateReady === "" ? undefined : gateReady === "siap",
-    }).then(({ data }) => {
+    void getCalendarEntries(
+      {
+        brand: brand || undefined,
+        platform: platform || undefined,
+        approval: approval || undefined,
+        gateReady: gateReady === "" ? undefined : gateReady === "siap",
+      },
+      new Date().toISOString(),
+      criticalHours
+    ).then(({ data }) => {
       if (!cancelled) {
         setEntries(data ?? []);
         setLoading(false);
@@ -84,15 +85,7 @@ export function PublicationCalendar() {
     return () => {
       cancelled = true;
     };
-  }, [brand, platform, approval, gateReady]);
-
-  useEffect(() => {
-    void getReleaseThresholds().then(({ data }) => {
-      if (data) {
-        setCriticalHours(String(data.criticalHours));
-      }
-    });
-  }, []);
+  }, [brand, platform, approval, gateReady, criticalHours]);
 
   const days: string[] = useMemo(() => {
     const base = new Date(`${cursor}T00:00:00Z`);
@@ -129,17 +122,6 @@ export function PublicationCalendar() {
 
   function shiftCursor(daysCount: number) {
     setCursor(toIso(addDays(new Date(`${cursor}T00:00:00Z`), daysCount)));
-  }
-
-  async function handleSaveThreshold() {
-    const { error: thresholdError } = await setReleaseThresholds({
-      criticalHours: Number(criticalHours),
-    });
-    if (thresholdError) {
-      setError(thresholdError);
-      return;
-    }
-    await refresh();
   }
 
   if (loading) {
@@ -270,28 +252,10 @@ export function PublicationCalendar() {
         <CardHeader className="border-b">
           <CardTitle className="text-base">Ambang Overdue / Kritis</CardTitle>
           <CardDescription>
-            Overdue = melewati jadwal. Kritis = terlambat melebihi ambang jam (Q-004,
-            dikonfigurasi di sini hingga halaman Pengaturan tersedia di US-041).
+            Overdue = melewati jadwal. Kritis = terlambat melebihi {criticalHours} jam.
+            Ambang diatur Super Admin di Pengaturan · KPI, SLA &amp; Routing.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-2">
-          <div className="space-y-2">
-            <label htmlFor="critical-hours" className="text-sm font-medium">
-              Ambang kritis (jam)
-            </label>
-            <Input
-              id="critical-hours"
-              type="number"
-              min="1"
-              className="w-28"
-              value={criticalHours}
-              onChange={(event) => setCriticalHours(event.target.value)}
-            />
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => void handleSaveThreshold()}>
-            Simpan ambang
-          </Button>
-        </CardContent>
       </Card>
     </main>
   );

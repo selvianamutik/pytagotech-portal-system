@@ -654,10 +654,39 @@ interface NotificationItem { id: string; type: NotificationType; title: string; 
 
 ---
 
-## Modul: Pengaturan
+## Modul: Pengaturan KPI, SLA &amp; Routing
 
-> Pengaturan penuh (KPI, SLA, routing) menyusul US-041 (Backend).
-> Bagian panduan/RACI selesai di US-042 di bawah.
+> **Status:** Backend Fase 3 (US-041, FR-30) — baca/tulis langsung ke Supabase
+> via `frontend/src/services/settings.ts`; tipe dan validasi di
+> `frontend/src/types/settings.ts`; hook pembaca `usePortalSettings`; halaman
+> `/pengaturan/kpi-sla` (Super Admin).
+>
+> Tabel yang sudah ada (tanpa migrasi baru): `settings(key, value jsonb)` dan
+> `holidays(day, name)`. RLS: semua user terautentikasi boleh membaca; hanya
+> Super Admin yang boleh menulis. Trigger audit generik mencatat old/new value
+> setiap perubahan. Nilai final historis (mis. snapshot KPI Final, publikasi
+> live) tidak diubah — pengaturan hanya memengaruhi perhitungan berikutnya.
+
+| Key `settings` | Default | Dipakai di |
+|----------------|---------|------------|
+| `sla.response_minutes` | 30 | Komunitas (`getSlaCompliance`, `isSlaMet`) |
+| `sla.routing_minutes` | 15 | Inquiry (`isRoutingSlaMet`) |
+| `release.critical_hours` | 24 | Kalender publikasi (`getCalendarEntries`) |
+| `service_hours` | `Asia/Jakarta`, Senin–Jumat 09:00–18:00 | Acuan jam layanan |
+| `wa.numbers` | `{Pytagotech:"",Pytabelajar:"",Pytafix:""}` | Inquiry (nomor resmi per brand) |
+| `kpi.targets` | `{}` (memakai target dasar) | Scorecard Sosmed (per brand) |
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `getPortalSettings()` | Gabung semua key + `holidays`; nilai rusak/absen jatuh ke default; error DB tetap mengembalikan default agar UI tampil |
+| `saveOperationalSettings(input)` | Validasi SLA 1–1440 menit, kritis 1–8760 jam, jam `HH:MM` dengan mulai lebih awal dari selesai, minimal satu hari, zona waktu 1–64 karakter, nomor WA `+62…`/`08…` 8–16 digit (boleh kosong). Menulis lima key dengan `update` lalu `insert` bila belum ada |
+| `saveKpiTargets(targets)` | Target per brand boleh parsial, angka ≥ 0, maks. 2 desimal; nilai kosong dihapus dan jatuh ke target dasar `12 / 500000 / 3 / 500 / 50000 / 20` |
+| `listHolidays()` / `createHoliday(day, name?)` / `deleteHoliday(day)` | Tanggal `YYYY-MM-DD` valid; duplikat dan nama lebih dari 120 karakter ditolak; DELETE 0 baris = error; perubahan langsung dipakai penjadwalan fitur |
+| `resolveKpiTargets(targets, brand)` | Target efektif = default ditimpa nilai tersimpan brand tersebut |
+
+**Target dasar KPI:** production 12 konten, reach 500.000, engagement 3%, growth 500 follower, footprint 50.000 follower, handover 20.
+
+**Konsumsi modul:** `CommunityManager` memakai `sla.response_minutes`; `InquiryManager` memakai `sla.routing_minutes` + `wa.numbers`; `SosmedScorecard` mengirim `kpi.targets` ke `getScorecard`; `PublicationCalendar` memakai `release.critical_hours`; `FeatureScheduleSection` memakai `holidays` (kapasitas developer masih mock).
 
 ---
 
