@@ -269,7 +269,7 @@
 - **Opsi yang dipertimbangkan:**
   - A) **Pertahankan role-based** (kondisi repo/live saat ini). Sales + Super Admin boleh mengubah semua lead; PM + Super Admin semua proyek. AC2 US-003 diubah lewat CR dari "miliknya" menjadi "sesuai role modul"; dokumentasi menyatakan batas akses per modul, bukan per baris.
   - B) **Kembalikan owner-only** untuk UPDATE `leads`/`projects` (Super Admin tetap penuh). Frontend US-009/US-020 harus diberi guard: bulk assign ke PIC lain dan edit proyek PM lain ditolak dengan pesan jelas.
-  - C) **Hybrid: owner-only + RPC reassignment (disarankan).** UPDATE biasa hanya untuk pemilik (`leads.pic_id`/`projects.pm_id` = team member user; Super Admin penuh), sedangkan reassign PIC/proyek dilakukan lewat RPC `SECURITY DEFINER` khusus dengan validasi role + audit. Sales tetap bisa bulk assign, PM/Admin tetap bisa reassign proyek, dan AC2 terpenuhi untuk perubahan data biasa. Perlu migration baru + penyesuaian service frontend.
+  - C) **Hybrid: owner-only + RPC reassignment (disarankan).** UPDATE biasa hanya untuk pemilik (`leads.pic_id`/`projects.pm_id` = team member user; Super Admin penuh), sedangkan reassign PIC/proyek dilakukan lewat RPC `SECURITY DEFINER` khusus dengan validasi role + audit: Sales untuk lead (US-009), PM hanya untuk proyek yang dikelolanya, Super Admin untuk semua. Sales tetap bisa bulk assign, reassign proyek tetap tersedia, dan AC2 terpenuhi untuk perubahan data biasa. Perlu migration baru + penyesuaian service frontend.
 - **Dampak jika salah:**
   - A: AC2 literal tidak terpenuhi; Sales/PM berisiko mengubah data rekan. Tidak ada perubahan kode, tetapi perlu persetujuan perubahan AC.
   - B: melanggar kontrak UI US-009/US-020; bulk assign dan edit proyek lintas PM gagal sampai frontend diubah.
