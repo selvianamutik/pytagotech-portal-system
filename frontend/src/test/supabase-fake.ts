@@ -37,18 +37,37 @@ export interface FakeAuditLog {
   created_at: string;
 }
 
+export interface FakeMasterOption {
+  category: string;
+  value: string;
+  is_active: boolean;
+}
+
+export interface FakeTeamMember {
+  id: string;
+  profile_id: string | null;
+  name: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface FakeDb {
   profiles: FakeProfile[];
   userRoles: FakeUserRole[];
   authUsers: FakeAuthUser[];
   auditLogs?: FakeAuditLog[];
+  masterOptions?: FakeMasterOption[];
+  teamMembers?: FakeTeamMember[];
+  /** Tabel tambahan untuk cek referensi (leads, projects, dst.). */
+  tables?: Record<string, Record<string, unknown>[]>;
   sessionUserId: string | null;
   sessionExpiresAt: number | null;
   resetError: string | null;
   listeners: ((event: string) => void)[];
 }
 
-type TableName = "profiles" | "user_roles" | "audit_logs";
+type TableName = string;
 
 type FilterOp = "eq" | "in" | "ilike" | "gte" | "lte";
 
@@ -158,16 +177,27 @@ class FakeQuery {
   }
 
   private rows(): Record<string, unknown>[] {
-    const db = this.db as unknown as Record<string, Record<string, unknown>[]>;
     if (this.table === "audit_logs") {
-      db["auditLogs"] ??= [];
-      return db["auditLogs"];
+      this.db.auditLogs ??= [];
+      return this.db.auditLogs as unknown as Record<string, unknown>[];
     }
-    return (
-      this.table === "profiles"
-        ? (this.db.profiles as unknown as Record<string, unknown>[])
-        : (this.db.userRoles as unknown as Record<string, unknown>[])
-    );
+    if (this.table === "master_options") {
+      this.db.masterOptions ??= [];
+      return this.db.masterOptions as unknown as Record<string, unknown>[];
+    }
+    if (this.table === "team_members") {
+      this.db.teamMembers ??= [];
+      return this.db.teamMembers as unknown as Record<string, unknown>[];
+    }
+    if (this.table === "profiles") {
+      return this.db.profiles as unknown as Record<string, unknown>[];
+    }
+    if (this.table === "user_roles") {
+      return this.db.userRoles as unknown as Record<string, unknown>[];
+    }
+    this.db.tables ??= {};
+    this.db.tables[this.table] ??= [];
+    return this.db.tables[this.table];
   }
 
   private execute(): { data: unknown; error: { message: string } | null } {
@@ -184,7 +214,14 @@ class FakeQuery {
             continue;
           }
         }
-        rows.push({ ...row });
+        const stored = { ...row };
+        if (this.table === "team_members") {
+          stored["id"] ??= `tm-${rows.length + 1}`;
+          stored["profile_id"] ??= null;
+          stored["created_at"] ??= new Date().toISOString();
+          stored["updated_at"] ??= stored["created_at"];
+        }
+        rows.push(stored);
       }
       return { data: this.insertRows, error: null };
     }
@@ -194,6 +231,9 @@ class FakeQuery {
       for (const row of rows) {
         if (matches(row, this.filters)) {
           Object.assign(row, this.updatePatch);
+          if (this.table === "team_members") {
+            row["updated_at"] = new Date().toISOString();
+          }
           updated.push({ ...row });
         }
       }

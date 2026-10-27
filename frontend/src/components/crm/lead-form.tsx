@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import { createLead, updateLead } from "@/services/leads";
 import type { CreateLeadInput, Lead } from "@/types/lead";
-import { INDUSTRY_CATEGORIES, LEAD_STATUSES } from "@/types/lead";
 
 /** Tanggal hari ini (WIB) dalam format input date. */
 function todayWib(): string {
@@ -42,6 +42,7 @@ interface LeadFormProps {
  * ditampilkan dari hasil service (non-blokir).
  */
 export function LeadForm({ open, onOpenChange, initial, picNames, actor, onSaved }: LeadFormProps) {
+  const { options } = useMasterOptions();
   const [companyName, setCompanyName] = useState(initial?.companyName ?? "");
   const [industry, setIndustry] = useState(initial?.industry ?? "");
   const [whatsapp, setWhatsapp] = useState(initial?.whatsapp ?? "");
@@ -113,7 +114,7 @@ export function LeadForm({ open, onOpenChange, initial, picNames, actor, onSaved
             label="Kategori industri"
             value={industry}
             onChange={setIndustry}
-            options={INDUSTRY_CATEGORIES}
+            options={options.industry}
             required
           />
           <div className="space-y-2">
@@ -189,7 +190,7 @@ export function LeadForm({ open, onOpenChange, initial, picNames, actor, onSaved
             label="Status"
             value={status}
             onChange={setStatus}
-            options={LEAD_STATUSES}
+            options={options.lead_status}
             required
           />
           {error ? (

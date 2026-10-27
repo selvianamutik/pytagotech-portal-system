@@ -190,3 +190,20 @@
 - **Alternatif yang dipertimbangkan:** Invite email Supabase (butuh SMTP terkonfigurasi — belum ada); guard owner di RLS leads (ditolak — bertentangan kontrak bulk-assign US-009, lihat migrasi parity-fix).
 - **Alasan:** Satu lapis service, secrets hanya di server, alur sesuai kontrak UI Fase 1.
 - **Konsekuensi:** Butuh `SUPABASE_SERVICE_ROLE_KEY` di server + user Super Admin pertama dibuat via Dashboard/SQL (terdokumentasi di `API.md`); `db reset` di mesin Docker tetap wajib sebelum klaim DONE.
+
+---
+
+## DEC-015: Master Data Terpusat — Satu Tabel Opsi, Fallback Hook, Tim/PIC Tanpa Flag Aktif
+
+- **Tanggal:** 2026-10-27
+- **Terkait:** US-005, FR-3
+- **Konteks:** Sembilan kelompok dropdown masih hardcode di konstanta form. Skema sudah menyediakan `master_options(category, value, is_active)` dengan RLS (user biasa hanya melihat opsi aktif) dan `team_members`, tetapi `team_members` belum punya kolom `is_active`.
+- **Keputusan:**
+  - Delapan kategori memakai satu tabel `master_options` (bukan satu tabel per dropdown): `industry`, `lead_status`, `interest_stage`, `brand`, `platform`, `pillar`, `feature_category`, `priority`. Halaman `/pengaturan/master-data` (Super Admin) melakukan CRUD + aktif/nonaktif.
+  - Rename dan hapus opsi ditolak bila opsi sudah direferensikan tabel lain (FK komposit tanpa `ON UPDATE CASCADE`, dan `ON DELETE` default `NO ACTION`). Jalur yang disarankan: nonaktifkan opsi lama, tambah nilai baru. Service tetap mengecek referensi lebih dulu agar pesan error jelas.
+  - Form membaca opsi lewat hook `useMasterOptions()`: satu kali baca saat mount, fallback ke konstanta lama bila query gagal atau tabel kosong. Tujuannya agar demo tetap berjalan sebelum sesi/database siap tanpa mengorbankan sumber data utama.
+  - `team_members` memakai CRUD + guard hapus berbasis 19 kolom referensi. Tidak ada tombol nonaktifkan karena skema belum mendukung; keputusan penambahan flag menunggu Q-015/CR.
+  - `listLeadPICs()` membaca `team_members` dan hanya jatuh ke mock user bila tabel belum bisa dibaca/kosong.
+- **Alternatif yang dipertimbangkan:** Satu tabel per dropdown (ditolak — duplikasi RLS/halaman/service); filter `is_active` di client setelah membaca semua baris (ditolak — RLS sudah menyembunyikan nonaktif untuk user biasa); menambah `team_members.is_active` sekarang (ditolak sementara — butuh CR + migration dan verifikasi DB belum tersedia).
+- **Alasan:** Satu kontrak tipe/service untuk semua dropdown, perubahan opsi langsung terlihat di form, dan tidak ada perubahan skema tanpa persetujuan.
+- **Konsekuensi:** Service modul yang masih mock (lead/interest/feature/sosmed) tetap memvalidasi nilai terhadap konstanta lama saat menyimpan, sehingga opsi baru bisa tampil di dropdown tetapi ditolak service sampai modul tersebut dimigrasikan ke Supabase. Verifikasi hapus-terjaga memakai query referensi per tabel; tabel referensi harus cocok dengan skema (sudah divalidasi terhadap `20261005000000_initial_schema.sql`).

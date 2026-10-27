@@ -1281,3 +1281,23 @@
 - **Verifikasi:** tidak ada perubahan kode; dokumen saja.
 - **Catatan/Masalah:** US-003 wajib selesai sebelum Gate 3/tag `v0.3.0-backend`.
 - **Langkah berikutnya:** US-005 — master data & dropdown.
+
+---
+
+## 2026-10-27 — Tahap 3 — US-005 Master Data & Dropdown (IN_PROGRESS 4/5)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-005-master-data
+- **Commit:** commit ini
+- **Yang dilakukan:**
+  - Fondasi: `types/master-data.ts` (8 kategori + grup tim/PIC + fallback), `services/master-data.ts` (CRUD `master_options`/`team_members`, guard referensi, `ServiceResult`), `hooks/use-master-options.ts` (opsi aktif sekali saat mount, fallback konstanta).
+  - Halaman `/pengaturan/master-data` (Super Admin) + `MasterDataManager`: 9 kelompok, tambah/ubah, aktif/nonaktif untuk opsi, konfirmasi hapus, pesan khusus bila data terpakai. Nav "Master Data" diarahkan ke route nyata.
+  - Dropdown dinamis: form/filter/aktivitas lead, pipeline interest, backlog fitur (kategori + prioritas), serta ide, inquiry, materi, kalender, komunitas, pertumbuhan, KIST, distribusi, dan scorecard sosmed.
+  - `listLeadPICs()` kini membaca `team_members` dengan fallback mock; fake Supabase diperluas untuk `master_options`, `team_members`, dan tabel referensi generik.
+  - Test baru: `master-data.test.ts` (12), `master-data-manager.test.tsx` (3), `lead-form.test.tsx` (1).
+  - Docs: `API.md` modul Master Data, `CHANGELOG.md`, `DECISIONS.md` DEC-015, PROGRESS US-005 4/5.
+- **File berubah:** lihat `git show --stat` commit ini; inti di `frontend/src/{types,services,hooks,components/pengaturan,app/(portal)/pengaturan/master-data}` + 14 komponen form/filter.
+- **Verifikasi:** lint ✅ · typecheck ✅ · test ✅ (233/233, 53 file) · build ✅ (`/pengaturan/master-data` terdaftar) · browser ⏳ (belum; butuh sesi Super Admin).
+- **Acceptance Criteria:** 4/5 — CRUD 9 kelompok ✅ · opsi langsung tampil di form ✅ · opsi terpakai tidak bisa dihapus (master ✅; tim/PIC tanpa nonaktifkan — Q-015) · lint/typecheck ✅ · browser ⏳.
+- **Catatan/Masalah:** (1) `team_members` belum punya `is_active`; hapus hanya diblokir bila direferensikan, tidak ada tombol nonaktifkan (Q-015). (2) Service modul yang masih mock tetap menolak nilai baru saat simpan sampai dimigrasikan. (3) Opsi master hanya terlihat aktif bagi user biasa (RLS), jadi halaman Super Admin wajib sesi nyata.
+- **Langkah berikutnya:** verifikasi browser dengan sesi Super Admin → bila lolos, US-005 DONE + merge; lalu jawab Q-015 sebelum menutup AC3 tim/PIC.

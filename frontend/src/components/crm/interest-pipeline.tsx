@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import {
   getPipeline,
   moveInterestStage,
@@ -30,7 +31,6 @@ import {
 } from "@/services/interest";
 import { useAuthStore } from "@/store/auth";
 import type { InterestStage, PipelineCard } from "@/types/interest";
-import { INTEREST_STAGES } from "@/types/interest";
 
 type ViewMode = "kanban" | "tabel";
 
@@ -41,6 +41,7 @@ type ViewMode = "kanban" | "tabel";
  */
 export function InterestPipeline() {
   const currentUser = useAuthStore((state) => state.user);
+  const { options } = useMasterOptions();
   const [cards, setCards] = useState<PipelineCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("kanban");
@@ -50,6 +51,12 @@ export function InterestPipeline() {
   const [editStage, setEditStage] = useState<InterestStage>("New Interest");
   const [editNeed, setEditNeed] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Kolom kanban = opsi aktif + tahap lama yang masih tersimpan di kartu,
+  // agar data lama tidak hilang saat opsi dinonaktifkan.
+  const stages = Array.from(
+    new Set([...options.interest_stage, ...cards.map((card) => card.stage)])
+  );
 
   async function refresh() {
     const { data } = await getPipeline();
@@ -169,7 +176,7 @@ export function InterestPipeline() {
         </Card>
       ) : view === "kanban" ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {INTEREST_STAGES.map((stage) => {
+          {stages.map((stage) => {
             const column = cards.filter((card) => card.stage === stage);
             return (
               <section
@@ -181,7 +188,7 @@ export function InterestPipeline() {
                   event.preventDefault();
                   const leadId = event.dataTransfer.getData("text/plain");
                   if (leadId) {
-                    void handleDrop(stage, leadId);
+                    void handleDrop(stage as InterestStage, leadId);
                   }
                 }}
               >
@@ -288,7 +295,7 @@ export function InterestPipeline() {
               label="Tahapan"
               value={editStage}
               onChange={(value) => setEditStage(value as InterestStage)}
-              options={INTEREST_STAGES}
+              options={options.interest_stage}
             />
             <div className="space-y-2">
               <label htmlFor="interest-need" className="text-sm font-medium">

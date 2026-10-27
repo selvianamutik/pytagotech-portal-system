@@ -23,8 +23,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import { listGrowth, recordGrowth } from "@/services/growth";
-import { SOSMED_PLATFORMS } from "@/types/sosmed";
 import { netGrowth, NET_GROWTH_FORMULA, type AccountGrowth } from "@/types/growth";
 
 /**
@@ -32,6 +32,7 @@ import { netGrowth, NET_GROWTH_FORMULA, type AccountGrowth } from "@/types/growt
  * otomatis + grafik tren bulanan (CSS murni).
  */
 export function GrowthManager() {
+  const { options } = useMasterOptions();
   const [platform, setPlatform] = useState<string>("Instagram");
   const [entries, setEntries] = useState<AccountGrowth[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,7 +111,7 @@ export function GrowthManager() {
           label="Platform"
           value={platform}
           onChange={setPlatform}
-          options={SOSMED_PLATFORMS}
+          options={options.platform}
         />
       </div>
 

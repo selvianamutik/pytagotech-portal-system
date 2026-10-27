@@ -5,7 +5,7 @@ import { SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/crm/lead-table";
-import { INDUSTRY_CATEGORIES, LEAD_STATUSES } from "@/types/lead";
+import { useMasterOptions } from "@/hooks/use-master-options";
 
 export interface LeadFilterState {
   search: string;
@@ -34,6 +34,8 @@ interface LeadFiltersProps {
 
 /** Bilah filter multi-kriteria database lead (US-008). */
 export function LeadFilters({ filters, onChange, picNames, resultCount }: LeadFiltersProps) {
+  const { options } = useMasterOptions();
+
   function set(patch: Partial<LeadFilterState>) {
     onChange({ ...filters, ...patch });
   }
@@ -69,7 +71,7 @@ export function LeadFilters({ filters, onChange, picNames, resultCount }: LeadFi
           label="Status"
           value={filters.status}
           onChange={(value) => set({ status: value })}
-          options={LEAD_STATUSES}
+          options={options.lead_status}
         />
         <FormSelect
           id="filter-pic"
@@ -83,7 +85,7 @@ export function LeadFilters({ filters, onChange, picNames, resultCount }: LeadFi
           label="Kategori industri"
           value={filters.industry}
           onChange={(value) => set({ industry: value })}
-          options={INDUSTRY_CATEGORIES}
+          options={options.industry}
         />
         <div className="space-y-2">
           <label htmlFor="filter-date-from" className="text-sm font-medium">

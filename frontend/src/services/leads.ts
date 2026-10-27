@@ -1,6 +1,7 @@
 import { mockUsers } from "@/mocks/auth";
 import { mockLeads } from "@/mocks/leads";
 import { logAudit } from "@/services/audit";
+import { listActiveTeamMembers } from "@/services/master-data";
 import type {
   CreateLeadInput,
   Lead,
@@ -48,10 +49,29 @@ export async function getLead(leadId: string): Promise<ServiceResult<Lead>> {
   return { data: cloneLead(lead), error: null };
 }
 
-/** Daftar PIC (user aktif) untuk dropdown penugasan. */
+/**
+ * Daftar PIC untuk dropdown penugasan (US-005, AC2).
+ * Sumber utama `team_members`; bila belum bisa dibaca (mis. sesi/database
+ * demo belum siap), pakai user aktif dari mock agar form tetap berjalan.
+ */
 export async function listLeadPICs(): Promise<
   ServiceResult<{ id: string; name: string }[]>
 > {
+  try {
+    const team = await listActiveTeamMembers();
+    if (team.data && team.data.length > 0) {
+      return {
+        data: team.data.map((member) => ({
+          id: member.id,
+          name: member.name,
+        })),
+        error: null,
+      };
+    }
+  } catch {
+    // Jatuh ke mock di bawah; dropdown tidak boleh kosong karena database
+    // belum siap.
+  }
   return {
     data: mockUsers
       .filter((user) => user.isActive)

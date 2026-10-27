@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import {
   getCalendarEntries,
   getReleaseThresholds,
@@ -14,7 +15,6 @@ import {
   setReleaseThresholds,
   type CalendarEntry,
 } from "@/services/calendar";
-import { SOSMED_BRANDS, SOSMED_PLATFORMS } from "@/types/sosmed";
 import { APPROVAL_DECISIONS } from "@/types/material";
 
 type ViewMode = "bulan" | "minggu";
@@ -38,6 +38,7 @@ function toIso(date: Date): string {
  * filter, klik → detail, seret untuk jadwal ulang, indikator Overdue/Kritis.
  */
 export function PublicationCalendar() {
+  const { options } = useMasterOptions();
   const [entries, setEntries] = useState<CalendarEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("bulan");
@@ -192,8 +193,8 @@ export function PublicationCalendar() {
       ) : null}
 
       <div className="grid gap-3 rounded-xl border bg-card p-4 md:grid-cols-2 xl:grid-cols-4">
-        <FormSelect id="cal-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={SOSMED_BRANDS} />
-        <FormSelect id="cal-platform" label="Platform" value={platform} onChange={setPlatform} options={SOSMED_PLATFORMS} />
+        <FormSelect id="cal-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={options.brand} />
+        <FormSelect id="cal-platform" label="Platform" value={platform} onChange={setPlatform} options={options.platform} />
         <FormSelect
           id="cal-approval"
           label="Status approval"

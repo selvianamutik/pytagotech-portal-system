@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import {
   getSlaCompliance,
   isSlaMet,
@@ -33,7 +34,6 @@ import {
   responseMinutes,
   RESPONSE_SLA_MINUTES,
 } from "@/services/community";
-import { SOSMED_PLATFORMS } from "@/types/sosmed";
 import { INTERACTION_CHANNELS, INTERACTION_TYPES } from "@/types/community";
 import { formatDateTime } from "@/lib/utils";
 
@@ -42,6 +42,7 @@ import { formatDateTime } from "@/lib/utils";
  * otomatis + SLA 30 menit + % tercapai.
  */
 export function CommunityManager() {
+  const { options } = useMasterOptions();
   const [items, setItems] = useState<Awaited<ReturnType<typeof listInteractions>>["data"]>([]);
   const [compliance, setCompliance] = useState({ answered: 0, met: 0, percent: 0 });
   const [loading, setLoading] = useState(true);
@@ -225,7 +226,7 @@ export function CommunityManager() {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <FormSelect id="int-channel" label="Kanal" value={channel} onChange={setChannel} options={INTERACTION_CHANNELS} required />
-            <FormSelect id="int-platform" label="Platform" value={platform} onChange={setPlatform} options={SOSMED_PLATFORMS} required />
+            <FormSelect id="int-platform" label="Platform" value={platform} onChange={setPlatform} options={options.platform} required />
             <FormSelect id="int-type" label="Tipe" value={type} onChange={setType} options={INTERACTION_TYPES} required />
             <div className="space-y-2">
               <label htmlFor="int-received" className="text-sm font-medium">

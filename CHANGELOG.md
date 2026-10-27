@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Master data & dropdown terpusat (US-005): halaman `/pengaturan/master-data` untuk 8 kategori `master_options` + tim/PIC, CRUD, aktif/nonaktif, hapus terjaga; form lead, interest, fitur, dan sosmed membaca opsi aktif dari database
 - Halaman Audit Log (US-004): baca `audit_logs` trigger DB + filter aktor/modul/tanggal, tanpa aksi ubah/hapus
 - Wiring Supabase Auth (US-002 backend): login/logout/reset/password-baru via Auth nyata, manajemen user via `profiles`/`user_roles`, Route Handler admin, redirect proxy, halaman error auth, template email ID
 - Migrasi parity-fix backend (`20261005002000`): RLS role-based selaras kontrak UI, RPC `convert_inquiry_to_lead`, notifikasi handover ke Sales, trigger `handle_new_user`, hapus policy INSERT pemalsu audit

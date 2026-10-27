@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import {
   convertInquiryToLead,
   isRoutingSlaMet,
@@ -35,7 +36,6 @@ import {
   setInquiryStatus,
 } from "@/services/inquiries";
 import { listLeadPICs } from "@/services/leads";
-import { SOSMED_BRANDS, SOSMED_PLATFORMS } from "@/types/sosmed";
 import { INQUIRY_STATUSES, type Inquiry } from "@/types/inquiry";
 import { formatDateTime } from "@/lib/utils";
 
@@ -44,6 +44,7 @@ import { formatDateTime } from "@/lib/utils";
  * SLA routing 15 menit, status, dan tombol Jadikan Lead CRM.
  */
 export function InquiryManager() {
+  const { options } = useMasterOptions();
   const [items, setItems] = useState<Inquiry[]>([]);
   const [picNames, setPicNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -286,8 +287,8 @@ export function InquiryManager() {
             <DialogTitle>Inquiry baru</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <FormSelect id="inq-platform" label="Platform sumber" value={platform} onChange={setPlatform} options={SOSMED_PLATFORMS} required />
-            <FormSelect id="inq-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={SOSMED_BRANDS} required />
+            <FormSelect id="inq-platform" label="Platform sumber" value={platform} onChange={setPlatform} options={options.platform} required />
+            <FormSelect id="inq-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={options.brand} required />
             <div className="space-y-2">
               <label htmlFor="inq-received" className="text-sm font-medium">
                 Waktu masuk

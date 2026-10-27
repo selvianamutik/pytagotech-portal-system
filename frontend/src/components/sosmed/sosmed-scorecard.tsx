@@ -6,14 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import { getScorecard, type KpiScore } from "@/services/scorecard";
-import { SOSMED_BRANDS } from "@/types/sosmed";
 
 /**
  * Dashboard eksekutif Sosmed / KPI Scorecard (US-039): 6 KPI dengan
  * target interim, capaian, dan status verifikasi + filter brand/periode.
  */
 export function SosmedScorecard() {
+  const { options } = useMasterOptions();
   const [scores, setScores] = useState<KpiScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [brand, setBrand] = useState("");
@@ -47,7 +48,7 @@ export function SosmedScorecard() {
       </div>
 
       <div className="grid max-w-xl gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2">
-        <FormSelect id="score-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={SOSMED_BRANDS} />
+        <FormSelect id="score-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={options.brand} />
         <div className="space-y-2">
           <label htmlFor="score-month" className="text-sm font-medium">
             Periode (kosongkan = semua)

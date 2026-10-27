@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/crm/lead-table";
+import { useMasterOptions } from "@/hooks/use-master-options";
 import {
   createPublication,
   deletePublication,
@@ -14,7 +15,6 @@ import {
   listPublications,
   recordRelease,
 } from "@/services/publications";
-import { SOSMED_PLATFORMS } from "@/types/sosmed";
 import type { Publication } from "@/types/publication";
 import { DISTRIBUTION_PATTERNS } from "@/types/publication";
 
@@ -23,6 +23,7 @@ import { DISTRIBUTION_PATTERNS } from "@/types/publication";
  * ke banyak PUB dengan pola Single/Crosspost + peringatan rekonsiliasi.
  */
 export function DistributionSection({ materialId }: { materialId: string }) {
+  const { options } = useMasterOptions();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [uncovered, setUncovered] = useState<string[]>([]);
   const [platform, setPlatform] = useState("");
@@ -107,8 +108,10 @@ export function DistributionSection({ materialId }: { materialId: string }) {
     await refresh();
   }
 
-  const usedPlatforms = new Set(publications.map((publication) => publication.platform));
-  const available = SOSMED_PLATFORMS.filter((item) => !usedPlatforms.has(item));
+  const usedPlatforms = new Set<string>(
+    publications.map((publication) => publication.platform)
+  );
+  const available = options.platform.filter((item) => !usedPlatforms.has(item));
 
   return (
     <Card>

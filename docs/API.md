@@ -131,7 +131,53 @@ Halaman tanpa izin menampilkan konten 403 (`/403`, komponen `RequireRole`), buka
 
 ## Modul: Master Data
 
-> _Akan didokumentasikan saat US-005 dimulai_
+> **Status:** Backend Fase 3 (US-005, FR-3) — baca/tulis langsung ke Supabase
+> via `frontend/src/services/master-data.ts`; tipe di
+> `frontend/src/types/master-data.ts`; halaman `/pengaturan/master-data`
+> (Super Admin). Form memakai hook `useMasterOptions` agar opsi aktif selalu
+> berasal dari database.
+>
+> Tabel: `master_options(category, value, is_active)` untuk 8 kelompok dropdown;
+> `team_members(id, profile_id, name, status)` untuk tim/PIC.
+> RLS: user terautentikasi hanya melihat opsi aktif; Super Admin boleh melihat
+> nonaktif dan satu-satunya yang boleh menulis.
+
+| Kelompok UI | `master_options.category` / tabel | Dipakai di |
+|-------------|-----------------------------------|------------|
+| Kategori industri | `industry` | Form lead, filter CRM |
+| Status lead | `lead_status` | Form lead, filter, dialog aktivitas |
+| Tahapan interest | `interest_stage` | Pipeline Interested Leads |
+| Lini bisnis | `brand` | Content planner, materi, kalender, inquiry, KIST, scorecard |
+| Platform | `platform` | Ide, materi, distribusi, kalender, pertumbuhan, komunitas, inquiry |
+| Pillar konten | `pillar` | Content planner, evaluasi KIST |
+| Kategori fitur | `feature_category` | Backlog fitur proyek |
+| Prioritas | `priority` | Backlog fitur proyek |
+| Tim / PIC | `team_members` | Dropdown PIC lead, inquiry, penugasan |
+
+| Fungsi service | Aturan bisnis |
+|----------------|---------------|
+| `listMasterOptions({includeInactive?})` | Urut kategori + nilai; filter `is_active` kecuali admin meminta semua |
+| `getActiveMasterOptions()` | Dikelompokkan per kategori untuk dropdown; bila tabel kosong, memakai daftar cadangan konstanta |
+| `createMasterOption({category, value, isActive?})` | Kategori harus terdaftar; nilai trim 1–80 karakter; duplikat per kategori ditolak |
+| `updateMasterOption(category, currentValue, {value, isActive?})` | Rename ditolak bila opsi sedang dipakai (FK komposit tanpa ON UPDATE CASCADE); status aktif bisa diubah |
+| `setMasterOptionActive(category, value, isActive)` | Nonaktifkan/aktifkan tanpa menghapus; opsi nonaktif hilang dari form user biasa |
+| `deleteMasterOption(category, value)` | Hanya opsi tanpa referensi; opsi terpakai → pesan untuk menonaktifkan |
+| `listTeamMembers()` | Semua anggota tim/PIC, urut nama |
+| `createTeamMember({name, status})` / `updateTeamMember(id, input)` | Nama unik 1–100 karakter; status `internal`/`external` |
+| `deleteTeamMember(id)` | Ditolak bila direferensikan lead, proyek, task, fitur, materi, komentar, dsb. (Q-015) |
+| Hook `useMasterOptions()` | Mengambil opsi aktif sekali saat komponen dipasang; fallback ke konstanta bila database belum bisa dibaca |
+
+```ts
+type MasterOptionCategory = "industry" | "lead_status" | "interest_stage"
+  | "brand" | "platform" | "pillar" | "feature_category" | "priority";
+
+interface MasterOption { category: MasterOptionCategory; value: string; isActive: boolean; }
+interface TeamMember { id: string; profileId: string | null; name: string; status: "internal" | "external"; createdAt: string; updatedAt: string; }
+```
+
+**Catatan tim/PIC:** skema `team_members` yang disetujui belum memiliki kolom
+`is_active`, sehingga belum ada tombol nonaktifkan. Penghapusan dijaga dengan
+cek referensi; keputusan penambahan kolom aktif menunggu Q-015.
 
 ---
 
