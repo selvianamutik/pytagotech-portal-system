@@ -79,7 +79,8 @@ export interface CalendarFilter {
 /** Entri kalender dari data distribusi + filter multi-parameter. */
 export async function getCalendarEntries(
   filter: CalendarFilter,
-  nowIso: string = new Date().toISOString()
+  nowIso: string = new Date().toISOString(),
+  criticalHours: number = thresholdsStore.criticalHours
 ): Promise<ServiceResult<CalendarEntry[]>> {
   const [{ data: publications }, { data: materials }] = await Promise.all([
     listPublications(),
@@ -123,7 +124,7 @@ export async function getCalendarEntries(
         publication.scheduleDate,
         publication.releaseDate,
         nowIso,
-        thresholdsStore.criticalHours
+        criticalHours
       ),
     });
   }

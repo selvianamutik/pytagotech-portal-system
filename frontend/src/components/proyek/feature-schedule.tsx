@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { usePortalSettings } from "@/hooks/use-portal-settings";
 import {
   getScheduleSettings,
   overrideFeatureSchedule,
@@ -31,13 +32,16 @@ import {
   type FeatureSchedule,
   type ScheduleSettings,
 } from "@/services/scheduling";
+import { createHoliday, deleteHoliday } from "@/services/settings";
 import { formatDate } from "@/lib/utils";
 
 /**
  * Penjadwalan fitur otomatis (US-024, FR-18): hitung jadwal,
  * override beralasan, peringatan bentrok, pengaturan kalender.
+ * Hari libur dibaca dari Pengaturan (US-041).
  */
 export function FeatureScheduleSection({ projectId }: { projectId: string }) {
+  const { settings: portalSettings, reload: reloadSettings } = usePortalSettings();
   const [schedules, setSchedules] = useState<FeatureSchedule[]>([]);
   const [settings, setSettings] = useState<ScheduleSettings>({ holidays: [], capacityHoursPerDay: {} });
   const [loading, setLoading] = useState(true);
@@ -53,9 +57,17 @@ export function FeatureScheduleSection({ projectId }: { projectId: string }) {
   const [capacityName, setCapacityName] = useState("");
   const [capacityHours, setCapacityHours] = useState("8");
 
+  const holidayKey = portalSettings.holidays
+    .map((holiday) => holiday.day)
+    .join(",");
+
+  function holidayDays(): string[] {
+    return holidayKey ? holidayKey.split(",").filter(Boolean) : [];
+  }
+
   async function refresh() {
     const [{ data: scheduleData }, { data: settingsData }] = await Promise.all([
-      scheduleProjectFeatures(projectId),
+      scheduleProjectFeatures(projectId, { holidays: holidayDays() }),
       getScheduleSettings(),
     ]);
     if (scheduleData) {
@@ -69,7 +81,9 @@ export function FeatureScheduleSection({ projectId }: { projectId: string }) {
   useEffect(() => {
     let cancelled = false;
     void Promise.all([
-      scheduleProjectFeatures(projectId),
+      scheduleProjectFeatures(projectId, {
+        holidays: holidayKey ? holidayKey.split(",").filter(Boolean) : [],
+      }),
       getScheduleSettings(),
     ]).then(([scheduleResult, settingsResult]) => {
       if (cancelled) {
@@ -86,7 +100,7 @@ export function FeatureScheduleSection({ projectId }: { projectId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, holidayKey]);
 
   async function handleSchedule() {
     setPending(true);
@@ -120,24 +134,24 @@ export function FeatureScheduleSection({ projectId }: { projectId: string }) {
     if (!newHoliday) {
       return;
     }
-    const { data } = await setScheduleSettings({
-      ...settings,
-      holidays: [...settings.holidays, newHoliday],
-    });
-    if (data) {
-      setSettings(data);
+    setError(null);
+    const { error: holidayError } = await createHoliday(newHoliday, "Hari libur khusus");
+    if (holidayError) {
+      setError(holidayError);
+      return;
     }
     setNewHoliday("");
+    reloadSettings();
   }
 
   async function handleRemoveHoliday(day: string) {
-    const { data } = await setScheduleSettings({
-      ...settings,
-      holidays: settings.holidays.filter((item) => item !== day),
-    });
-    if (data) {
-      setSettings(data);
+    setError(null);
+    const { error: holidayError } = await deleteHoliday(day);
+    if (holidayError) {
+      setError(holidayError);
+      return;
     }
+    reloadSettings();
   }
 
   async function handleSaveCapacity() {
@@ -261,24 +275,30 @@ export function FeatureScheduleSection({ projectId }: { projectId: string }) {
         <CardHeader className="border-b">
           <CardTitle className="text-base">Kalender & kapasitas</CardTitle>
           <CardDescription>
-            Sabtu/Minggu selalu libur. Estimasi = hari-orang @8 jam.
+            Sabtu/Minggu selalu libur. Hari libur mengikuti Pengaturan. Estimasi = hari-orang
+            @8 jam.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div>
             <p className="text-sm font-medium">Hari libur</p>
             <ul className="mt-2 space-y-1">
-              {settings.holidays.length === 0 ? (
+              {portalSettings.holidays.length === 0 ? (
                 <li className="text-xs text-muted-foreground">Belum ada hari libur khusus.</li>
               ) : (
-                settings.holidays.map((day) => (
-                  <li key={day} className="flex items-center justify-between text-sm">
-                    <span className="font-mono">{day}</span>
+                portalSettings.holidays.map((holiday) => (
+                  <li key={holiday.day} className="flex items-center justify-between text-sm">
+                    <span>
+                      <span className="font-mono">{holiday.day}</span>
+                      {holiday.name ? (
+                        <span className="ml-2 text-xs text-muted-foreground">{holiday.name}</span>
+                      ) : null}
+                    </span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => void handleRemoveHoliday(day)}
+                      onClick={() => void handleRemoveHoliday(holiday.day)}
                     >
                       Hapus
                     </Button>

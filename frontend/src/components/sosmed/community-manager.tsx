@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
 import { useMasterOptions } from "@/hooks/use-master-options";
+import { usePortalSettings } from "@/hooks/use-portal-settings";
 import {
   getSlaCompliance,
   isSlaMet,
@@ -32,17 +33,18 @@ import {
   markInteractionReplied,
   recordInteraction,
   responseMinutes,
-  RESPONSE_SLA_MINUTES,
 } from "@/services/community";
 import { INTERACTION_CHANNELS, INTERACTION_TYPES } from "@/types/community";
 import { formatDateTime } from "@/lib/utils";
 
 /**
  * Community management (US-037, FR-26): interaksi + waktu tanggap
- * otomatis + SLA 30 menit + % tercapai.
+ * otomatis + SLA dari Pengaturan (US-041) + % tercapai.
  */
 export function CommunityManager() {
   const { options } = useMasterOptions();
+  const { settings } = usePortalSettings();
+  const slaMinutes = settings.slaResponseMinutes;
   const [items, setItems] = useState<Awaited<ReturnType<typeof listInteractions>>["data"]>([]);
   const [compliance, setCompliance] = useState({ answered: 0, met: 0, percent: 0 });
   const [loading, setLoading] = useState(true);
@@ -60,7 +62,7 @@ export function CommunityManager() {
   async function refresh() {
     const [{ data: list }, { data: sla }] = await Promise.all([
       listInteractions(),
-      getSlaCompliance(),
+      getSlaCompliance(slaMinutes),
     ]);
     if (list) {
       setItems(list);
@@ -72,12 +74,9 @@ export function CommunityManager() {
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([listInteractions(), getSlaCompliance()]).then(([list, sla]) => {
+    void listInteractions().then((list) => {
       if (!cancelled) {
         setItems(list.data ?? []);
-        if (sla.data) {
-          setCompliance(sla.data);
-        }
         setLoading(false);
       }
     });
@@ -85,6 +84,18 @@ export function CommunityManager() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getSlaCompliance(slaMinutes).then((sla) => {
+      if (!cancelled && sla.data) {
+        setCompliance(sla.data);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slaMinutes]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -139,7 +150,7 @@ export function CommunityManager() {
           <h1 className="mt-1 text-2xl font-bold">Community Management</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             SLA {compliance.met}/{compliance.answered} tercapai ({compliance.percent.toFixed(0)}%)
-            — ambang {RESPONSE_SLA_MINUTES} menit.
+            — ambang {slaMinutes} menit.
           </p>
         </div>
         <Button type="button" onClick={() => setDialogOpen(true)}>
@@ -169,7 +180,7 @@ export function CommunityManager() {
             <TableBody>
               {items?.map((item) => {
                 const minutes = responseMinutes(item);
-                const met = isSlaMet(item);
+                const met = isSlaMet(item, slaMinutes);
                 return (
                   <TableRow key={item.id}>
                     <TableCell className="px-4">

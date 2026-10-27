@@ -38,6 +38,7 @@ export const dashboardSnapshot: DashboardSnapshot = {
     { label: "Audit Log", module: "Pengaturan", href: "/pengaturan/audit-log", roles: ["Super Admin", "Executive / Leader"] },
     { label: "Panduan & RACI", module: "Pengaturan", href: "/pengaturan/panduan", roles: ["Super Admin"] },
     { label: "Master Data", module: "Pengaturan", href: "/pengaturan/master-data", roles: ["Super Admin"] },
+    { label: "KPI, SLA & Routing", module: "Pengaturan", href: "/pengaturan/kpi-sla", roles: ["Super Admin"] },
   ],
   workQueue: [
     { id: "LEAD-024", title: "Follow up PT Aruna Digital", module: "CRM", owner: "Feby", status: "Follow Up", dueDate: "2026-10-04T08:30:00Z", tone: "warning" },

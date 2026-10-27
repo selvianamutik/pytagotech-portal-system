@@ -148,12 +148,15 @@ export async function markInteractionReplied(
   return { data: { ...interaction }, error: null };
 }
 
-/** Persentase SLA tercapai (untuk dashboard Sosmed US-039). */
-export async function getSlaCompliance(): Promise<
-  ServiceResult<{ answered: number; met: number; percent: number }>
-> {
+/**
+ * Persentase SLA tercapai (untuk dashboard Sosmed US-039).
+ * `slaMinutes` berasal dari Pengaturan (US-041); default 30 menit.
+ */
+export async function getSlaCompliance(
+  slaMinutes: number = RESPONSE_SLA_MINUTES
+): Promise<ServiceResult<{ answered: number; met: number; percent: number }>> {
   const answered = interactionStore.filter((interaction) => interaction.repliedAt);
-  const met = answered.filter((interaction) => isSlaMet(interaction)).length;
+  const met = answered.filter((interaction) => isSlaMet(interaction, slaMinutes)).length;
   return {
     data: {
       answered: answered.length,

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Pengaturan KPI, SLA & routing (US-041, FR-30): halaman `/pengaturan/kpi-sla` untuk ambang SLA 30/15 menit, jam layanan, nomor WhatsApp resmi per brand, ambang kritis publikasi, target KPI per lini bisnis, dan kalender hari libur; nilai dipakai Komunitas, Inquiry, Scorecard, Kalender Publikasi, dan penjadwalan fitur; perubahan tercatat di audit log tanpa mengubah snapshot final historis
 - Master data & dropdown terpusat (US-005): halaman `/pengaturan/master-data` untuk 8 kategori `master_options` + tim/PIC, CRUD, aktif/nonaktif, hapus terjaga; form lead, interest, fitur, dan sosmed membaca opsi aktif dari database
 - Halaman Audit Log (US-004): baca `audit_logs` trigger DB + filter aktor/modul/tanggal, tanpa aksi ubah/hapus
 - Wiring Supabase Auth (US-002 backend): login/logout/reset/password-baru via Auth nyata, manajemen user via `profiles`/`user_roles`, Route Handler admin, redirect proxy, halaman error auth, template email ID

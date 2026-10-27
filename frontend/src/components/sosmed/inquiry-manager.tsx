@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
 import { useMasterOptions } from "@/hooks/use-master-options";
+import { usePortalSettings } from "@/hooks/use-portal-settings";
 import {
   convertInquiryToLead,
   isRoutingSlaMet,
@@ -32,19 +33,22 @@ import {
   markInquiryRouted,
   recordInquiry,
   routingMinutes,
-  ROUTING_SLA_MINUTES,
   setInquiryStatus,
 } from "@/services/inquiries";
 import { listLeadPICs } from "@/services/leads";
 import { INQUIRY_STATUSES, type Inquiry } from "@/types/inquiry";
+import { formatWhatsAppNumber } from "@/types/settings";
 import { formatDateTime } from "@/lib/utils";
 
 /**
  * Inquiry tracking & handover WhatsApp (US-038, FR-28): catat inquiry,
- * SLA routing 15 menit, status, dan tombol Jadikan Lead CRM.
+ * SLA routing dari Pengaturan (US-041), status, nomor WA resmi per brand,
+ * dan tombol Jadikan Lead CRM.
  */
 export function InquiryManager() {
   const { options } = useMasterOptions();
+  const { settings } = usePortalSettings();
+  const slaMinutes = settings.slaRoutingMinutes;
   const [items, setItems] = useState<Inquiry[]>([]);
   const [picNames, setPicNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,7 +165,8 @@ export function InquiryManager() {
           <p className="text-sm font-medium text-primary">Sosmed · Komunitas</p>
           <h1 className="mt-1 text-2xl font-bold">Inquiry Tracking</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            SLA routing WhatsApp ≤ {ROUTING_SLA_MINUTES} menit.
+            SLA routing WhatsApp ≤ {slaMinutes} menit. Nomor resmi per lini bisnis
+            mengikuti Pengaturan.
           </p>
         </div>
         <Button type="button" onClick={() => setDialogOpen(true)}>
@@ -202,6 +207,9 @@ export function InquiryManager() {
                         {item.platform} · {item.brand}
                       </p>
                       <p className="font-mono text-xs text-muted-foreground">
+                        WA {formatWhatsAppNumber(settings.waNumbers[item.brand] ?? "")}
+                      </p>
+                      <p className="font-mono text-xs text-muted-foreground">
                         {item.id} · {item.handler}
                         {item.leadId ? ` → ${item.leadId}` : ""}
                       </p>
@@ -217,7 +225,7 @@ export function InquiryManager() {
                     <TableCell>
                       {minutes === null ? (
                         <Badge variant="outline">Belum</Badge>
-                      ) : isRoutingSlaMet(item) ? (
+                      ) : isRoutingSlaMet(item, slaMinutes) ? (
                         <Badge variant="default">{minutes} mnt</Badge>
                       ) : (
                         <Badge variant="destructive">{minutes} mnt</Badge>

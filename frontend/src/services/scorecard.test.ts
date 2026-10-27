@@ -39,6 +39,17 @@ describe("getScorecard", () => {
     expect(data?.find((kpi) => kpi.key === "reach")?.verified).toBe(false);
   });
 
+  it("target per lini bisnis dari Pengaturan menimpa default secara parsial", async () => {
+    const { data } = await getScorecard(
+      { brand: "Pytagotech" },
+      { kpiTargets: { Pytagotech: { production: 20, engagement: 4.5 } } }
+    );
+
+    expect(data?.find((kpi) => kpi.key === "production")?.target).toBe(20);
+    expect(data?.find((kpi) => kpi.key === "engagement")?.target).toBe(4.5);
+    expect(data?.find((kpi) => kpi.key === "reach")?.target).toBe(500000);
+  });
+
   it("metrik Final memverifikasi KPI reach & engagement", async () => {
     const pub = await createPublication("MAT-0018", "Instagram", "Single");
     await recordMetric(
