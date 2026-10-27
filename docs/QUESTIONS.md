@@ -159,3 +159,29 @@
   - B) Ada master divisi tersendiri (perlu tabel + filter baru)
 - **Dampak jika salah:** Filter dashboard salah sasaran; bila opsi B, perlu master data tambahan.
 - **Jawaban:** _(diisi pemilik proyek)_
+
+---
+
+## Q-014 — [ANSWERED]
+
+- **Terkait:** US-003 / FR-1
+- **Pertanyaan:** Verifikasi RLS lewat `supabase db reset` + uji role belum bisa dijalankan karena Docker dan Supabase CLI tidak tersedia di mesin ini. Apakah US-003 ditunda sampai environment verifikasi tersedia?
+- **Opsi yang dipertimbangkan:**
+  - A) Pasang Docker / jalankan `db reset` di mesin lain sebelum menutup US-003
+  - B) Uji policy dengan PGlite sebagai pengganti sementara
+  - C) Tunda US-003, tandai `BLOCKED`, lanjut ke US-005
+- **Dampak jika salah:** Gate 3 dan tag `v0.3.0-backend` tidak bisa ditutup sebelum US-003 selesai; menandai `DONE` tanpa verifikasi akan melanggar Definition of Done.
+- **Jawaban:** Pemilik memilih **opsi C (tunda)** pada 2026-10-27. US-003 tetap `BLOCKED` dan wajib diselesaikan sebelum Gate 3.
+
+---
+
+## Q-015 — [OPEN]
+
+- **Terkait:** US-005 / FR-3
+- **Pertanyaan:** Acceptance Criteria US-005 menyebut opsi yang sedang dipakai hanya boleh dinonaktifkan. Skema `team_members` yang disetujui belum memiliki kolom `is_active`, sehingga anggota tim/PIC tidak bisa dinonaktifkan tanpa perubahan skema.
+- **Opsi yang dipertimbangkan:**
+  - A) Tambah kolom `team_members.is_active` lewat CR + migration (dropdown form memfilter yang aktif)
+  - B) Tanpa perubahan skema: blokir hapus anggota yang sudah dipakai, edit nama/status tetap bisa; anggota tak terpakai boleh dihapus
+  - C) Keluarkan tim/PIC dari US-005 dan jadikan US terpisah
+- **Dampak jika salah:** Opsi A menambah kolom + migration baru dan menunda verifikasi karena `db reset` belum bisa dijalankan. Opsi B membuat perilaku tim/PIC sedikit berbeda dari opsi master lain (tidak ada tombol nonaktifkan).
+- **Jawaban:** _(diisi pemilik proyek)_

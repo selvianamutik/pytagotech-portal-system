@@ -1266,3 +1266,18 @@
 - **Verifikasi:** browser oleh pemilik ✅ · lint ✅ typecheck ✅ test ✅ (217/217) build ✅
 - **Catatan/Masalah:** Docker tidak tersedia di mesin ini; verifikasi `db reset` akan memakai jalur alternatif (PGlite/hosted) atau didefer ke mesin lain.
 - **Langkah berikutnya:** Tahap 2 — US-003 RLS tanpa Docker (test otomatis + verifikasi policy).
+
+---
+
+## 2026-10-27 — Tahap 2 — US-003 ditunda (BLOCKED), lanjut US-005
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** docs/us-003-deferral
+- **Commit:** commit docs ini
+- **Yang dilakukan:**
+  - Pemilik memilih menunda US-003 karena Docker/Supabase CLI tidak tersedia; bukan skip permanen.
+  - PROGRESS: US-003 `IN_PROGRESS` → **`BLOCKED`** (2/4) dengan referensi Q-014.
+  - QUESTIONS: Q-014 (keputusan penundaan) dan Q-015 (status aktif `team_members` belum ada di skema).
+- **Verifikasi:** tidak ada perubahan kode; dokumen saja.
+- **Catatan/Masalah:** US-003 wajib selesai sebelum Gate 3/tag `v0.3.0-backend`.
+- **Langkah berikutnya:** US-005 — master data & dropdown.
