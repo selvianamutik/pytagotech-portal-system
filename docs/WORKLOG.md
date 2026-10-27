@@ -1360,3 +1360,23 @@
 - **Acceptance Criteria:** 4/4 ✅ — soft archive + restore proyek/lead/konten ✅ · ekspor CSV per modul ✅ · prosedur backup Supabase terdokumentasi ✅ · lint/typecheck/test/build + browser ✅.
 - **Catatan/Masalah:** Tidak ada migrasi/tabel baru (RPC + `archived_at` sudah ada). Modul lead/proyek/materi masih mock, jadi penyaringan data terarsip baru berlaku saat modul membaca database; halaman arsip adalah UI backend langsung. Job purge belum dibuat karena retensi menunggu Q-018. Backup manual membutuhkan Docker/`pg_dump` + akses Storage sesuai `docs/DEPLOYMENT.md`.
 - **Langkah berikutnya:** merge `feature/US-043-arsip-backup` ke `develop`; lanjut US-003 setelah Q-014, lalu sisa Q-015/Q-016/Q-017/Q-018 sebelum Gate 3.
+
+---
+
+## 2026-10-27 — Tahap 7 — Verifikasi live RLS US-003 & temuan konflik AC2 (Q-019)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** develop
+- **Commit:** commit docs ini
+- **Yang dilakukan:**
+  - Verifikasi RLS langsung ke Supabase live karena Docker/Supabase CLI/WSL belum tersedia; tanpa perubahan skema/policy. Membuat sementara user tanpa role, Sales, dan PM beserta data uji, lalu menghapus semuanya.
+  - 42/42 tabel memiliki `ENABLE ROW LEVEL SECURITY`. User tanpa role: SELECT `leads`/`projects`/`clients`/`audit_logs` = 0 baris; INSERT lead ditolak `403` (`new row violates row-level security policy for table "leads"`).
+  - Sales dapat mengubah lead miliknya; PM dapat mengubah proyek miliknya. Sales tidak dapat mengubah proyek; PM tidak dapat mengubah lead.
+  - Temuan AC2: Sales juga dapat mengubah lead milik PIC lain (1 baris; `next_follow_up` menjadi `2026-11-16`) dan PM dapat mengubah proyek milik PM lain (1 baris; `target_date` menjadi `2027-01-05`). Penyebab: `leads_update_sales_roles` dan `projects_update_pm_roles` di `20261005002000_backend_parity_fixes.sql` role-based, bukan owner-only.
+  - Semua user/data uji (profil, team member, lead, klien, deal, proyek, audit log, lead history) dihapus; live kembali hanya berisi Super Admin + 4 seed team member.
+  - Docs: Q-019 (opsi A/B/C), matriks policy RLS di `DATABASE.md` §5.1, PROGRESS US-003 3/4 BLOCKED, WORKLOG ini.
+- **File berubah:** `docs/QUESTIONS.md`, `docs/DATABASE.md`, `docs/PROGRESS.md`, `docs/WORKLOG.md`
+- **Verifikasi:** 42/42 tabel RLS aktif; user tanpa role 0 baris; batas modul Sales/PM terjaga; lint ✅, typecheck ✅, test ✅ (255/255, 55 file).
+- **Acceptance Criteria:** 3/4 — AC1 42 tabel + policy per role terdokumentasi ✅; AC2 ❌ konflik role-based (Q-019); AC3 user tanpa role tidak dapat membaca data ✅; AC4 lint/typecheck ✅.
+- **Catatan/Masalah:** `db reset` dari database kosong belum bisa dijalankan (Docker/Supabase CLI/WSL tidak tersedia); verifikasi live dipakai sebagai bukti sementara. US-003 belum DONE sampai Q-019 diputuskan. Jangan mengubah policy/migration/frontend sebelum keputusan.
+- **Langkah berikutnya:** pemilik memilih opsi Q-019; setelah itu implementasi + verifikasi ulang, lalu lanjut US-005 (Q-015/Q-016) dan sisa Q-017/Q-018 sebelum Gate 3.

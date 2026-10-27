@@ -781,6 +781,69 @@ erDiagram
 > menggantung: setiap FK merujuk tabel yang ada. Non-Goals tidak menghasilkan tabel
 > (tanpa migrasi data, portal klien, invoicing, API sosmed, WA API, mobile, file master).
 
+### 5.1 Matriks policy RLS per role
+
+> **Status verifikasi (2026-10-27):** 42/42 tabel `ENABLE ROW LEVEL SECURITY`. Matriks ini
+> adalah hasil akhir policy di repo setelah `20261005002000_backend_parity_fixes.sql`.
+> Semua policy memakai role `authenticated`; operasi yang tidak punya policy = **deny**
+> (selain bypass trigger `SECURITY DEFINER`). Verifikasi live terbatas pada tabel inti
+> (`leads`, `projects`, `clients`, `audit_logs`) dan user tanpa role.
+>
+> Singkatan: **SA** = Super Admin · **EX** = Executive / Leader · **SM** = Sales / Marketing ·
+> **PM** = Project Manager · **DEV** = Developer · **SOS** = Social Media Specialist ·
+> **CRE** = Graphic Designer / Video Editor / Copywriter · **auth** = semua user login.
+
+| Tabel | SELECT | INSERT | UPDATE | DELETE |
+|-------|--------|--------|--------|--------|
+| roles | auth | SA | SA | SA |
+| profiles | self atau SA/EX (`can_manage_platform`) | self atau SA | self atau SA | — |
+| user_roles | self atau SA | SA | SA | SA |
+| team_members | auth | SA | SA | SA |
+| master_options | aktif atau SA | SA | SA | SA |
+| settings | auth | SA | SA | SA |
+| leads | SA, EX, SM, PM | SA, SM | SA, SM (**role-based — Q-019**) | — |
+| lead_interests | SA, EX, SM | SA, SM | SA, SM | SA, SM |
+| lead_status_history | SA, EX, SM, PM | trigger | — | — |
+| lead_activities | SA, EX, SM | SA, SM | — | — |
+| clients | SA, EX, SM, PM | SA, SM | SA, SM | — |
+| deals | SA, EX, SM, PM | SA, SM, PM | SA, SM, PM | — |
+| deal_features | SA, EX, SM, PM | SA, SM, PM | SA, SM, PM | SA, SM, PM |
+| deal_payment_terms | SA, EX, SM, PM | SA, SM, PM | SA, SM, PM | SA, SM, PM |
+| deal_versions | SA, EX, SM, PM | SA, SM, PM | — | — |
+| change_requests | SA, EX, SM, PM | SA, SM, PM | SA, SM, PM | — |
+| projects | SA, EX, PM, DEV | SA, PM | SA, PM (**role-based — Q-019**) | — |
+| task_templates | auth | SA | SA | SA |
+| tasks | SA, EX, PM, DEV | SA, PM | SA/PM, assignee, atau PM proyek | SA, PM |
+| task_dependencies | SA, EX, PM, DEV | SA, PM | SA, PM | SA, PM |
+| features | SA, EX, PM, DEV | SA, PM | SA, PM | SA, PM |
+| developer_capacity | SA, PM, DEV | SA, PM | SA, PM | SA, PM |
+| holidays | auth | SA | SA | SA |
+| content_ideas | SA, EX, SOS, CRE | SA, SOS | SA, SOS | SA, SOS |
+| idea_platforms | SA, EX, SOS, CRE | SA, SOS | SA, SOS | SA, SOS |
+| content_materials | SA, EX, SOS, CRE | SA, SOS, CRE | SA, SOS, CRE | SA, SOS, CRE |
+| material_platforms | SA, EX, SOS, CRE | SA, SOS | SA, SOS | SA, SOS |
+| content_revisions | SA, EX, SOS, CRE | SA, EX, SOS | SA, EX, SOS | SA, EX, SOS |
+| publications | SA, EX, SOS, CRE | SA, SOS | SA, SOS | SA, SOS |
+| post_metrics | SA, EX, SOS | SA, SOS | SA/SOS (snapshot ≠ Final); SA/EX (Final) | — |
+| account_growth | SA, EX, SOS | SA, SOS | SA, SOS | SA, SOS |
+| community_interactions | SA, EX, SOS | SA, SOS | SA, SOS | SA, SOS |
+| inquiries | SA, EX, SM, SOS | SA, SOS | SA, SOS | SA, SOS |
+| assets | SA, EX, SOS, CRE | SA, SOS, CRE | SA, SOS, CRE | SA, SOS, CRE |
+| material_assets | SA, EX, SOS, CRE | SA, SOS, CRE | SA, SOS, CRE | SA, SOS, CRE |
+| strategy_evaluations | SA, EX, SOS | SA, EX, SOS | SA, EX, SOS | SA, EX, SOS |
+| comments | auth | auth (author = self/null) | author atau SA | — |
+| attachments | auth | auth (uploaded_by = self/null) | — | uploader atau SA |
+| notifications | recipient atau SA | auth | recipient atau SA | — |
+| audit_logs | SA, EX | trigger | — | — |
+| guides | auth | SA | SA | SA |
+| raci_matrix | auth | SA | SA | SA |
+
+> **Perhatian (US-003 AC2, Q-019):** `leads_update_sales_roles` dan
+> `projects_update_pm_roles` sengaja role-based agar paritas dengan US-009/US-020.
+> Akibatnya Sales dapat mengubah lead milik PIC lain dan PM dapat mengubah proyek
+> milik PM lain (terbukti di live 2026-10-27). Ini bertentangan dengan AC2 US-003;
+> jangan mengubah policy sampai pemilik memilih opsi di Q-019.
+
 ---
 
 ## 6. Walkthrough per User Story

@@ -253,3 +253,26 @@
   - D) Nilai lain (diisi pemilik)
 - **Dampak jika salah:** Job purge tidak boleh dibuat sebelum X disepakati. Retensi backup memengaruhi biaya penyimpanan dan kepatuhan terhadap data pelanggan. Saat ini arsip hanya mengisi `archived_at` dan **belum ada penghapusan otomatis**.
 - **Jawaban:** _(diisi pemilik proyek)_
+
+---
+
+## Q-019 — [OPEN]
+
+- **Terkait:** US-003 AC2 vs US-009, US-020 / FR-1, FR-6, FR-15
+- **Pertanyaan:** AC2 US-003 meminta "Sales hanya dapat mengubah lead miliknya; PM hanya dapat mengubah proyek yang ia kelola". Namun migrasi `20261005002000_backend_parity_fixes.sql` sengaja mengganti policy owner-only menjadi role-based agar sesuai kontrak frontend US-009 (Sales boleh assign/reassign PIC massal) dan US-020 (semua PM/Admin boleh membuat/mengubah proyek). Policy live saat ini mengikuti role-based. Arah mana yang benar?
+- **Bukti verifikasi live (2026-10-27):**
+  - 42/42 tabel memiliki `ENABLE ROW LEVEL SECURITY`. User tanpa role mendapat 0 baris untuk `leads`, `projects`, `clients`, dan `audit_logs`; INSERT lead ditolak `403` dengan pesan `new row violates row-level security policy for table "leads"`.
+  - Sales dapat mengubah lead miliknya (`200`, 1 baris); PM dapat mengubah proyek miliknya (`200`, 1 baris).
+  - Sales **juga** dapat mengubah lead milik PIC lain (`200`, 1 baris; `next_follow_up` berubah menjadi `2026-11-16`) dan PM **juga** dapat mengubah proyek milik PM lain (`200`, 1 baris; `target_date` berubah menjadi `2027-01-05`).
+  - Batas antar-modul tetap terjaga: Sales tidak dapat mengubah proyek dan PM tidak dapat mengubah lead.
+  - Semua user/data uji dihapus setelah verifikasi; tidak ada perubahan skema/policy.
+- **Opsi yang dipertimbangkan:**
+  - A) **Pertahankan role-based** (kondisi repo/live saat ini). Sales + Super Admin boleh mengubah semua lead; PM + Super Admin semua proyek. AC2 US-003 diubah lewat CR dari "miliknya" menjadi "sesuai role modul"; dokumentasi menyatakan batas akses per modul, bukan per baris.
+  - B) **Kembalikan owner-only** untuk UPDATE `leads`/`projects` (Super Admin tetap penuh). Frontend US-009/US-020 harus diberi guard: bulk assign ke PIC lain dan edit proyek PM lain ditolak dengan pesan jelas.
+  - C) **Hybrid: owner-only + RPC reassignment (disarankan).** UPDATE biasa hanya untuk pemilik (`leads.pic_id`/`projects.pm_id` = team member user; Super Admin penuh), sedangkan reassign PIC/proyek dilakukan lewat RPC `SECURITY DEFINER` khusus dengan validasi role + audit. Sales tetap bisa bulk assign, PM/Admin tetap bisa reassign proyek, dan AC2 terpenuhi untuk perubahan data biasa. Perlu migration baru + penyesuaian service frontend.
+- **Dampak jika salah:**
+  - A: AC2 literal tidak terpenuhi; Sales/PM berisiko mengubah data rekan. Tidak ada perubahan kode, tetapi perlu persetujuan perubahan AC.
+  - B: melanggar kontrak UI US-009/US-020; bulk assign dan edit proyek lintas PM gagal sampai frontend diubah.
+  - C: paling sesuai AC2 + PRD, tetapi menambah migration, RPC, perubahan service, dan verifikasi ulang.
+- **Catatan:** Tidak ada policy, migration, atau frontend yang diubah sampai pemilik memilih. `db reset` dari database kosong masih belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia; verifikasi live dipakai sebagai bukti sementara.
+- **Jawaban:** _(diisi pemilik proyek)_
