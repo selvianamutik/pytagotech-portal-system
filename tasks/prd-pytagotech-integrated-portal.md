@@ -82,7 +82,7 @@ Masalah utama: data tersebar dan diinput manual, tidak ada relasi antar-spreadsh
 
 **Acceptance Criteria:**
 - [ ] RLS aktif di semua tabel; policy per role terdokumentasi
-- [ ] Sales hanya dapat mengubah lead miliknya; PM hanya dapat mengubah proyek yang ia kelola
+- [ ] Batas akses per role modul: Sales/Marketing dapat mengubah lead, Project Manager dapat mengubah proyek, role lain read-only; Super Admin penuh.
 - [ ] Test otomatis memverifikasi user tanpa role tidak dapat membaca data
 - [ ] Typecheck/lint passes
 
