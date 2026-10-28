@@ -1,11 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { getCrmDashboard, resolvePeriod } from "@/services/crm-dashboard";
-import { resetMockLeads } from "@/services/leads";
-
-beforeEach(() => {
-  resetMockLeads();
-});
 
 describe("resolvePeriod", () => {
   it("mode harian memakai hari ini (WIB)", () => {

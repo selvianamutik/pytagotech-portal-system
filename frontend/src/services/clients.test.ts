@@ -8,10 +8,8 @@ import {
   resetMockClients,
   updateClient,
 } from "@/services/clients";
-import { resetMockLeads } from "@/services/leads";
 
 beforeEach(() => {
-  resetMockLeads();
   resetMockClients();
 });
 

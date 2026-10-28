@@ -1,10 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { queryLeads, resetMockLeads } from "@/services/leads";
-
-beforeEach(() => {
-  resetMockLeads();
-});
+import { queryLeads } from "@/services/leads";
 
 describe("queryLeads", () => {
   it("paginasi default 5 per halaman", async () => {

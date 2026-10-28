@@ -285,3 +285,15 @@
 - **Alternatif yang dipertimbangkan:** Arsip 5 tahun + backup 30 hari/24 bulan (ditolak - biaya lebih tinggi); tanpa purge otomatis (ditolak - tidak sesuai Q-010 opsi B); nilai lain (tidak diusulkan).
 - **Alasan:** Menyeimbangkan keterlacakan operasional, kepatuhan, dan biaya penyimpanan untuk skala portal internal.
 - **Konsekuensi:** Kebijakan dicatat di `docs/DEPLOYMENT.md`; belum ada job purge otomatis. Bila job dibuat, wajib ekspor CSV lebih dulu, log audit, verifikasi jumlah baris, dan menghormati retensi backup. Jangan menghapus arsip manual sebelum 2 tahun.
+
+---
+
+## DEC-022 - Kontrak Lead: Display ID di UI, UUID di Database (FR-6/FR-7)
+
+- **Tanggal:** 2026-10-27
+- **Terkait:** US-007..010, US-013 / FR-6, FR-7, FR-10
+- **Konteks:** Tabel `leads` memakai PK UUID + `display_id` (`LEAD-xxx`, DEC-006/DEC-010). Komponen, route, audit mock, dan test Fase 1 memakai display ID. Mengganti kontrak UI ke UUID akan menyentuh banyak komponen tanpa manfaat user.
+- **Keputusan:** `Lead.id` tetap berisi `display_id`. `services/leads.ts` memetakan display ID ↔ UUID secara internal saat select/insert/update; join nama PIC memakai `team_members` (termasuk anggota nonaktif). Validasi industri/status memakai `master_options` aktif, bukan konstanta lokal, karena nilai live sudah berbeda dari fallback Fase 1. `findDuplicates` menjadi async; impor CSV memakai helper `findDuplicatesIn` dengan satu kali prefetch.
+- **Alternatif yang dipertimbangkan:** Mengekspos UUID ke UI (ditolak - churn besar dan ID tidak ramah user); mempertahankan validasi `INDUSTRY_CATEGORIES` lokal (ditolak - menolak opsi live seperti `Retail`/`Jasa Profesional`); query duplikat per baris impor (ditolak - N query).
+- **Alasan:** Mempertahankan kontrak UI stabil sambil menjadikan Supabase sumber kebenaran; FR-3 tetap terpenuhi.
+- **Konsekuensi:** Setiap modul baru yang memakai UUID (komentar/lampiran/audit) harus me-resolve display ID lewat service lead. `logAudit()` mock masih dipanggil sementara untuk timeline US-012 sampai migrasi `lead-activities`; trigger DB tetap menulis audit sebenarnya. Verifikasi live REST 2026-10-27: insert menghasilkan `LEAD-xxx`, select/update berdasarkan display ID berhasil, audit trigger mencatat UUID lead; data uji dibersihkan.

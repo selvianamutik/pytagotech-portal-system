@@ -197,36 +197,46 @@ opsi uji hilang dari halaman setelah reload.
 
 ## Modul: CRM — Leads
 
-> **Status:** Draft Fase 1 (US-007) — mock di `frontend/src/mocks/leads.ts`,
-> diakses via `frontend/src/services/leads.ts`, tipe di `frontend/src/types/lead.ts`.
-> Halaman `/crm/leads` (tabel + form tambah/ubah). Validator format bersama di
-> `frontend/src/lib/validators.ts` (dipakai ulang service auth).
-> Fase 2: tabel `leads` + trigger display ID `LEAD-xxx` + unique index WhatsApp.
+> **Status:** Backend Fase 3 (US-007..010, FR-6/FR-7) — `frontend/src/services/leads.ts`
+> membaca/menulis tabel `leads` via Supabase. Tabel memakai UUID sebagai PK dan
+> `display_id` (`LEAD-xxx`) untuk UI; service memetakan display ID ↔ UUID secara
+> internal sehingga route/komponen tetap memakai ID ramah-user (DEC-006/DEC-010,
+> `DEC-022`). Nama PIC diambil dari `team_members` (termasuk nonaktif agar histori
+> terbaca). Validasi industri/status memakai `master_options` aktif (FR-3), bukan
+> daftar hardcode. Halaman `/crm/leads` (tabel + form tambah/ubah). Validator
+> format bersama di `frontend/src/lib/validators.ts` (dipakai ulang service auth).
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|
-| `listLeads()` | Terurut tanggal hubungi terbaru |
-| `getLead(id)` | Error jika tidak dikenal |
-| `createLead(input)` | Field wajib: perusahaan, industri (`INDUSTRY_CATEGORIES`), WhatsApp, email, PIC, status, tanggal; Instagram opsional (`@nama`); **peringatan duplikat non-blokir** via WhatsApp ternormalisasi atau nama perusahaan |
-| `updateLead(id, partial)` | Validasi ulang field yang diubah; duplikat mengecualikan diri sendiri |
-| `findDuplicates(whatsapp, companyName, excludeId?)` | Deteksi FR-7 |
-| `listLeadPICs()` | Tim/PIC aktif (`team_members.is_active`) untuk dropdown PIC |
-| `queryLeads(query)` (US-008) | Pencarian teks (perusahaan/email/WA/IG) + filter status/PIC/industri/rentang tanggal + sort (`companyName`/`contactDate`/`status`/`picName`) + paginasi (`page`, `limit` default 5) → `{items, total, page, limit, pageCount}` |
-| `assignLeadPIC(ids, picName, actor)` (US-009) | Assign/reassign satuan & massal; tiap perubahan PIC dicatat ke audit trail (`lead.assign-pic`, pratinjau US-004) |
-| `previewLeadImport(csv)` / `importLeads(preview, {skipDuplicates})` (US-010) | Template header `companyName,industry,contactDate,whatsapp,instagram,email,picName,status`; preview tandai valid/tidak-valid/duplikat (vs data + dalam file); impor lewati duplikat bila diminta |
+| `listLeads()` | Baca `leads` non-arsip, terurut tanggal hubungi terbaru; `Lead.id` = `display_id`, `picName` hasil join `team_members` |
+| `getLead(id)` | Cari berdasarkan `display_id`; error jika tidak dikenal |
+| `createLead(input)` | Field wajib: perusahaan, industri + status dari `master_options` aktif, WhatsApp, email, PIC aktif, tanggal; Instagram opsional (`@nama`); **peringatan duplikat non-blokir** via WhatsApp ternormalisasi atau nama perusahaan; `display_id` dibuat trigger DB |
+| `updateLead(id, partial)` | Validasi ulang field yang diubah; nilai lama yang sudah nonaktif tetap boleh dipertahankan; duplikat mengecualikan diri sendiri; `updated_at` diisi service |
+| `findDuplicates(whatsapp, companyName, excludeId?)` | **Async**; deteksi FR-7 dari data Supabase |
+| `findDuplicatesIn(leads, whatsapp, companyName, excludeId?)` | Helper sinkron untuk impor CSV agar satu query cukup untuk semua baris |
+| `getLeadValidationOptions()` | Opsi validasi `{picNames, industries, statuses}` dari `team_members` aktif + `master_options` |
+| `listLeadPICs()` | Tim/PIC aktif (`team_members.is_active`) untuk dropdown PIC; tanpa fallback mock |
+| `queryLeads(query)` (US-008) | Pencarian teks (perusahaan/email/WA/IG) + filter status/PIC/industri/rentang tanggal + sort (`companyName`/`contactDate`/`status`/`picName`) + paginasi (`page`, `limit` default 5) → `{items, total, page, limit, pageCount}`; sumber data Supabase |
+| `assignLeadPIC(ids, picName, actor)` (US-009) | Assign/reassign satuan & massal berdasarkan `display_id`; tiap perubahan PIC dicatat ke audit trail (`lead.assign-pic`, pratinjau US-004) |
+| `previewLeadImport(csv)` / `importLeads(preview, {skipDuplicates})` (US-010) | Template header `companyName,industry,contactDate,whatsapp,instagram,email,picName,status`; preview memuat opsi validasi + lead sekali, lalu tandai valid/tidak-valid/duplikat (vs data + dalam file); impor lewati duplikat bila diminta |
 
 ```ts
 type LeadStatus = "New" | "Contacted" | "Follow Up" | "Interest" | "Not Interested" | "Lost" | "Closing";
-interface Lead { id: string; contactDate: string; companyName: string; industry: IndustryCategory; whatsapp: string; instagram: string; email: string; picName: string; status: LeadStatus; createdAt: string; updatedAt: string; }
+interface Lead { id: string; /* display_id LEAD-xxx */ contactDate: string; companyName: string; industry: string; /* master_options */ whatsapp: string; instagram: string; email: string; picName: string; status: LeadStatus; nextFollowUp?: string; source?: string; createdAt: string; updatedAt: string; }
 ```
+
+**Catatan transisi:** `logAudit()` mock masih dipanggil untuk memberi timeline
+US-012 sampai `lead-activities.ts` dimigrasikan ke `audit_logs`; trigger DB sudah
+mencatat audit sebenarnya untuk setiap CUD `leads`.
 
 ---
 
 ## Modul: CRM — Interested Leads (Pipeline)
 
-> **Status:** Draft Fase 1 (US-011) — `services/interest.ts`, tipe `types/interest.ts`.
-> Halaman `/crm/interested` (Kanban drag-and-drop + tabel).
-> Fase 2: tabel `lead_interests`; Closing pipeline → klien + handover (US-014).
+> **Status:** Fase 3 — keanggotaan pipeline otomatis dari `leads` Supabase
+> (status Interest). Tahap/kebutuhan masih mock di `services/interest.ts`;
+> migrasi ke `lead_interests` menyusul. Halaman `/crm/interested`
+> (Kanban drag-and-drop + tabel). Closing pipeline → klien + handover (US-014).
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|
@@ -242,9 +252,10 @@ type InterestStage = "New Interest" | "Contacted" | "Demo" | "Price Sent" | "Neg
 
 ## Modul: CRM — Activity Log
 
-> **Status:** Draft Fase 1 (US-012) — catatan di `services/lead-activities.ts`;
-> perubahan otomatis (status/tahap/PIC/follow-up) dibaca dari audit trail.
-> Dialog aktivitas per baris lead di `/crm/leads`.
+> **Status:** Fase 3 transisi — `setNextFollowUp` menulis `leads.next_follow_up`
+> di Supabase, tetapi catatan (`lead_activities`) dan timeline audit masih mock
+> di `services/lead-activities.ts`. Migrasi timeline ke `audit_logs` + tabel
+> `lead_activities` menyusul. Dialog aktivitas per baris lead di `/crm/leads`.
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|
@@ -257,9 +268,10 @@ type InterestStage = "New Interest" | "Contacted" | "Demo" | "Price Sent" | "Neg
 
 ## Modul: CRM — Dashboard
 
-> **Status:** Draft Fase 1 (US-013) — `services/crm-dashboard.ts`.
-> Halaman `/crm/dashboard` (KPI + kinerja per PIC + filter periode).
-> Fase 2: agregasi SQL; rumus tetap didokumentasikan di tooltip.
+> **Status:** Fase 3 — `services/crm-dashboard.ts` menghitung KPI dari
+> `listLeads()` (Supabase), tanpa mock. Halaman `/crm/dashboard`
+> (KPI + kinerja per PIC + filter periode). Agregasi SQL dapat ditambahkan bila
+> volume data membesar; rumus tetap didokumentasikan di tooltip.
 
 | Fungsi | Definisi |
 |--------|----------|

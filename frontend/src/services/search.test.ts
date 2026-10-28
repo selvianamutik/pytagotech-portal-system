@@ -2,13 +2,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { getMyWork, globalSearch } from "@/services/search";
 import { resetMockClients } from "@/services/clients";
-import { resetMockLeads } from "@/services/leads";
 import { resetMockMaterials } from "@/services/materials";
 import { resetMockProjects } from "@/services/projects";
 import { mockUsers } from "@/mocks/auth";
 
 beforeEach(() => {
-  resetMockLeads();
   resetMockClients();
   resetMockProjects();
   resetMockMaterials();

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   createLead,
@@ -6,7 +6,6 @@ import {
   getLead,
   listLeadPICs,
   listLeads,
-  resetMockLeads,
   updateLead,
 } from "@/services/leads";
 import type { CreateLeadInput } from "@/types/lead";
@@ -21,10 +20,6 @@ const validInput: CreateLeadInput = {
   picName: "Feby",
   status: "New",
 };
-
-beforeEach(() => {
-  resetMockLeads();
-});
 
 describe("listLeads", () => {
   it("mengembalikan 8 lead mock terurut tanggal hubungi terbaru", async () => {
@@ -99,11 +94,11 @@ describe("createLead", () => {
 });
 
 describe("findDuplicates", () => {
-  it("mengenali duplikat lintas format nomor", () => {
-    expect(findDuplicates("081234567890", "PT Unik").map((lead) => lead.id)).toContain(
-      "LEAD-001"
-    );
-    expect(findDuplicates("0810000000000", "PT Unik")).toHaveLength(0);
+  it("mengenali duplikat lintas format nomor", async () => {
+    expect(
+      (await findDuplicates("081234567890", "PT Unik")).map((lead) => lead.id)
+    ).toContain("LEAD-001");
+    expect(await findDuplicates("0810000000000", "PT Unik")).toHaveLength(0);
   });
 });
 

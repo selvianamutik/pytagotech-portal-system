@@ -7,12 +7,10 @@ import {
   resetMockInterest,
   updateInterestNeed,
 } from "@/services/interest";
-import { resetMockLeads } from "@/services/leads";
 
 const actor = { id: "USR-002", name: "Feby" };
 
 beforeEach(() => {
-  resetMockLeads();
   resetMockInterest();
   resetMockAudit();
 });

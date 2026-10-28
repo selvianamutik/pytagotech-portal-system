@@ -1,7 +1,8 @@
 import {
   createLead,
-  findDuplicates,
-  listLeadPICs,
+  findDuplicatesIn,
+  getLeadValidationOptions,
+  listLeads,
   validateLeadInput,
 } from "@/services/leads";
 import { normalizeWhatsapp } from "@/lib/validators";
@@ -125,8 +126,24 @@ export async function previewLeadImport(
     return { data: null, error: "Tidak ada baris data di file CSV." };
   }
 
-  const pics = await listLeadPICs();
-  const picNames = (pics.data ?? []).map((pic) => pic.name);
+  const [optionsResult, leadsResult] = await Promise.all([
+    getLeadValidationOptions(),
+    listLeads(),
+  ]);
+  if (optionsResult.error || !optionsResult.data) {
+    return {
+      data: null,
+      error: optionsResult.error ?? "Gagal memuat opsi validasi lead.",
+    };
+  }
+  if (leadsResult.error || !leadsResult.data) {
+    return {
+      data: null,
+      error: leadsResult.error ?? "Gagal memuat lead tersimpan.",
+    };
+  }
+  const { picNames, industries, statuses } = optionsResult.data;
+  const storedLeads = leadsResult.data;
   const rows: CsvImportRow[] = [];
   const seenWhatsapp = new Set<string>();
   const seenNames = new Set<string>();
@@ -152,12 +169,18 @@ export async function previewLeadImport(
         `Jumlah kolom harus ${LEAD_CSV_HEADERS.length}, ditemukan ${columns.length}.`
       );
     }
-    const validationError = validateLeadInput(input, picNames);
+    const validationError = validateLeadInput(input, picNames, {
+      industries,
+      statuses,
+    });
     if (validationError) {
       errors.push(validationError);
     }
 
-    const stored = errors.length === 0 ? findDuplicates(input.whatsapp, input.companyName) : [];
+    const stored =
+      errors.length === 0
+        ? findDuplicatesIn(storedLeads, input.whatsapp, input.companyName)
+        : [];
     const normalizedWhatsapp = normalizeWhatsapp(input.whatsapp);
     const normalizedName = input.companyName.toLowerCase();
     const inFile =

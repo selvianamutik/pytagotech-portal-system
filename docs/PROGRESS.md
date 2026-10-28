@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-27  
-> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 DONE 4/4 — verifikasi live 42 tabel + role tanpa role, AC2 role-based via CR-003, PRD diperbarui 2026-10-27; US-005 DONE 5/5 — tim/PIC `is_active` + policy DELETE `master_options` terverifikasi live (REST + browser); Q-017/Q-018 ANSWERED — audit `entity_id` PK komposit + retensi arsip 2 tahun/backup 7 hari-12 bulan; US-041 DONE 3/3; US-043 DONE 4/4)
+> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 DONE 4/4 — verifikasi live 42 tabel + role tanpa role, AC2 role-based via CR-003, PRD diperbarui 2026-10-27; US-005 DONE 5/5 — tim/PIC `is_active` + policy DELETE `master_options` terverifikasi live (REST + browser); Q-017/Q-018 ANSWERED — audit `entity_id` PK komposit + retensi arsip 2 tahun/backup 7 hari-12 bulan; CRM Leads DB-backed (FR-6/FR-7/FR-10) — service `leads` Supabase + verifikasi live REST; US-041 DONE 3/3; US-043 DONE 4/4)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -108,11 +108,11 @@
 | FR-3 | Dropdown dari master data terpusat | DONE |
 | FR-4 | Komentar, lampiran, notifikasi reusable | IN_PROGRESS |
 | FR-5 | Semua kalkulasi metrik di sistem, rumus terdokumentasi | IN_PROGRESS |
-| FR-6 | Lead dengan field kontak, industri, PIC, status 7 tahap | IN_PROGRESS |
-| FR-7 | Deteksi lead duplikat | IN_PROGRESS |
+| FR-6 | Lead dengan field kontak, industri, PIC, status 7 tahap | DONE |
+| FR-7 | Deteksi lead duplikat | DONE |
 | FR-8 | Lead Interest → pipeline Interested Leads otomatis | IN_PROGRESS |
 | FR-9 | Lead Closing → klien + deal handover tanpa input ulang | IN_PROGRESS |
-| FR-10 | Dashboard CRM agregat + per PIC + filter periode | IN_PROGRESS |
+| FR-10 | Dashboard CRM agregat + per PIC + filter periode | DONE |
 | FR-11 | Format nama proyek otomatis + kode unik | IN_PROGRESS |
 | FR-12 | Validasi total termin = nilai deal | IN_PROGRESS |
 | FR-13 | Alur status handover Draft→Menunggu→Dikonfirmasi/Perlu Revisi | IN_PROGRESS |

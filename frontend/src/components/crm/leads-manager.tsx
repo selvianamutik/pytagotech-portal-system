@@ -20,7 +20,7 @@ import {
 } from "@/services/leads";
 import { useAuthStore } from "@/store/auth";
 import type { Lead } from "@/types/lead";
-import { isIndustryCategory, isLeadStatus } from "@/types/lead";
+import { isLeadStatus } from "@/types/lead";
 
 /**
  * Halaman database lead (US-007 + US-008): tabel + form tambah/ubah,
@@ -69,7 +69,7 @@ export function LeadsManager() {
       search: filters.search || undefined,
       statuses: filters.status && isLeadStatus(filters.status) ? [filters.status] : undefined,
       picNames: filters.picName ? [filters.picName] : undefined,
-      industries: filters.industry && isIndustryCategory(filters.industry) ? [filters.industry] : undefined,
+      industries: filters.industry ? [filters.industry] : undefined,
       dateFrom: filters.dateFrom || undefined,
       dateTo: filters.dateTo || undefined,
       sortBy,

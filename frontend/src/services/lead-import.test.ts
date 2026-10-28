@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   importLeads,
@@ -6,11 +6,6 @@ import {
   parseLeadCsv,
   previewLeadImport,
 } from "@/services/lead-import";
-import { resetMockLeads } from "@/services/leads";
-
-beforeEach(() => {
-  resetMockLeads();
-});
 
 describe("parseLeadCsv", () => {
   it("memisahkan kolom dan menangani koma dalam kutip", () => {

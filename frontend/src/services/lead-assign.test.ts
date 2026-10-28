@@ -1,12 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { listAudit, resetMockAudit } from "@/services/audit";
-import { assignLeadPIC, getLead, resetMockLeads } from "@/services/leads";
+import { assignLeadPIC, getLead } from "@/services/leads";
 
 const actor = { id: "USR-001", name: "Dinda Prameswari" };
 
 beforeEach(() => {
-  resetMockLeads();
   resetMockAudit();
 });
 

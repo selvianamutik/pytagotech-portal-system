@@ -8,11 +8,10 @@ import {
   resetMockInquiries,
   routingMinutes,
 } from "@/services/inquiries";
-import { getLead, resetMockLeads } from "@/services/leads";
+import { getLead } from "@/services/leads";
 
 beforeEach(() => {
   resetMockInquiries();
-  resetMockLeads();
 });
 
 describe("routingMinutes", () => {

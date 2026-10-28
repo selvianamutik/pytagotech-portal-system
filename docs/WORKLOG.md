@@ -1475,3 +1475,23 @@
 - **Acceptance Criteria:** Q-017 — `entity_id` terisi untuk PK tunggal dan komposit, tidak ada perubahan format untuk PK tunggal; Q-018 — retensi arsip/backup terdokumentasi dan disetujui. FR-2 ditandai DONE karena seluruh tabel bisnis memiliki trigger audit (kecuali `audit_logs`, `lead_status_history`, dan `roles` yang memang bukan entitas bisnis).
 - **Catatan/Masalah:** `db reset` dari database kosong belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia; wajib dibuktikan sebelum Gate 3. Baris audit lama yang sudah kosong tidak di-backfill.
 - **Langkah berikutnya:** audit sisa FR/US untuk Gate 3, jalankan `db reset` saat environment tersedia, lalu siapkan tag `v0.3.0-backend`.
+
+---
+
+## 2026-10-27 - Tahap 13 - CRM Leads DB-Backed (FR-6/FR-7/FR-10)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** develop
+- **Commit:** commit ini (CRM Leads)
+- **Yang dilakukan:**
+  - Menulis ulang `services/leads.ts` agar membaca/menulis tabel `leads` via Supabase. `Lead.id` tetap `display_id` (`LEAD-xxx`); service memetakan ke UUID internal untuk select/insert/update.
+  - Join nama PIC dari `team_members` (termasuk nonaktif) agar histori lead tetap terbaca; `listLeadPICs()` hanya memakai anggota aktif dan tidak lagi fallback ke mock.
+  - Validasi industri/status dari `master_options` aktif (FR-3). Ini memperbaiki temuan live: opsi seperti `Retail`/`Jasa Profesional` sebelumnya ditolak konstanta `INDUSTRY_CATEGORIES` Fase 1.
+  - `findDuplicates` menjadi async; impor CSV memakai `findDuplicatesIn` + satu kali prefetch (`getLeadValidationOptions`, `listLeads`) agar tidak N query per baris.
+  - `assignLeadPIC` memperbarui banyak baris berdasarkan `display_id` dan memverifikasi jumlah baris; `setNextFollowUp` menulis `next_follow_up`; `queryLeads` dan dashboard CRM memakai data Supabase.
+  - Test: fake Supabase diberi seed CRM (8 lead + tim/PIC + master options), mock client global di `src/test/setup.ts`, dan test lama tidak lagi memakai `resetMockLeads()`.
+- **File berubah:** `frontend/src/services/leads.ts`, `frontend/src/services/lead-import.ts`, `frontend/src/types/lead.ts`, `frontend/src/components/crm/leads-manager.tsx`, `frontend/src/test/{setup,supabase-fake}.ts`, test CRM terkait, `docs/{API,DECISIONS,PROGRESS,WORKLOG}.md`, `CHANGELOG.md`
+- **Verifikasi:** lint OK, type-check OK, test 258/258 (55 file). Live REST 2026-10-27: login Super Admin, insert lead berhasil membuat `LEAD-008` (UUID + display ID), select/update berdasarkan display ID berhasil, trigger audit mencatat `insert`/`update`, lalu lead + riwayat status + audit uji dibersihkan (0 baris).
+- **Acceptance Criteria:** FR-6 (lead lengkap + 7 status DB-backed) DONE; FR-7 (deteksi duplikat DB-backed) DONE; FR-10 (dashboard CRM dari data lead) DONE. FR-8/FR-9 tetap IN_PROGRESS karena tahap pipeline, klien, dan handover masih mock.
+- **Catatan/Masalah:** `logAudit()` mock masih dipanggil sementara untuk timeline US-012 sampai `lead-activities.ts` dimigrasikan; trigger DB tetap menulis audit sebenarnya. `db reset` dari database kosong masih belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia.
+- **Langkah berikutnya:** migrasikan `lead-activities.ts` (catatan + timeline `audit_logs`) dan `interest.ts` (`lead_interests`), lalu lanjut klien/deal handover.

@@ -18,8 +18,9 @@ export const LEAD_STATUSES = [
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
 /**
- * Opsi kategori industri (Fase 1, lokal modul).
- * US-005 (master data terpusat) akan menggantikan daftar ini dari database.
+ * Nilai cadangan kategori industri saat `master_options` belum bisa dibaca.
+ * Sumber utama form/filter adalah `master_options` (US-005/FR-3), sehingga
+ * `Lead.industry` bertipe string dan tidak dibatasi union ini.
  */
 export const INDUSTRY_CATEGORIES = [
   "Teknologi",
@@ -42,7 +43,8 @@ export interface Lead {
   /** Tanggal pertama menghubungi (ISO date, WIB). */
   contactDate: string;
   companyName: string;
-  industry: IndustryCategory;
+  /** Nilai `master_options` kategori `industry` (FR-3). */
+  industry: string;
   /** Nomor WhatsApp ternormalisasi (diawali 62). */
   whatsapp: string;
   instagram: string;

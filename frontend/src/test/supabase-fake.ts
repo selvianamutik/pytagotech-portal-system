@@ -6,6 +6,8 @@
  * onAuthStateChange.
  */
 
+import { LEAD_STATUSES } from "@/types/lead";
+
 export interface FakeProfile {
   id: string;
   name: string;
@@ -219,6 +221,7 @@ class FakeQuery {
     const rows = this.rows();
 
     if (this.insertRows) {
+      const inserted: Record<string, unknown>[] = [];
       for (const row of this.insertRows) {
         if (this.isUpsert) {
           const index = rows.findIndex(
@@ -226,6 +229,7 @@ class FakeQuery {
           );
           if (index >= 0) {
             rows[index] = { ...rows[index], ...row };
+            inserted.push({ ...rows[index] });
             continue;
           }
         }
@@ -237,9 +241,26 @@ class FakeQuery {
           stored["created_at"] ??= new Date().toISOString();
           stored["updated_at"] ??= stored["created_at"];
         }
+        if (this.table === "leads") {
+          const now = new Date().toISOString();
+          const maxDisplay = rows.reduce((max, row) => {
+            const match = /^LEAD-(\d+)$/.exec(String(row["display_id"] ?? ""));
+            return match ? Math.max(max, Number(match[1])) : max;
+          }, 0);
+          stored["id"] ??= `lead-${rows.length + 1}`;
+          stored["display_id"] ??= `LEAD-${String(maxDisplay + 1).padStart(3, "0")}`;
+          stored["instagram"] ??= null;
+          stored["pic_id"] ??= null;
+          stored["next_follow_up"] ??= null;
+          stored["source"] ??= null;
+          stored["archived_at"] ??= null;
+          stored["created_at"] ??= now;
+          stored["updated_at"] ??= now;
+        }
         rows.push(stored);
+        inserted.push({ ...stored });
       }
-      return { data: this.insertRows, error: null };
+      return { data: this.returning ? inserted : this.insertRows, error: null };
     }
 
     if (this.updatePatch) {
@@ -336,6 +357,214 @@ export interface FakeSupabaseClient {
     data: unknown;
     error: { message: string; code?: string } | null;
   }>;
+}
+
+/**
+ * Seed CRM untuk unit test: 8 lead (sama dengan `mocks/leads.ts`), tim/PIC
+ * aktif + nonaktif, dan opsi master data inti. Setiap test mendapat salinan
+ * baru lewat `createSupabaseFake(seedCrmFake())`.
+ */
+export function seedCrmFake(): Partial<FakeDb> {
+  const createdAt = "2026-09-01T00:00:00Z";
+  const teamMembers: FakeTeamMember[] = [
+    {
+      id: "tm-feby",
+      profile_id: null,
+      name: "Feby",
+      status: "internal",
+      is_active: true,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: "tm-fira",
+      profile_id: null,
+      name: "Fira",
+      status: "internal",
+      is_active: true,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: "tm-figo",
+      profile_id: null,
+      name: "Figo",
+      status: "internal",
+      is_active: true,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: "tm-sinta",
+      profile_id: null,
+      name: "Sinta",
+      status: "internal",
+      is_active: false,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+  ];
+
+  const masterOptions: FakeMasterOption[] = [
+    { category: "industry", value: "Teknologi", is_active: true },
+    { category: "industry", value: "Jasa", is_active: true },
+    { category: "industry", value: "Retail & E-commerce", is_active: true },
+    { category: "industry", value: "Kesehatan", is_active: true },
+    { category: "industry", value: "Properti", is_active: true },
+    { category: "industry", value: "F&B", is_active: true },
+    { category: "industry", value: "Pendidikan", is_active: true },
+    { category: "industry", value: "Lainnya", is_active: true },
+    ...LEAD_STATUSES.map((value) => ({
+      category: "lead_status",
+      value,
+      is_active: true,
+    })),
+  ];
+
+  const leads: Record<string, unknown>[] = [
+    {
+      id: "lead-1",
+      display_id: "LEAD-001",
+      contact_date: "2026-09-20",
+      company_name: "PT Aruna Digital",
+      industry: "Teknologi",
+      whatsapp: "6281234567890",
+      instagram: "@arunadigital",
+      email: "halo@arunadigital.id",
+      pic_id: "tm-feby",
+      status: "Follow Up",
+      next_follow_up: "2026-10-02",
+      source: null,
+      archived_at: null,
+      created_at: "2026-09-20T03:00:00Z",
+      updated_at: "2026-10-03T04:00:00Z",
+    },
+    {
+      id: "lead-2",
+      display_id: "LEAD-002",
+      contact_date: "2026-09-22",
+      company_name: "CV Mandala Kreasi",
+      industry: "Jasa",
+      whatsapp: "6289876543210",
+      instagram: "@mandalakreasi",
+      email: "info@mandalakreasi.com",
+      pic_id: "tm-fira",
+      status: "Interest",
+      next_follow_up: null,
+      source: null,
+      archived_at: null,
+      created_at: "2026-09-22T03:00:00Z",
+      updated_at: "2026-10-04T02:20:00Z",
+    },
+    {
+      id: "lead-3",
+      display_id: "LEAD-003",
+      contact_date: "2026-09-25",
+      company_name: "Toko Berkah Jaya",
+      industry: "Retail & E-commerce",
+      whatsapp: "6281122334455",
+      instagram: "@berkahjaya",
+      email: "cs@berkahjaya.id",
+      pic_id: "tm-figo",
+      status: "New",
+      next_follow_up: null,
+      source: null,
+      archived_at: null,
+      created_at: "2026-09-25T03:00:00Z",
+      updated_at: "2026-09-25T03:00:00Z",
+    },
+    {
+      id: "lead-4",
+      display_id: "LEAD-004",
+      contact_date: "2026-09-18",
+      company_name: "Klinik Sehat Sentosa",
+      industry: "Kesehatan",
+      whatsapp: "6285566778899",
+      instagram: "@sehatsentosa",
+      email: "admin@sehatsentosa.id",
+      pic_id: "tm-feby",
+      status: "Contacted",
+      next_follow_up: "2026-10-10",
+      source: null,
+      archived_at: null,
+      created_at: "2026-09-18T03:00:00Z",
+      updated_at: "2026-09-28T05:00:00Z",
+    },
+    {
+      id: "lead-5",
+      display_id: "LEAD-005",
+      contact_date: "2026-09-10",
+      company_name: "PT Sinar Abadi Properti",
+      industry: "Properti",
+      whatsapp: "6289988776655",
+      instagram: "@sinarabadi",
+      email: "marketing@sinarabadi.co.id",
+      pic_id: "tm-fira",
+      status: "Closing",
+      next_follow_up: null,
+      source: null,
+      archived_at: null,
+      created_at: "2026-09-10T03:00:00Z",
+      updated_at: "2026-10-02T06:00:00Z",
+    },
+    {
+      id: "lead-6",
+      display_id: "LEAD-006",
+      contact_date: "2026-09-12",
+      company_name: "Kopi Nusantara",
+      industry: "F&B",
+      whatsapp: "6283344556677",
+      instagram: "@kopinusantara",
+      email: "hello@kopinusantara.id",
+      pic_id: "tm-figo",
+      status: "Interest",
+      next_follow_up: null,
+      source: null,
+      archived_at: null,
+      created_at: "2026-09-12T03:00:00Z",
+      updated_at: "2026-10-02T04:00:00Z",
+    },
+    {
+      id: "lead-7",
+      display_id: "LEAD-007",
+      contact_date: "2026-09-08",
+      company_name: "Bimbel Cerdas Bangsa",
+      industry: "Pendidikan",
+      whatsapp: "6287766554433",
+      instagram: "@cerdasbangsa",
+      email: "info@cerdasbangsa.id",
+      pic_id: "tm-feby",
+      status: "Lost",
+      next_follow_up: null,
+      source: null,
+      archived_at: null,
+      created_at: "2026-09-08T03:00:00Z",
+      updated_at: "2026-09-15T04:00:00Z",
+    },
+    {
+      id: "lead-8",
+      display_id: "LEAD-008",
+      contact_date: "2026-10-01",
+      company_name: "Aruna Digital PT",
+      industry: "Teknologi",
+      whatsapp: "6281234567890",
+      instagram: "@arunadigital2",
+      email: "sales@arunadigital.id",
+      pic_id: "tm-fira",
+      status: "New",
+      next_follow_up: null,
+      source: null,
+      archived_at: null,
+      created_at: "2026-10-01T03:00:00Z",
+      updated_at: "2026-10-01T03:00:00Z",
+    },
+  ];
+
+  return {
+    teamMembers,
+    masterOptions,
+    tables: { leads },
+  };
 }
 
 /** Membuat fake + setter seed per test. */

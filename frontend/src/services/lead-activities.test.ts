@@ -8,12 +8,11 @@ import {
   listLeadNotes,
   resetMockLeadActivities,
 } from "@/services/lead-activities";
-import { resetMockLeads, setNextFollowUp, updateLead } from "@/services/leads";
+import { setNextFollowUp, updateLead } from "@/services/leads";
 
 const actor = { id: "USR-002", name: "Feby" };
 
 beforeEach(() => {
-  resetMockLeads();
   resetMockLeadActivities();
   resetMockAudit();
 });
