@@ -1,5 +1,4 @@
-import { mockTerms } from "@/mocks/deal-terms";
-import { listDeals } from "@/services/deals";
+import { createClient as getSupabaseClient } from "@/lib/supabase/client";
 import type {
   PaymentTerm,
   PaymentTermInput,
@@ -10,18 +9,28 @@ import { formatCurrency } from "@/lib/utils";
 import type { ServiceResult } from "@/services/result";
 
 /**
- * Lapisan termin pembayaran (US-016, FR-12). Fase 1: mock in-memory.
+ * Lapisan termin pembayaran (US-016, FR-12).
+ *
+ * Menggunakan database Supabase (tabel `deal_payment_terms` dan `deals`).
  * Termin disimpan sebagai SET per deal: `replaceTerms` memvalidasi
  * total = nilai deal dan menolak simpan bila tidak sama.
- * Fase 2: tabel `deal_payment_terms`.
  */
 
-let termStore: PaymentTerm[] = structuredClone(mockTerms);
-
-/** Mengembalikan state mock ke awal — dipakai test dan demo. */
-export function resetMockTerms(): void {
-  termStore = structuredClone(mockTerms);
+interface DealPaymentTermRow {
+  id: string;
+  deal_id: string;
+  name: string;
+  kind: "percent" | "amount";
+  value: number;
+  due_date: string | null;
+  milestone: string | null;
+  status: string;
 }
+
+const TERM_COLUMNS = "id, deal_id, name, kind, value, due_date, milestone, status";
+
+/** Backward-compat no-op for tests */
+export function resetMockTerms(): void {}
 
 export interface TermsSummary {
   terms: PaymentTerm[];
@@ -30,25 +39,53 @@ export interface TermsSummary {
   balanced: boolean;
 }
 
+function rowToTerm(row: DealPaymentTermRow, dealDisplayId: string): PaymentTerm {
+  return {
+    id: row.id,
+    dealId: dealDisplayId,
+    name: row.name,
+    kind: row.kind,
+    value: Number(row.value),
+    dueDate: row.due_date ?? undefined,
+    milestone: row.milestone ?? undefined,
+    status: row.status as TermStatus,
+  };
+}
+
 export async function listTerms(dealId: string): Promise<ServiceResult<TermsSummary>> {
-  const { data: deals } = await listDeals();
-  const deal = (deals ?? []).find((item) => item.deal.id === dealId);
-  if (!deal) {
-    return { data: null, error: "Deal handover tidak ditemukan." };
-  }
-  const terms = termStore
-    .filter((term) => term.dealId === dealId)
-    .map((term) => ({ ...term }));
+  const supabase = getSupabaseClient();
+  const { data: dealRow, error: dealError } = await supabase
+    .from("deals")
+    .select("id, display_id, value_idr")
+    .eq("display_id", dealId)
+    .maybeSingle();
+
+  if (dealError) return { data: null, error: dealError.message };
+  if (!dealRow) return { data: null, error: "Deal handover tidak ditemukan." };
+
+  const { data: termsData, error: termsError } = await supabase
+    .from("deal_payment_terms")
+    .select(TERM_COLUMNS)
+    .eq("deal_id", dealRow.id);
+
+  if (termsError) return { data: null, error: termsError.message };
+
+  const terms = ((termsData ?? []) as DealPaymentTermRow[]).map((r) =>
+    rowToTerm(r, dealRow.display_id)
+  );
+
+  const dealValue = Number(dealRow.value_idr);
   const totalAmount = terms.reduce(
-    (sum, term) => sum + termAmount(term, deal.deal.value),
+    (sum, term) => sum + termAmount(term, dealValue),
     0
   );
+
   return {
     data: {
       terms,
       totalAmount,
-      dealValue: deal.deal.value,
-      balanced: totalAmount === deal.deal.value,
+      dealValue,
+      balanced: totalAmount === dealValue,
     },
     error: null,
   };
@@ -82,56 +119,85 @@ export async function replaceTerms(
   dealId: string,
   inputs: PaymentTermInput[]
 ): Promise<ServiceResult<TermsSummary>> {
-  const { data: deals } = await listDeals();
-  const deal = (deals ?? []).find((item) => item.deal.id === dealId);
-  if (!deal) {
-    return { data: null, error: "Deal handover tidak ditemukan." };
-  }
-  if (deal.deal.status === "Dikonfirmasi") {
+  const supabase = getSupabaseClient();
+  const { data: dealRow, error: dealError } = await supabase
+    .from("deals")
+    .select("id, display_id, value_idr, status")
+    .eq("display_id", dealId)
+    .maybeSingle();
+
+  if (dealError) return { data: null, error: dealError.message };
+  if (!dealRow) return { data: null, error: "Deal handover tidak ditemukan." };
+
+  if (dealRow.status === "Dikonfirmasi") {
     return {
       data: null,
       error: "Termin handover Dikonfirmasi hanya bisa diubah via change request (US-018).",
     };
   }
+
   if (inputs.length === 0) {
     return { data: null, error: "Minimal satu termin." };
   }
+
   for (const row of inputs) {
     const rowError = validateTermRow(row);
     if (rowError) {
       return { data: null, error: rowError };
     }
   }
+
+  const dealValue = Number(dealRow.value_idr);
   const totalAmount = inputs.reduce(
-    (sum, row) => sum + termAmount(row, deal.deal.value),
+    (sum, row) => sum + termAmount(row, dealValue),
     0
   );
-  if (totalAmount !== deal.deal.value) {
-    const diff = totalAmount - deal.deal.value;
+
+  if (totalAmount !== dealValue) {
+    const diff = totalAmount - dealValue;
     const direction = diff > 0 ? "melebihi" : "kurang";
     return {
       data: null,
-      error: `Total termin ${formatCurrency(totalAmount)} tidak sama dengan nilai deal ${formatCurrency(deal.deal.value)} (${direction} ${formatCurrency(Math.abs(diff))}).`,
+      error: `Total termin ${formatCurrency(totalAmount)} tidak sama dengan nilai deal ${formatCurrency(dealValue)} (${direction} ${formatCurrency(Math.abs(diff))}).`,
     };
   }
 
-  const kept = new Map(
-    termStore.filter((term) => term.dealId === dealId).map((term) => [term.id, term])
+  // Ambil existing terms untuk mempertahankan status jika ID sama
+  const { data: existingTerms } = await supabase
+    .from("deal_payment_terms")
+    .select(TERM_COLUMNS)
+    .eq("deal_id", dealRow.id);
+
+  const existingMap = new Map(
+    ((existingTerms ?? []) as DealPaymentTermRow[]).map((t) => [t.id, t])
   );
-  const next: PaymentTerm[] = inputs.map((row, index) => {
-    const existing = row.id ? kept.get(row.id) : undefined;
+
+  // Hapus semua termin lama untuk deal ini
+  await supabase.from("deal_payment_terms").delete().eq("deal_id", dealRow.id);
+
+  // Masukkan termin baru
+  const insertPayload = inputs.map((row) => {
+    const old = row.id ? existingMap.get(row.id) : undefined;
     return {
-      id: existing?.id ?? `TRM-${String(termStore.length + index + 1).padStart(3, "0")}`,
-      dealId,
+      ...(row.id ? { id: row.id } : {}),
+      deal_id: dealRow.id,
       name: row.name.trim(),
       kind: row.kind,
       value: row.value,
-      dueDate: row.dueDate || undefined,
-      milestone: (row.milestone ?? "").trim() || undefined,
-      status: existing?.status ?? "Belum Ditagih",
+      due_date: row.dueDate || null,
+      milestone: (row.milestone ?? "").trim() || null,
+      status: old?.status ?? "Belum Ditagih",
     };
   });
-  termStore = [...termStore.filter((term) => term.dealId !== dealId), ...next];
+
+  const { error: insertError } = await supabase
+    .from("deal_payment_terms")
+    .insert(insertPayload);
+
+  if (insertError) {
+    return { data: null, error: insertError.message };
+  }
+
   return listTerms(dealId);
 }
 
@@ -142,10 +208,27 @@ export async function updateTermStatus(
   if (!isTermStatus(status)) {
     return { data: null, error: "Status termin tidak dikenal." };
   }
-  const term = termStore.find((item) => item.id === termId);
-  if (!term) {
-    return { data: null, error: "Termin tidak ditemukan." };
-  }
-  term.status = status;
-  return { data: { ...term }, error: null };
+
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("deal_payment_terms")
+    .update({ status })
+    .eq("id", termId)
+    .select(TERM_COLUMNS)
+    .maybeSingle();
+
+  if (error) return { data: null, error: error.message };
+  if (!data) return { data: null, error: "Termin tidak ditemukan." };
+
+  const termRow = data as DealPaymentTermRow;
+  const { data: deal } = await supabase
+    .from("deals")
+    .select("display_id")
+    .eq("id", termRow.deal_id)
+    .maybeSingle();
+
+  return {
+    data: rowToTerm(termRow, (deal as { display_id: string } | null)?.display_id ?? ""),
+    error: null,
+  };
 }
