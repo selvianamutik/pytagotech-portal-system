@@ -1495,3 +1495,22 @@
 - **Acceptance Criteria:** FR-6 (lead lengkap + 7 status DB-backed) DONE; FR-7 (deteksi duplikat DB-backed) DONE; FR-10 (dashboard CRM dari data lead) DONE. FR-8/FR-9 tetap IN_PROGRESS karena tahap pipeline, klien, dan handover masih mock.
 - **Catatan/Masalah:** `logAudit()` mock masih dipanggil sementara untuk timeline US-012 sampai `lead-activities.ts` dimigrasikan; trigger DB tetap menulis audit sebenarnya. `db reset` dari database kosong masih belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia.
 - **Langkah berikutnya:** migrasikan `lead-activities.ts` (catatan + timeline `audit_logs`) dan `interest.ts` (`lead_interests`), lalu lanjut klien/deal handover.
+
+---
+
+## 2026-10-28 — Tahap 14 — Interested Leads Pipeline DB-Backed (FR-8)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-011-FR-8-interest-pipeline
+- **Commit:** commit ini (Interested Leads Pipeline)
+- **Yang dilakukan:**
+  - Menulis ulang `services/interest.ts` agar membaca/menulis ke database Supabase (tabel `leads` dan `lead_interests`).
+  - `getPipeline()` mengambil lead berstatus 'Interest', mencocokkan UUID dengan display_id, dan memuat `stage` serta `need` langsung dari tabel `lead_interests`.
+  - `moveInterestStage()` memvalidasi status lead 'Interest', melakukan upsert ke `lead_interests`, dan mencatat perpindahan tahap ke `audit_logs` (`lead.move-stage`).
+  - `updateInterestNeed()` melakukan upsert kebutuhan klien ke `lead_interests`.
+  - Fake Supabase diperluas dengan dukungan method `.is()` dan operator `is` pada `FakeQueryBuilder`, dukungan `.maybeSingle()`, serta perbaikan matcher upsert untuk tabel ber-PK `lead_id` (`lead_interests`).
+- **File berubah:** `frontend/src/services/interest.ts`, `frontend/src/test/supabase-fake.ts`, `docs/PROGRESS.md`, `docs/WORKLOG.md`
+- **Verifikasi:** lint ✅, type-check ✅, test 258/258 (55 file) lolos.
+- **Acceptance Criteria:** FR-8 (Lead Interest → pipeline Interested Leads otomatis) DONE.
+- **Langkah berikutnya:** FR-9 (Lead Closing → Master Klien + Deal Handover).
+
