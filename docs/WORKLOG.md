@@ -1514,3 +1514,25 @@
 - **Acceptance Criteria:** FR-8 (Lead Interest → pipeline Interested Leads otomatis) DONE.
 - **Langkah berikutnya:** FR-9 (Lead Closing → Master Klien + Deal Handover).
 
+---
+
+## 2026-10-28 — Tahap 15 — Master Klien & Konversi Closing DB-Backed (FR-9)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-014-FR-9-master-klien
+- **Commit:** commit ini (Master Klien DB-Backed)
+- **Yang dilakukan:**
+  - Menulis ulang `services/clients.ts` agar membaca/menulis ke database Supabase (tabel `clients`).
+  - `display_id` dikelola otomatis oleh sequence DB `KLI-xxx`, memetakan `source_lead_id` UUID ↔ display_id secara transparan ke komponen UI.
+  - `listClients()` mengambil data terurut nama perusahaan dengan pencocokan lead sumber.
+  - `createClient()` melakukan validasi input, deteksi duplikasi nama perusahaan via `.ilike()`, dan insert ke tabel `clients`.
+  - `updateClient()` memperbarui data klien di DB Supabase.
+  - `listConvertibleLeads()` memfilter lead berstatus 'Closing' yang belum pernah dikonversi ke klien.
+  - `createClientFromLead()` membuat klien otomatis dari lead Closing tanpa input ulang (FR-9).
+  - Fake Supabase diperluas dengan operator `.not()`, auto-id/display-id untuk tabel `clients`, seed data `clients`, dan dukungan `singleRow` pada hasil insert/update.
+- **File berubah:** `frontend/src/services/clients.ts`, `frontend/src/test/supabase-fake.ts`, `docs/PROGRESS.md`, `docs/WORKLOG.md`
+- **Verifikasi:** lint ✅, type-check ✅, test 258/258 (55 file) lolos.
+- **Acceptance Criteria:** FR-9 (Lead Closing → klien + deal handover tanpa input ulang) DONE.
+- **Langkah berikutnya:** Kelompok 3 — Handover & Termin (FR-11, FR-12, FR-13, FR-14).
+
+

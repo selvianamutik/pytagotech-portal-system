@@ -76,7 +76,7 @@ export interface FakeDb {
 
 type TableName = string;
 
-type FilterOp = "eq" | "in" | "ilike" | "gte" | "lte" | "is";
+type FilterOp = "eq" | "in" | "ilike" | "gte" | "lte" | "is" | "not";
 
 function matches<T extends Record<string, unknown>>(
   row: T,
@@ -86,6 +86,13 @@ function matches<T extends Record<string, unknown>>(
     const actual = row[filter.column];
     if (filter.op === "eq" || filter.op === "is") {
       return actual === filter.value;
+    }
+    if (filter.op === "not") {
+      const inner = filter.value as { op: string; value: unknown };
+      if (inner.op === "is") {
+        return actual !== inner.value;
+      }
+      return actual !== inner.value;
     }
     if (filter.op === "ilike") {
       const needle = String(filter.value).replace(/%/g, "").toLowerCase();
@@ -132,6 +139,11 @@ class FakeQuery {
 
   is(column: string, value: unknown): this {
     this.filters.push({ column, op: "is", value });
+    return this;
+  }
+
+  not(column: string, op: string, value: unknown): this {
+    this.filters.push({ column, op: "not", value: { op, value } });
     return this;
   }
 
@@ -257,6 +269,20 @@ class FakeQuery {
           stored["created_at"] ??= new Date().toISOString();
           stored["updated_at"] ??= stored["created_at"];
         }
+        if (this.table === "clients") {
+          const now = new Date().toISOString();
+          const maxDisplay = rows.reduce((max, row) => {
+            const match = /^KLI-(\d+)$/.exec(String(row["display_id"] ?? ""));
+            return match ? Math.max(max, Number(match[1])) : max;
+          }, 0);
+          stored["id"] ??= `cli-${rows.length + 1}`;
+          stored["display_id"] ??= `KLI-${String(maxDisplay + 1).padStart(3, "0")}`;
+          stored["pic_name"] ??= null;
+          stored["referrer"] ??= null;
+          stored["source_lead_id"] ??= null;
+          stored["created_at"] ??= now;
+          stored["updated_at"] ??= now;
+        }
         if (this.table === "leads") {
           const now = new Date().toISOString();
           const maxDisplay = rows.reduce((max, row) => {
@@ -276,7 +302,11 @@ class FakeQuery {
         rows.push(stored);
         inserted.push({ ...stored });
       }
-      return { data: this.returning ? inserted : this.insertRows, error: null };
+      const res = this.returning ? inserted : this.insertRows;
+      if (this.singleRow) {
+        return { data: res[0] ?? null, error: null };
+      }
+      return { data: res, error: null };
     }
 
     if (this.updatePatch) {
@@ -289,6 +319,9 @@ class FakeQuery {
           }
           updated.push({ ...row });
         }
+      }
+      if (this.singleRow) {
+        return { data: updated[0] ?? null, error: null };
       }
       return { data: updated, error: null };
     }
@@ -592,10 +625,37 @@ export function seedCrmFake(): Partial<FakeDb> {
     },
   ];
 
+  const clients: Record<string, unknown>[] = [
+    {
+      id: "cli-1",
+      display_id: "KLI-001",
+      company_name: "PT Sinar Abadi Properti",
+      pic_name: "Bpk. Hendra Gunawan",
+      phone: "6289988776655",
+      email: "hendra@sinarabadi.co.id",
+      referrer: "Referral",
+      source_lead_id: "lead-5",
+      created_at: "2026-10-02T07:00:00Z",
+      updated_at: "2026-10-02T07:00:00Z",
+    },
+    {
+      id: "cli-2",
+      display_id: "KLI-002",
+      company_name: "Yayasan Maju Bersama",
+      pic_name: "Ibu Ratna Sari",
+      phone: "6282211002233",
+      email: "ratna@majubersama.or.id",
+      referrer: "Instagram",
+      source_lead_id: null,
+      created_at: "2026-09-15T03:00:00Z",
+      updated_at: "2026-09-15T03:00:00Z",
+    },
+  ];
+
   return {
     teamMembers,
     masterOptions,
-    tables: { leads, lead_interests },
+    tables: { leads, lead_interests, clients },
   };
 }
 
