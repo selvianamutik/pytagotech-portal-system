@@ -76,7 +76,7 @@ export interface FakeDb {
 
 type TableName = string;
 
-type FilterOp = "eq" | "in" | "ilike" | "gte" | "lte";
+type FilterOp = "eq" | "in" | "ilike" | "gte" | "lte" | "is";
 
 function matches<T extends Record<string, unknown>>(
   row: T,
@@ -84,7 +84,7 @@ function matches<T extends Record<string, unknown>>(
 ): boolean {
   return filters.every((filter) => {
     const actual = row[filter.column];
-    if (filter.op === "eq") {
+    if (filter.op === "eq" || filter.op === "is") {
       return actual === filter.value;
     }
     if (filter.op === "ilike") {
@@ -130,6 +130,11 @@ class FakeQuery {
     return this;
   }
 
+  is(column: string, value: unknown): this {
+    this.filters.push({ column, op: "is", value });
+    return this;
+  }
+
   in(column: string, value: unknown): this {
     this.filters.push({ column, op: "in", value });
     return this;
@@ -167,8 +172,16 @@ class FakeQuery {
     return this;
   }
 
+  private allowEmptySingle = false;
+
   single(): this {
     this.singleRow = true;
+    return this;
+  }
+
+  maybeSingle(): this {
+    this.singleRow = true;
+    this.allowEmptySingle = true;
     return this;
   }
 
@@ -224,9 +237,12 @@ class FakeQuery {
       const inserted: Record<string, unknown>[] = [];
       for (const row of this.insertRows) {
         if (this.isUpsert) {
-          const index = rows.findIndex(
-            (candidate) => candidate["id"] === row["id"]
-          );
+          const index = rows.findIndex((candidate) => {
+            if (this.table === "lead_interests") {
+              return candidate["lead_id"] === row["lead_id"];
+            }
+            return candidate["id"] === row["id"];
+          });
           if (index >= 0) {
             rows[index] = { ...rows[index], ...row };
             inserted.push({ ...rows[index] });
@@ -305,6 +321,9 @@ class FakeQuery {
     }
     if (this.singleRow) {
       if (result.length === 0) {
+        if (this.allowEmptySingle) {
+          return { data: null, error: null };
+        }
         return { data: null, error: { message: "No rows" } };
       }
       return { data: result[0], error: null };
@@ -560,10 +579,23 @@ export function seedCrmFake(): Partial<FakeDb> {
     },
   ];
 
+  const lead_interests: Record<string, unknown>[] = [
+    {
+      lead_id: "lead-2",
+      stage: "Demo",
+      need: "Website company profile + katalog produk, estimasi 20 halaman.",
+    },
+    {
+      lead_id: "lead-6",
+      stage: "Price Sent",
+      need: "Paket pengelolaan sosmed 3 platform selama 3 bulan.",
+    },
+  ];
+
   return {
     teamMembers,
     masterOptions,
-    tables: { leads },
+    tables: { leads, lead_interests },
   };
 }
 

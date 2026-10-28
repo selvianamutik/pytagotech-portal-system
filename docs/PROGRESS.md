@@ -110,7 +110,7 @@
 | FR-5 | Semua kalkulasi metrik di sistem, rumus terdokumentasi | IN_PROGRESS |
 | FR-6 | Lead dengan field kontak, industri, PIC, status 7 tahap | DONE |
 | FR-7 | Deteksi lead duplikat | DONE |
-| FR-8 | Lead Interest → pipeline Interested Leads otomatis | IN_PROGRESS |
+| FR-8 | Lead Interest → pipeline Interested Leads otomatis | DONE |
 | FR-9 | Lead Closing → klien + deal handover tanpa input ulang | IN_PROGRESS |
 | FR-10 | Dashboard CRM agregat + per PIC + filter periode | DONE |
 | FR-11 | Format nama proyek otomatis + kode unik | IN_PROGRESS |
