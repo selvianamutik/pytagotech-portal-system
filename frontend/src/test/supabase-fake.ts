@@ -76,7 +76,7 @@ export interface FakeDb {
 
 type TableName = string;
 
-type FilterOp = "eq" | "in" | "ilike" | "gte" | "lte" | "is";
+type FilterOp = "eq" | "neq" | "in" | "ilike" | "gte" | "lte" | "is" | "not";
 
 function matches<T extends Record<string, unknown>>(
   row: T,
@@ -86,6 +86,16 @@ function matches<T extends Record<string, unknown>>(
     const actual = row[filter.column];
     if (filter.op === "eq" || filter.op === "is") {
       return actual === filter.value;
+    }
+    if (filter.op === "neq") {
+      return actual !== filter.value;
+    }
+    if (filter.op === "not") {
+      const inner = filter.value as { op: string; value: unknown };
+      if (inner.op === "is") {
+        return actual !== inner.value;
+      }
+      return actual !== inner.value;
     }
     if (filter.op === "ilike") {
       const needle = String(filter.value).replace(/%/g, "").toLowerCase();
@@ -130,8 +140,18 @@ class FakeQuery {
     return this;
   }
 
+  neq(column: string, value: unknown): this {
+    this.filters.push({ column, op: "neq", value });
+    return this;
+  }
+
   is(column: string, value: unknown): this {
     this.filters.push({ column, op: "is", value });
+    return this;
+  }
+
+  not(column: string, op: string, value: unknown): this {
+    this.filters.push({ column, op: "not", value: { op, value } });
     return this;
   }
 
@@ -257,6 +277,20 @@ class FakeQuery {
           stored["created_at"] ??= new Date().toISOString();
           stored["updated_at"] ??= stored["created_at"];
         }
+        if (this.table === "clients") {
+          const now = new Date().toISOString();
+          const maxDisplay = rows.reduce((max, row) => {
+            const match = /^KLI-(\d+)$/.exec(String(row["display_id"] ?? ""));
+            return match ? Math.max(max, Number(match[1])) : max;
+          }, 0);
+          stored["id"] ??= `cli-${rows.length + 1}`;
+          stored["display_id"] ??= `KLI-${String(maxDisplay + 1).padStart(3, "0")}`;
+          stored["pic_name"] ??= null;
+          stored["referrer"] ??= null;
+          stored["source_lead_id"] ??= null;
+          stored["created_at"] ??= now;
+          stored["updated_at"] ??= now;
+        }
         if (this.table === "leads") {
           const now = new Date().toISOString();
           const maxDisplay = rows.reduce((max, row) => {
@@ -273,10 +307,48 @@ class FakeQuery {
           stored["created_at"] ??= now;
           stored["updated_at"] ??= now;
         }
+        if (this.table === "deals") {
+          const now = new Date().toISOString();
+          const maxDisplay = rows.reduce((max, row) => {
+            const match = /^HDV-(\d+)$/.exec(String(row["display_id"] ?? ""));
+            return match ? Math.max(max, Number(match[1])) : max;
+          }, 0);
+          stored["id"] ??= `deal-${rows.length + 1}`;
+          stored["display_id"] ??= `HDV-${String(maxDisplay + 1).padStart(3, "0")}`;
+          stored["status"] ??= "Draft";
+          stored["created_by"] ??= null;
+          stored["confirmed_by"] ??= null;
+          stored["confirmed_at"] ??= null;
+          stored["created_at"] ??= now;
+          stored["updated_at"] ??= now;
+        }
+        if (this.table === "deal_payment_terms") {
+          const maxTerm = rows.reduce((max, r) => {
+            const match = /^TRM-(\d+)$/.exec(String(r["id"] ?? ""));
+            return match ? Math.max(max, Number(match[1])) : max;
+          }, 0);
+          stored["id"] ??= `TRM-${String(maxTerm + 1).padStart(3, "0")}`;
+        }
+        if (this.table === "change_requests") {
+          const now = new Date().toISOString();
+          const maxDisplay = rows.reduce((max, row) => {
+            const match = /^CR-(\d+)$/.exec(String(row["display_id"] ?? ""));
+            return match ? Math.max(max, Number(match[1])) : max;
+          }, 0);
+          stored["id"] ??= `cr-${rows.length + 1}`;
+          stored["display_id"] ??= `CR-${String(maxDisplay + 1).padStart(3, "0")}`;
+          stored["status"] ??= "Diajukan";
+          stored["created_at"] ??= now;
+          stored["updated_at"] ??= now;
+        }
         rows.push(stored);
         inserted.push({ ...stored });
       }
-      return { data: this.returning ? inserted : this.insertRows, error: null };
+      const res = this.returning ? inserted : this.insertRows;
+      if (this.singleRow) {
+        return { data: res[0] ?? null, error: null };
+      }
+      return { data: res, error: null };
     }
 
     if (this.updatePatch) {
@@ -289,6 +361,9 @@ class FakeQuery {
           }
           updated.push({ ...row });
         }
+      }
+      if (this.singleRow) {
+        return { data: updated[0] ?? null, error: null };
       }
       return { data: updated, error: null };
     }
@@ -592,10 +667,160 @@ export function seedCrmFake(): Partial<FakeDb> {
     },
   ];
 
+  const clients: Record<string, unknown>[] = [
+    {
+      id: "cli-1",
+      display_id: "KLI-001",
+      company_name: "PT Sinar Abadi Properti",
+      pic_name: "Bpk. Hendra Gunawan",
+      phone: "6289988776655",
+      email: "hendra@sinarabadi.co.id",
+      referrer: "Referral",
+      source_lead_id: "lead-5",
+      created_at: "2026-10-02T07:00:00Z",
+      updated_at: "2026-10-02T07:00:00Z",
+    },
+    {
+      id: "cli-2",
+      display_id: "KLI-002",
+      company_name: "Yayasan Maju Bersama",
+      pic_name: "Ibu Ratna Sari",
+      phone: "6282211002233",
+      email: "ratna@majubersama.or.id",
+      referrer: "Instagram",
+      source_lead_id: null,
+      created_at: "2026-09-15T03:00:00Z",
+      updated_at: "2026-09-15T03:00:00Z",
+    },
+  ];
+
+  const deals: Record<string, unknown>[] = [
+    {
+      id: "deal-1",
+      display_id: "HDV-001",
+      title: "Website Company Profile",
+      code: "PYT-2026-001",
+      client_id: "cli-1",
+      scope: "Pembuatan website company profile + katalog produk untuk PT Sinar Abadi Properti.",
+      objective: "Menaikkan inquiry online 30% dalam 3 bulan setelah rilis.",
+      value_idr: 45000000,
+      term_scheme: "50-30-20 (DP, serah terima desain, go-live)",
+      deadline: "2026-12-20",
+      notes: "Logo dan foto dari klien paling lambat 20 Oktober.",
+      status: "Menunggu Konfirmasi Produksi",
+      created_by: null,
+      confirmed_by: null,
+      confirmed_at: null,
+      created_at: "2026-10-03T05:00:00Z",
+      updated_at: "2026-10-03T05:00:00Z",
+    },
+    {
+      id: "deal-2",
+      display_id: "HDV-002",
+      title: "Sistem Informasi Yayasan",
+      code: "PYT-2026-002",
+      client_id: "cli-2",
+      scope: "Sistem data donatur dan laporan kegiatan yayasan.",
+      objective: "Merapikan administrasi dalam 2 bulan.",
+      value_idr: 30000000,
+      term_scheme: "50-50 (DP, serah terima)",
+      deadline: "2026-11-30",
+      notes: "",
+      status: "Draft",
+      created_by: null,
+      confirmed_by: null,
+      confirmed_at: null,
+      created_at: "2026-10-01T04:00:00Z",
+      updated_at: "2026-10-01T04:00:00Z",
+    },
+    {
+      id: "deal-3",
+      display_id: "HDV-003",
+      title: "Website Katalog Yayasan",
+      code: "PYT-2026-003",
+      client_id: "cli-2",
+      scope: "Website katalog program dan galeri kegiatan yayasan.",
+      objective: "Donasi online naik 20% dalam 6 bulan.",
+      value_idr: 25000000,
+      term_scheme: "50-50 (DP, go-live)",
+      deadline: "2026-12-15",
+      notes: "Seed demo: sudah Dikonfirmasi dan menjadi PRJ-001.",
+      status: "Dikonfirmasi",
+      created_by: null,
+      confirmed_by: null,
+      confirmed_at: null,
+      created_at: "2026-09-20T03:00:00Z",
+      updated_at: "2026-09-21T03:00:00Z",
+    },
+    {
+      id: "deal-4",
+      display_id: "HDV-004",
+      title: "Landing Page Properti",
+      code: "PYT-2026-004",
+      client_id: "cli-1",
+      scope: "Landing page kampanye klaster baru.",
+      objective: "Kumpulkan 200 prospek dalam sebulan.",
+      value_idr: 15000000,
+      term_scheme: "100 di muka",
+      deadline: "2027-01-31",
+      notes: "Seed demo: sudah Dikonfirmasi dan menjadi PRJ-002.",
+      status: "Dikonfirmasi",
+      created_by: null,
+      confirmed_by: null,
+      confirmed_at: null,
+      created_at: "2026-09-20T03:00:00Z",
+      updated_at: "2026-09-20T03:00:00Z",
+    },
+  ];
+
+  const deal_features: Record<string, unknown>[] = [
+    { deal_id: "deal-1", name: "Landing page", description: "Hero, layanan, galeri, kontak.", sort_order: 0 },
+    { deal_id: "deal-1", name: "Katalog produk", description: "20 halaman + filter kategori + PDF.", sort_order: 1 },
+    { deal_id: "deal-1", name: "Form kontak WA", description: "Tombol WhatsApp + notifikasi email.", sort_order: 2 },
+    { deal_id: "deal-2", name: "Dashboard donatur", description: "CRUD + riwayat donasi.", sort_order: 0 },
+    { deal_id: "deal-3", name: "Katalog program", description: "12 halaman program + pencarian.", sort_order: 0 },
+    { deal_id: "deal-3", name: "Galeri kegiatan", description: "Galeri foto + video profil.", sort_order: 1 },
+    { deal_id: "deal-4", name: "Landing page", description: "Hero, tipe unit, form survei.", sort_order: 0 },
+  ];
+
+  const deal_versions: Record<string, unknown>[] = [
+    { deal_id: "deal-1", version: 1, value_idr: 45000000, deadline: "2026-12-20", note: "Versi awal saat handover dibuat.", created_at: "2026-10-03T05:00:00Z" },
+    { deal_id: "deal-2", version: 1, value_idr: 30000000, deadline: "2026-11-30", note: "Versi awal saat handover dibuat.", created_at: "2026-10-01T04:00:00Z" },
+    { deal_id: "deal-3", version: 1, value_idr: 25000000, deadline: "2026-12-15", note: "Versi awal saat handover dibuat.", created_at: "2026-09-20T03:00:00Z" },
+    { deal_id: "deal-4", version: 1, value_idr: 15000000, deadline: "2027-01-31", note: "Versi awal saat handover dibuat.", created_at: "2026-09-20T03:00:00Z" },
+  ];
+
+  const deal_payment_terms: Record<string, unknown>[] = [
+    { id: "TRM-001", deal_id: "deal-1", name: "DP 50%", kind: "percent", value: 50, milestone: "Penandatanganan kesepakatan", due_date: null, status: "Lunas" },
+    { id: "TRM-002", deal_id: "deal-1", name: "Serah terima desain 30%", kind: "percent", value: 30, milestone: "Approval desain", due_date: null, status: "Ditagih" },
+    { id: "TRM-003", deal_id: "deal-1", name: "Pelunasan 20%", kind: "percent", value: 20, milestone: null, due_date: "2026-12-20", status: "Belum Ditagih" },
+    { id: "TRM-004", deal_id: "deal-2", name: "DP 50%", kind: "percent", value: 50, milestone: null, due_date: null, status: "Belum Ditagih" },
+    { id: "TRM-005", deal_id: "deal-3", name: "DP 50%", kind: "percent", value: 50, milestone: "Penandatanganan kesepakatan", due_date: null, status: "Lunas" },
+    { id: "TRM-006", deal_id: "deal-3", name: "Pelunasan 50%", kind: "percent", value: 50, milestone: null, due_date: "2026-12-15", status: "Belum Ditagih" },
+  ];
+
+  const change_requests: Record<string, unknown>[] = [
+    {
+      id: "cr-1",
+      display_id: "CR-001",
+      deal_id: "deal-2",
+      kind: "negosiasi",
+      description: "Klien meminta skema termin 30-40-30.",
+      value_impact: null,
+      deadline_impact: null,
+      status: "Diajukan",
+      created_by: null,
+      created_by_name: "Figo",
+      decided_at: null,
+      created_at: "2026-10-02T03:00:00Z",
+      updated_at: "2026-10-02T03:00:00Z",
+    },
+  ];
+
   return {
     teamMembers,
     masterOptions,
-    tables: { leads, lead_interests },
+    tables: { leads, lead_interests, clients, deals, deal_features, deal_versions, deal_payment_terms, change_requests },
   };
 }
 

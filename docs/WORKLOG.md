@@ -1514,3 +1514,45 @@
 - **Acceptance Criteria:** FR-8 (Lead Interest → pipeline Interested Leads otomatis) DONE.
 - **Langkah berikutnya:** FR-9 (Lead Closing → Master Klien + Deal Handover).
 
+---
+
+## 2026-10-28 — Tahap 15 — Master Klien & Konversi Closing DB-Backed (FR-9)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-014-FR-9-master-klien
+- **Commit:** commit ini (Master Klien DB-Backed)
+- **Yang dilakukan:**
+  - Menulis ulang `services/clients.ts` agar membaca/menulis ke database Supabase (tabel `clients`).
+  - `display_id` dikelola otomatis oleh sequence DB `KLI-xxx`, memetakan `source_lead_id` UUID ↔ display_id secara transparan ke komponen UI.
+  - `listClients()` mengambil data terurut nama perusahaan dengan pencocokan lead sumber.
+  - `createClient()` melakukan validasi input, deteksi duplikasi nama perusahaan via `.ilike()`, dan insert ke tabel `clients`.
+  - `updateClient()` memperbarui data klien di DB Supabase.
+  - `listConvertibleLeads()` memfilter lead berstatus 'Closing' yang belum pernah dikonversi ke klien.
+  - `createClientFromLead()` membuat klien otomatis dari lead Closing tanpa input ulang (FR-9).
+  - Fake Supabase diperluas dengan operator `.not()`, auto-id/display-id untuk tabel `clients`, seed data `clients`, dan dukungan `singleRow` pada hasil insert/update.
+- **File berubah:** `frontend/src/services/clients.ts`, `frontend/src/test/supabase-fake.ts`, `docs/PROGRESS.md`, `docs/WORKLOG.md`
+- **Verifikasi:** lint ✅, type-check ✅, test 258/258 (55 file) lolos.
+- **Acceptance Criteria:** FR-9 (Lead Closing → klien + deal handover tanpa input ulang) DONE.
+- **Langkah berikutnya:** Kelompok 3 — Handover & Termin (FR-11, FR-12, FR-13, FR-14).
+
+---
+
+## 2026-10-28 — Tahap 16 — Deal Handover, Termin, Workflow & Change Requests DB-Backed (FR-11, FR-12, FR-13, FR-14)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** feature/US-015-FR-11-14-handover-termin
+- **Commit:** commit ini (Handover & Termin DB-Backed)
+- **Yang dilakukan:**
+  - Menulis ulang `services/deals.ts` agar membaca/menulis ke database Supabase (tabel `deals`, `deal_features`, `deal_versions`).
+  - Pemetaan dua arah UUID klien ↔ `display_id` (`KLI-xxx`) dilakukan secara transparan; penegakan kode unik proyek secara live di level DB (FR-11).
+  - Menulis ulang `services/deal-terms.ts` agar membaca/menulis ke tabel `deal_payment_terms` di Supabase. Validasi kesetaraan total termin = nilai deal (FR-12) ditegakkan dengan pesan selisih yang presisi.
+  - Alur status `deal-workflow.ts` (FR-13: Draft → Menunggu Konfirmasi Produksi → Dikonfirmasi / Perlu Revisi) diverifikasi dan berjalan di atas tabel Supabase live.
+  - Menulis ulang `services/change-requests.ts` agar membaca/menulis ke tabel `change_requests` di Supabase. Persetujuan CR otomatis memperbarui nilai/deadline deal dan menambah riwayat `deal_versions` (FR-14).
+  - Fake Supabase diperluas dengan operator `.neq()`, auto-id/display-id untuk tabel `deals`, `deal_payment_terms`, dan `change_requests`, serta seed data lengkap untuk modul handover.
+- **File berubah:** `frontend/src/services/deals.ts`, `frontend/src/services/deal-terms.ts`, `frontend/src/services/change-requests.ts`, `frontend/src/test/supabase-fake.ts`, `docs/PROGRESS.md`, `docs/WORKLOG.md`
+- **Verifikasi:** lint ✅ (0 error, 0 warning), type-check ✅, test 258/258 (55 file) lolos.
+- **Acceptance Criteria:** FR-11 (Format nama proyek otomatis + kode unik) DONE; FR-12 (Validasi total termin = nilai deal) DONE; FR-13 (Alur status handover) DONE; FR-14 (Change request dengan riwayat versi) DONE.
+- **Langkah berikutnya:** Kelompok 4 — Proyek & Task (FR-15, FR-16, FR-17, FR-18, FR-19, FR-20).
+
+
+
