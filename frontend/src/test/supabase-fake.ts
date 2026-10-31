@@ -78,6 +78,44 @@ type TableName = string;
 
 type FilterOp = "eq" | "neq" | "in" | "ilike" | "gte" | "lte" | "is" | "not";
 
+/** Tabel yang memiliki trigger audit di database live. */
+const AUDITED_TABLES = new Set(["leads", "lead_interests", "lead_activities"]);
+
+/**
+ * Meniru trigger audit database: simpan snapshot lama/baru ke `auditLogs`.
+ * Dipakai test timeline lead dan pemeriksaan audit tanpa memanggil DB nyata.
+ */
+function recordAudit(
+  db: FakeDb,
+  table: TableName,
+  action: string,
+  oldRow: Record<string, unknown> | null,
+  newRow: Record<string, unknown> | null
+): void {
+  if (!AUDITED_TABLES.has(table)) {
+    return;
+  }
+  const row = newRow ?? oldRow;
+  if (!row) {
+    return;
+  }
+  const entityId =
+    table === "lead_interests" ? row["lead_id"] : row["id"];
+  db.auditLogs ??= [];
+  const profile = db.profiles.find((item) => item.id === db.sessionUserId);
+  db.auditLogs.push({
+    id: `AUD-${String(db.auditLogs.length + 1).padStart(4, "0")}`,
+    actor_id: db.sessionUserId,
+    actor_name: profile?.name ?? "Sistem",
+    action,
+    entity_type: table,
+    entity_id: String(entityId ?? ""),
+    old_value: oldRow ? { ...oldRow } : null,
+    new_value: newRow ? { ...newRow } : null,
+    created_at: new Date().toISOString(),
+  });
+}
+
 function matches<T extends Record<string, unknown>>(
   row: T,
   filters: { column: string; op: FilterOp; value: unknown }[]
@@ -264,7 +302,9 @@ class FakeQuery {
             return candidate["id"] === row["id"];
           });
           if (index >= 0) {
+            const before = { ...rows[index] };
             rows[index] = { ...rows[index], ...row };
+            recordAudit(this.db, this.table, "update", before, { ...rows[index] });
             inserted.push({ ...rows[index] });
             continue;
           }
@@ -276,6 +316,11 @@ class FakeQuery {
           stored["is_active"] ??= true;
           stored["created_at"] ??= new Date().toISOString();
           stored["updated_at"] ??= stored["created_at"];
+        }
+        if (this.table === "lead_activities") {
+          stored["id"] ??= `lan-${rows.length + 1}`;
+          stored["author_id"] ??= null;
+          stored["created_at"] ??= new Date().toISOString();
         }
         if (this.table === "clients") {
           const now = new Date().toISOString();
@@ -342,6 +387,7 @@ class FakeQuery {
           stored["updated_at"] ??= now;
         }
         rows.push(stored);
+        recordAudit(this.db, this.table, "insert", null, { ...stored });
         inserted.push({ ...stored });
       }
       const res = this.returning ? inserted : this.insertRows;
@@ -355,10 +401,12 @@ class FakeQuery {
       const updated: Record<string, unknown>[] = [];
       for (const row of rows) {
         if (matches(row, this.filters)) {
+          const before = { ...row };
           Object.assign(row, this.updatePatch);
           if (this.table === "team_members") {
             row["updated_at"] = new Date().toISOString();
           }
+          recordAudit(this.db, this.table, "update", before, { ...row });
           updated.push({ ...row });
         }
       }
@@ -373,6 +421,9 @@ class FakeQuery {
         return { data: [], error: null };
       }
       const deleted = rows.filter((row) => matches(row, this.filters));
+      for (const row of deleted) {
+        recordAudit(this.db, this.table, "delete", { ...row }, null);
+      }
       const kept = rows.filter((row) => !matches(row, this.filters));
       rows.length = 0;
       rows.push(...kept);
@@ -896,6 +947,26 @@ export function createSupabaseFake(seed: Partial<FakeDb>): {
     rpc: async (name, args) => {
       if (db.rpcError) {
         return { data: null, error: db.rpcError };
+      }
+      if (name === "lead_audit_trail") {
+        const leadId = String(args?.["p_lead_id"] ?? "");
+        const rows = (db.auditLogs ?? [])
+          .filter(
+            (entry) =>
+              entry.entity_id === leadId &&
+              (entry.entity_type === "leads" ||
+                entry.entity_type === "lead_interests")
+          )
+          .sort((a, b) => a.created_at.localeCompare(b.created_at))
+          .map((entry) => ({
+            actor_name: entry.actor_name,
+            action: entry.action,
+            entity_type: entry.entity_type,
+            old_value: entry.old_value,
+            new_value: entry.new_value,
+            created_at: entry.created_at,
+          }));
+        return { data: rows, error: null };
       }
       const tableByType: Record<string, string> = {
         lead: "leads",

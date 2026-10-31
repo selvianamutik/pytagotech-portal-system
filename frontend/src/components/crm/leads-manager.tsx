@@ -18,7 +18,6 @@ import {
   type LeadSortKey,
   type SortDirection,
 } from "@/services/leads";
-import { useAuthStore } from "@/store/auth";
 import type { Lead } from "@/types/lead";
 import { isLeadStatus } from "@/types/lead";
 
@@ -27,7 +26,6 @@ import { isLeadStatus } from "@/types/lead";
  * filter multi-kriteria, sort per kolom, paginasi, peringatan duplikat.
  */
 export function LeadsManager() {
-  const currentUser = useAuthStore((state) => state.user);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -162,10 +160,7 @@ export function LeadsManager() {
     }
     setBulkPending(true);
     setBulkError(null);
-    const { error } = await assignLeadPIC(selectedIds, bulkPic, {
-      id: currentUser?.id ?? "USR-001",
-      name: currentUser?.name ?? "Dinda Prameswari",
-    });
+    const { error } = await assignLeadPIC(selectedIds, bulkPic);
     setBulkPending(false);
     if (error) {
       setBulkError(error);
@@ -362,9 +357,6 @@ export function LeadsManager() {
           onOpenChange={setDialogOpen}
           initial={editTarget}
           picNames={picNames}
-          actor={
-            currentUser ? { id: currentUser.id, name: currentUser.name } : undefined
-          }
           onSaved={(saveWarning) => {
             setWarning(saveWarning);
             void refresh();

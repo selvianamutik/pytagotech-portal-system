@@ -33,7 +33,6 @@ interface LeadFormProps {
   /** Null = mode tambah; Lead = mode ubah. */
   initial: Lead | null;
   picNames: string[];
-  actor?: { id: string; name: string };
   onSaved: (warning: string | null) => void;
 }
 
@@ -41,7 +40,7 @@ interface LeadFormProps {
  * Form tambah/ubah lead (US-007): validasi format + peringatan duplikat
  * ditampilkan dari hasil service (non-blokir).
  */
-export function LeadForm({ open, onOpenChange, initial, picNames, actor, onSaved }: LeadFormProps) {
+export function LeadForm({ open, onOpenChange, initial, picNames, onSaved }: LeadFormProps) {
   const { options } = useMasterOptions();
   const [companyName, setCompanyName] = useState(initial?.companyName ?? "");
   const [industry, setIndustry] = useState(initial?.industry ?? "");
@@ -74,7 +73,7 @@ export function LeadForm({ open, onOpenChange, initial, picNames, actor, onSaved
       nextFollowUp: nextFollowUp || undefined,
     };
     const result = initial
-      ? await updateLead(initial.id, input, actor)
+      ? await updateLead(initial.id, input)
       : await createLead(input);
     setPending(false);
     if (result.error || !result.data) {

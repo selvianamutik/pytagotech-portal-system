@@ -1,17 +1,11 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { listAudit, resetMockAudit } from "@/services/audit";
+import { getLeadTimeline } from "@/services/lead-activities";
 import { assignLeadPIC, getLead } from "@/services/leads";
-
-const actor = { id: "USR-001", name: "Dinda Prameswari" };
-
-beforeEach(() => {
-  resetMockAudit();
-});
 
 describe("assignLeadPIC", () => {
   it("menetapkan PIC ke banyak lead sekaligus", async () => {
-    const result = await assignLeadPIC(["LEAD-001", "LEAD-003"], "Fira", actor);
+    const result = await assignLeadPIC(["LEAD-001", "LEAD-003"], "Fira");
 
     expect(result.error).toBeNull();
     expect(result.data).toHaveLength(2);
@@ -19,30 +13,33 @@ describe("assignLeadPIC", () => {
     expect((await getLead("LEAD-003")).data?.picName).toBe("Fira");
   });
 
-  it("mencatat setiap perubahan PIC di audit trail", async () => {
-    await assignLeadPIC(["LEAD-001", "LEAD-004"], "Fira", actor);
+  it("mencatat perubahan PIC di timeline lead", async () => {
+    await assignLeadPIC(["LEAD-001", "LEAD-004"], "Fira");
 
-    const audit = await listAudit();
-    const picChanges = (audit.data ?? []).filter(
-      (entry) => entry.action === "lead.assign-pic"
-    );
-    expect(picChanges).toHaveLength(2);
-    const first = picChanges.find((entry) => entry.entityId === "LEAD-001");
-    expect(first?.oldValue).toBe("Feby");
-    expect(first?.newValue).toBe("Fira");
-    expect(first?.actorName).toBe("Dinda Prameswari");
+    const first = await getLeadTimeline("LEAD-001");
+    const picChanges = (first.data ?? []).filter((item) => item.kind === "assign");
+    expect(picChanges).toHaveLength(1);
+    expect(picChanges[0]?.title).toContain("Fira");
+    expect(picChanges[0]?.detail).toContain("Feby");
+
+    expect(
+      (await getLeadTimeline("LEAD-004")).data?.some(
+        (item) => item.kind === "assign"
+      )
+    ).toBe(true);
   });
 
-  it("tidak mencatat audit bila PIC tidak berubah", async () => {
-    await assignLeadPIC(["LEAD-001"], "Feby", actor);
+  it("tidak mencatat perubahan bila PIC tidak berubah", async () => {
+    await assignLeadPIC(["LEAD-001"], "Feby");
 
-    expect((await listAudit()).data).toHaveLength(0);
+    const timeline = await getLeadTimeline("LEAD-001");
+    expect(timeline.data?.some((item) => item.kind === "assign")).toBe(false);
   });
 
   it("menolak PIC asing, daftar kosong, dan id tak dikenal", async () => {
-    expect((await assignLeadPIC(["LEAD-001"], "Hantu", actor)).error).toMatch(/PIC/);
-    expect((await assignLeadPIC([], "Feby", actor)).error).toMatch(/minimal satu/);
-    expect((await assignLeadPIC(["LEAD-999"], "Feby", actor)).error).toMatch(
+    expect((await assignLeadPIC(["LEAD-001"], "Hantu")).error).toMatch(/PIC/);
+    expect((await assignLeadPIC([], "Feby")).error).toMatch(/minimal satu/);
+    expect((await assignLeadPIC(["LEAD-999"], "Feby")).error).toMatch(
       /LEAD-999/
     );
   });

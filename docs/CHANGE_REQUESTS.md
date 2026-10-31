@@ -63,3 +63,12 @@ _Belum ada change request._
 - **Alasan:** Keputusan pemilik atas Q-017 pada 2026-10-27 memilih opsi A. Tabel ber-PK komposit (`master_options`, `user_roles`, `task_dependencies`, `idea_platforms`, `material_platforms`, `material_assets`, `raci_matrix`, dan tabel komposit lain) sebelumnya menghasilkan entitas kosong di audit log.
 - **Dampak:** Satu migration function (`20261027000200_audit_entity_id_composite.sql`), tanpa perubahan tabel/kolom/policy/PRD. PK tunggal tetap memakai nilai aslinya; PK komposit digabung dengan `/`. Baris audit lama tidak diubah agar tetap append-only.
 - **Persetujuan:** Pemilik memilih opsi A pada 2026-10-27 (Q-017); migration diterapkan ke live dan diverifikasi pada hari yang sama.
+
+---
+
+## CR-006 — [APPROVED]
+
+- **Usulan:** Tambah RPC `public.lead_audit_trail(p_lead_id uuid)` (SECURITY DEFINER) yang mengembalikan baris `audit_logs` untuk satu lead (`entity_type` `leads` dan `lead_interests`) dan hanya dapat dipanggil role CRM (Super Admin, Executive/Leader, Sales/Marketing).
+- **Alasan:** Timeline US-012 perlu menampilkan perubahan status, tahap, PIC, dan follow-up untuk Sales. Policy SELECT `audit_logs` saat ini hanya Super Admin + Executive/Leader; memperluas policy akan membuka seluruh audit log platform ke Sales.
+- **Dampak:** Satu migration function (`20261031000000_lead_audit_trail.sql`), tanpa perubahan tabel/kolom atau policy `audit_logs`. RPC memvalidasi role lewat `private.has_any_role` dan membatasi hasil ke `entity_id` lead yang diminta. Service `lead-activities.ts` memakai RPC ini; tidak ada akses audit lintas modul.
+- **Persetujuan:** Pemilik menyetujui opsi RPC terbatas pada 2026-10-31.

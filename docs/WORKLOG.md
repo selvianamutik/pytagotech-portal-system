@@ -1552,7 +1552,26 @@
 - **File berubah:** `frontend/src/services/deals.ts`, `frontend/src/services/deal-terms.ts`, `frontend/src/services/change-requests.ts`, `frontend/src/test/supabase-fake.ts`, `docs/PROGRESS.md`, `docs/WORKLOG.md`
 - **Verifikasi:** lint ✅ (0 error, 0 warning), type-check ✅, test 258/258 (55 file) lolos.
 - **Acceptance Criteria:** FR-11 (Format nama proyek otomatis + kode unik) DONE; FR-12 (Validasi total termin = nilai deal) DONE; FR-13 (Alur status handover) DONE; FR-14 (Change request dengan riwayat versi) DONE.
-- **Langkah berikutnya:** Kelompok 4 — Proyek & Task (FR-15, FR-16, FR-17, FR-18, FR-19, FR-20).
+- **Langkah berikutnya:** Kelompok 4 - Proyek & Task (FR-15, FR-16, FR-17, FR-18, FR-19, FR-20).
+
+---
+
+## 2026-10-31 - Tahap 17 - Timeline Aktivitas Lead DB-Backed + RPC lead_audit_trail (US-012, CR-006)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** develop
+- **Commit:** commit ini (Timeline Aktivitas Lead DB-Backed)
+- **Yang dilakukan:**
+  - Menulis ulang `services/lead-activities.ts`: catatan dibaca/ditulis ke `lead_activities`, penulis di-resolve dari `team_members` (profil, id, atau nama), dan display ID `LEAD-xxx` dipetakan ke UUID internal (DEC-022).
+  - Timeline menggabungkan catatan dengan audit trigger database; perubahan status, PIC, dan follow-up dideteksi dari snapshot `old_value`/`new_value` pada `leads`, sedangkan perubahan tahap dari `lead_interests`.
+  - Menambah migration `20261031000000_lead_audit_trail.sql` berisi RPC `public.lead_audit_trail(p_lead_id uuid)` SECURITY DEFINER (CR-006). RPC hanya mengembalikan audit satu lead untuk role CRM, sehingga policy SELECT `audit_logs` tetap ketat dan Sales tidak dapat membaca seluruh audit platform.
+  - Menghapus pemanggilan `logAudit()` mock dari `services/leads.ts` dan `services/interest.ts`; assign PIC, `setNextFollowUp`, `updateLead`, dan `moveInterestStage` tidak lagi menerima parameter `actor` karena trigger database mencatat pelaku sebenarnya.
+  - Menyesuaikan komponen `lead-form`, `leads-manager`, `lead-activity-dialog`, dan `interest-pipeline` dengan signature baru.
+  - Fake Supabase diberi simulasi trigger audit untuk `leads`, `lead_interests`, dan `lead_activities`, auto-id `lead_activities`, serta RPC `lead_audit_trail`; test CRM terkait ditulis ulang.
+- **File berubah:** `frontend/src/services/lead-activities.ts`, `frontend/src/services/leads.ts`, `frontend/src/services/interest.ts`, `frontend/src/components/crm/lead-form.tsx`, `frontend/src/components/crm/leads-manager.tsx`, `frontend/src/components/crm/lead-activity-dialog.tsx`, `frontend/src/components/crm/interest-pipeline.tsx`, `frontend/src/test/supabase-fake.ts`, test terkait, `frontend/supabase/migrations/20261031000000_lead_audit_trail.sql`, `docs/API.md`, `docs/CHANGE_REQUESTS.md`, `docs/PROGRESS.md`, `docs/WORKLOG.md`, `CHANGELOG.md`
+- **Verifikasi:** lint OK (0 error, 0 warning), type-check OK, test 260/260 (55 file) lolos. Migration diterapkan ke database live; verifikasi REST membuat lead uji `LEAD-010`, menambah catatan, mengubah status `New -> Interest`, mengubah tahap `New Interest -> Demo`, lalu RPC mengembalikan 4 baris audit (insert lead, insert interest, update status, update tahap) dengan aktor `Super Admin`. Seluruh data uji dibersihkan hingga 0 baris.
+- **Acceptance Criteria:** US-012 (Activity log per lead) DB-backed: timeline catatan + perubahan status/tahap/PIC/follow-up dengan penulis dan waktu; follow-up berikutnya + penanda Overdue tetap berfungsi.
+- **Langkah berikutnya:** FR-4 komentar/lampiran/notifikasi reusable (US-006), lalu Proyek & Task (FR-15..FR-20).
 
 
 

@@ -1,19 +1,11 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { listAudit, resetMockAudit } from "@/services/audit";
+import { getLeadTimeline } from "@/services/lead-activities";
 import {
   getPipeline,
   moveInterestStage,
-  resetMockInterest,
   updateInterestNeed,
 } from "@/services/interest";
-
-const actor = { id: "USR-002", name: "Feby" };
-
-beforeEach(() => {
-  resetMockInterest();
-  resetMockAudit();
-});
 
 describe("getPipeline", () => {
   it("hanya berisi lead berstatus Interest dengan tahap awal", async () => {
@@ -29,24 +21,23 @@ describe("getPipeline", () => {
 });
 
 describe("moveInterestStage", () => {
-  it("memindahkan tahap dan mencatat audit", async () => {
-    const result = await moveInterestStage("LEAD-006", "Negotiation", actor);
+  it("memindahkan tahap dan mencatat timeline", async () => {
+    const result = await moveInterestStage("LEAD-006", "Negotiation");
 
     expect(result.error).toBeNull();
     expect(result.data?.stage).toBe("Negotiation");
 
-    const audit = await listAudit("LEAD-006");
-    const move = (audit.data ?? []).find((entry) => entry.action === "lead.move-stage");
-    expect(move?.oldValue).toBe("Price Sent");
-    expect(move?.newValue).toBe("Negotiation");
+    const timeline = await getLeadTimeline("LEAD-006");
+    const move = timeline.data?.find((item) => item.kind === "stage");
+    expect(move?.title).toMatch(/Price Sent → Negotiation/);
   });
 
   it("menolak tahap asing dan lead non-Interest", async () => {
     expect(
-      (await moveInterestStage("LEAD-002", "Sultan" as never, actor)).error
+      (await moveInterestStage("LEAD-002", "Sultan" as never)).error
     ).toMatch(/Tahapan/);
     // LEAD-001 berstatus Follow Up.
-    expect((await moveInterestStage("LEAD-001", "Demo", actor)).error).toMatch(
+    expect((await moveInterestStage("LEAD-001", "Demo")).error).toMatch(
       /Interest/
     );
   });

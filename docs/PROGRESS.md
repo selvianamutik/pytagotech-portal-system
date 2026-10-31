@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-10-27  
-> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 DONE 4/4 — verifikasi live 42 tabel + role tanpa role, AC2 role-based via CR-003, PRD diperbarui 2026-10-27; US-005 DONE 5/5 — tim/PIC `is_active` + policy DELETE `master_options` terverifikasi live (REST + browser); Q-017/Q-018 ANSWERED — audit `entity_id` PK komposit + retensi arsip 2 tahun/backup 7 hari-12 bulan; CRM Leads DB-backed (FR-6/FR-7/FR-10) — service `leads` Supabase + verifikasi live REST; US-041 DONE 3/3; US-043 DONE 4/4)
+> **Fase saat ini:** Fase 3 — Backend (Gate 2 APPROVED 2026-10-05; US-004 DONE; US-003 DONE 4/4 — verifikasi live 42 tabel + role tanpa role, AC2 role-based via CR-003, PRD diperbarui 2026-10-27; US-005 DONE 5/5 — tim/PIC `is_active` + policy DELETE `master_options` terverifikasi live (REST + browser); Q-017/Q-018 ANSWERED — audit `entity_id` PK komposit + retensi arsip 2 tahun/backup 7 hari-12 bulan; CRM Leads DB-backed (FR-6/FR-7/FR-10) — service `leads` Supabase + verifikasi live REST; US-012 timeline DB-backed — catatan `lead_activities` + audit lead via RPC `lead_audit_trail` (CR-006), verifikasi live REST; US-041 DONE 3/3; US-043 DONE 4/4)
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---

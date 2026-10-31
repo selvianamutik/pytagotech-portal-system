@@ -29,7 +29,6 @@ import {
   moveInterestStage,
   updateInterestNeed,
 } from "@/services/interest";
-import { useAuthStore } from "@/store/auth";
 import type { InterestStage, PipelineCard } from "@/types/interest";
 
 type ViewMode = "kanban" | "tabel";
@@ -40,7 +39,6 @@ type ViewMode = "kanban" | "tabel";
  * lead berstatus Interest.
  */
 export function InterestPipeline() {
-  const currentUser = useAuthStore((state) => state.user);
   const { options } = useMasterOptions();
   const [cards, setCards] = useState<PipelineCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,16 +77,9 @@ export function InterestPipeline() {
     };
   }, []);
 
-  function actor() {
-    return {
-      id: currentUser?.id ?? "USR-001",
-      name: currentUser?.name ?? "Dinda Prameswari",
-    };
-  }
-
   async function handleDrop(stage: InterestStage, leadId: string) {
     setError(null);
-    const { error: moveError } = await moveInterestStage(leadId, stage, actor());
+    const { error: moveError } = await moveInterestStage(leadId, stage);
     if (moveError) {
       setError(moveError);
       return;
@@ -111,7 +102,7 @@ export function InterestPipeline() {
     setSaving(true);
     setError(null);
     const needResult = await updateInterestNeed(editTarget.lead.id, editNeed);
-    const stageResult = await moveInterestStage(editTarget.lead.id, editStage, actor());
+    const stageResult = await moveInterestStage(editTarget.lead.id, editStage);
     setSaving(false);
     if (needResult.error || stageResult.error) {
       setError(needResult.error ?? stageResult.error);

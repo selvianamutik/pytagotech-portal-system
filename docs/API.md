@@ -217,7 +217,7 @@ opsi uji hilang dari halaman setelah reload.
 | `getLeadValidationOptions()` | Opsi validasi `{picNames, industries, statuses}` dari `team_members` aktif + `master_options` |
 | `listLeadPICs()` | Tim/PIC aktif (`team_members.is_active`) untuk dropdown PIC; tanpa fallback mock |
 | `queryLeads(query)` (US-008) | Pencarian teks (perusahaan/email/WA/IG) + filter status/PIC/industri/rentang tanggal + sort (`companyName`/`contactDate`/`status`/`picName`) + paginasi (`page`, `limit` default 5) → `{items, total, page, limit, pageCount}`; sumber data Supabase |
-| `assignLeadPIC(ids, picName, actor)` (US-009) | Assign/reassign satuan & massal berdasarkan `display_id`; tiap perubahan PIC dicatat ke audit trail (`lead.assign-pic`, pratinjau US-004) |
+| `assignLeadPIC(ids, picName)` (US-009) | Assign/reassign satuan & massal berdasarkan `display_id`; perubahan PIC dicatat otomatis oleh trigger audit database (US-004) |
 | `previewLeadImport(csv)` / `importLeads(preview, {skipDuplicates})` (US-010) | Template header `companyName,industry,contactDate,whatsapp,instagram,email,picName,status`; preview memuat opsi validasi + lead sekali, lalu tandai valid/tidak-valid/duplikat (vs data + dalam file); impor lewati duplikat bila diminta |
 
 ```ts
@@ -225,24 +225,25 @@ type LeadStatus = "New" | "Contacted" | "Follow Up" | "Interest" | "Not Interest
 interface Lead { id: string; /* display_id LEAD-xxx */ contactDate: string; companyName: string; industry: string; /* master_options */ whatsapp: string; instagram: string; email: string; picName: string; status: LeadStatus; nextFollowUp?: string; source?: string; createdAt: string; updatedAt: string; }
 ```
 
-**Catatan transisi:** `logAudit()` mock masih dipanggil untuk memberi timeline
-US-012 sampai `lead-activities.ts` dimigrasikan ke `audit_logs`; trigger DB sudah
-mencatat audit sebenarnya untuk setiap CUD `leads`.
+**Catatan transisi:** `logAudit()` mock sudah dihapus dari service lead/interest.
+Timeline US-012 membaca audit trigger database lewat RPC `lead_audit_trail`
+(CR-006); tidak ada lagi penulisan audit dari sisi aplikasi.
 
 ---
 
 ## Modul: CRM — Interested Leads (Pipeline)
 
 > **Status:** Fase 3 — keanggotaan pipeline otomatis dari `leads` Supabase
-> (status Interest). Tahap/kebutuhan masih mock di `services/interest.ts`;
-> migrasi ke `lead_interests` menyusul. Halaman `/crm/interested`
-> (Kanban drag-and-drop + tabel). Closing pipeline → klien + handover (US-014).
+> (status Interest), tahap/kebutuhan di tabel `lead_interests`. Perubahan tahap
+> dicatat otomatis oleh trigger audit `lead_interests` dan tampil di timeline
+> US-012. Halaman `/crm/interested` (Kanban drag-and-drop + tabel). Closing
+> pipeline → klien + handover (US-014).
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|
 | `getPipeline()` | Otomatis berisi lead berstatus Interest + tahap/kebutuhan; tahap awal `New Interest` |
-| `moveInterestStage(leadId, stage, actor)` | Hanya untuk lead Interest; dicatat audit `lead.move-stage` |
-| `updateInterestNeed(leadId, need)` | Kebutuhan/solusi yang dicari klien |
+| `moveInterestStage(leadId, stage)` | Hanya untuk lead Interest; perubahan dicatat trigger audit database |
+| `updateInterestNeed(leadId, need)` | Kebutuhan/solusi yang dicari klien; perubahan dicatat trigger audit |
 
 ```ts
 type InterestStage = "New Interest" | "Contacted" | "Demo" | "Price Sent" | "Negotiation" | "Closing" | "Lost";
@@ -252,17 +253,21 @@ type InterestStage = "New Interest" | "Contacted" | "Demo" | "Price Sent" | "Neg
 
 ## Modul: CRM — Activity Log
 
-> **Status:** Fase 3 transisi — `setNextFollowUp` menulis `leads.next_follow_up`
-> di Supabase, tetapi catatan (`lead_activities`) dan timeline audit masih mock
-> di `services/lead-activities.ts`. Migrasi timeline ke `audit_logs` + tabel
-> `lead_activities` menyusul. Dialog aktivitas per baris lead di `/crm/leads`.
+> **Status:** Fase 3 — catatan di `lead_activities` (penulis di-resolve dari
+> `team_members`), perubahan status/tahap/PIC/follow-up dibaca dari `audit_logs`
+> lewat RPC `lead_audit_trail` (CR-006). RPC hanya mengembalikan audit satu lead
+> dan hanya untuk role CRM, sehingga Sales tidak perlu akses seluruh audit log.
+> Dialog aktivitas per baris lead di `/crm/leads`.
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|
-| `listLeadNotes(leadId)` / `addLeadNote(leadId, authorId, body)` | Catatan maks 2000 karakter |
-| `getLeadTimeline(leadId)` | Gabungan catatan + perubahan, terbaru dulu, dengan penulis & waktu |
-| `setNextFollowUp(leadId, date, actor)` (di `services/leads`) | Audit `lead.followup` |
+| `listLeadNotes(leadId)` / `addLeadNote(leadId, actor, body)` | Resolve display ID → UUID; catatan maks 2000 karakter; penulis dicari lewat `team_members.profile_id`/id/nama |
+| `getLeadTimeline(leadId)` | Gabungan catatan + perubahan status/tahap/PIC/follow-up, terbaru dulu, dengan penulis & waktu; audit dibaca via `lead_audit_trail` |
+| `setNextFollowUp(leadId, date)` (di `services/leads`) | Menulis `leads.next_follow_up`; audit `update` dicatat trigger |
 | `isFollowUpOverdue(nextFollowUp, status)` | Overdue bila lewat hari ini dan status belum final (Closing/Lost/Not Interested dikecualikan) |
+
+**RPC:** `lead_audit_trail(p_lead_id uuid)` → `{actor_name, action, entity_type, old_value, new_value, created_at}[]`
+untuk `entity_type` `leads` + `lead_interests`; SECURITY DEFINER dengan cek role CRM.
 
 ---
 

@@ -1,15 +1,8 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { LeadActivityDialog } from "@/components/crm/lead-activity-dialog";
-import { resetMockAudit } from "@/services/audit";
 import { getLead } from "@/services/leads";
-import { resetMockLeadActivities } from "@/services/lead-activities";
-
-beforeEach(() => {
-  resetMockLeadActivities();
-  resetMockAudit();
-});
 
 describe("LeadActivityDialog — ubah status", () => {
   it("memindahkan status dan mencatat timeline", async () => {

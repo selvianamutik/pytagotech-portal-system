@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/client";
-import { logAudit } from "@/services/audit";
 import { getLead, listLeads } from "@/services/leads";
 import type {
   InterestStage,
@@ -15,7 +14,8 @@ import type { ServiceResult } from "@/services/result";
  * Anggota pipeline diturunkan otomatis dari lead berstatus Interest;
  * tahap & kebutuhan disimpan di tabel `lead_interests` yang berelasi 1:1 via FK `lead_id`.
  *
- * Perubahan tahap dicatat audit (`lead.move-stage`) sebagai bahan timeline US-012.
+ * Perubahan tahap dicatat otomatis oleh trigger audit `lead_interests` dan
+ * ditampilkan di timeline US-012 lewat RPC `lead_audit_trail` (CR-006).
  */
 
 interface LeadInterestRow {
@@ -84,8 +84,7 @@ export async function getPipeline(): Promise<ServiceResult<PipelineCard[]>> {
 
 export async function moveInterestStage(
   leadId: string,
-  stage: InterestStage,
-  actor: { id: string; name: string }
+  stage: InterestStage
 ): Promise<ServiceResult<PipelineCard>> {
   if (!isInterestStage(stage)) {
     return { data: null, error: "Tahapan pipeline tidak dikenal." };
@@ -115,8 +114,6 @@ export async function moveInterestStage(
     .eq("lead_id", leadRow.id)
     .maybeSingle();
 
-  const oldStage = (existingInterest?.stage as InterestStage) ?? "New Interest";
-
   const { error: upsertError } = await supabase
     .from("lead_interests")
     .upsert({
@@ -127,18 +124,6 @@ export async function moveInterestStage(
 
   if (upsertError) {
     return { data: null, error: upsertError.message };
-  }
-
-  if (oldStage !== stage) {
-    await logAudit({
-      actorId: actor.id,
-      actorName: actor.name,
-      action: "lead.move-stage",
-      entityType: "lead",
-      entityId: leadId,
-      oldValue: oldStage,
-      newValue: stage,
-    });
   }
 
   const leadResult = await getLead(leadId);

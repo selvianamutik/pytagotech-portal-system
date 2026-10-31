@@ -99,7 +99,7 @@ export function LeadActivityDialog({
     event.preventDefault();
     setPending(true);
     setError(null);
-    const { error: noteError } = await addLeadNote(lead.id, actor().id, note);
+    const { error: noteError } = await addLeadNote(lead.id, actor(), note);
     setPending(false);
     if (noteError) {
       setError(noteError);
@@ -116,7 +116,7 @@ export function LeadActivityDialog({
     }
     setPending(true);
     setError(null);
-    const { error: followUpError } = await setNextFollowUp(lead.id, followUp, actor());
+    const { error: followUpError } = await setNextFollowUp(lead.id, followUp);
     setPending(false);
     if (followUpError) {
       setError(followUpError);
@@ -134,8 +134,7 @@ export function LeadActivityDialog({
     setError(null);
     const { data, error: statusError } = await updateLead(
       lead.id,
-      { status: newStatus as Lead["status"] },
-      actor()
+      { status: newStatus as Lead["status"] }
     );
     setPending(false);
     if (statusError || !data) {

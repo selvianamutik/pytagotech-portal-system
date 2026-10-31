@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/client";
-import { logAudit } from "@/services/audit";
 import {
   listActiveTeamMembers,
   listMasterOptions,
@@ -417,8 +416,7 @@ export async function createLead(
 
 export async function updateLead(
   leadId: string,
-  input: UpdateLeadInput,
-  actor?: AssignPicActor
+  input: UpdateLeadInput
 ): Promise<SaveLeadResult<Lead>> {
   const supabase = createClient();
   const { data: rowData, error: rowError } = await supabase
@@ -526,20 +524,6 @@ export async function updateLead(
 
   const updated = toLead(updatedRow, teamNameMap(members));
 
-  // Perubahan status tetap ditulis ke mock audit sampai timeline US-012
-  // dimigrasikan ke `audit_logs`; trigger DB sudah mencatat audit sebenarnya.
-  if (current.status !== updated.status) {
-    await logAudit({
-      actorId: actor?.id ?? "system",
-      actorName: actor?.name ?? "Sistem",
-      action: "lead.update-status",
-      entityType: "lead",
-      entityId: updated.id,
-      oldValue: current.status,
-      newValue: updated.status,
-    });
-  }
-
   const duplicates = await findDuplicates(
     merged.whatsapp,
     merged.companyName,
@@ -643,19 +627,13 @@ export async function queryLeads(
   return { data: { items, total, page: safePage, limit, pageCount }, error: null };
 }
 
-export interface AssignPicActor {
-  id: string;
-  name: string;
-}
-
 /**
  * Tetapkan/ubah PIC untuk satu atau banyak lead sekaligus (US-009).
- * Setiap perubahan PIC dicatat di audit trail (pratinjau US-004).
+ * Perubahan PIC dicatat otomatis oleh trigger audit database.
  */
 export async function assignLeadPIC(
   leadIds: string[],
-  picName: string,
-  actor: AssignPicActor
+  picName: string
 ): Promise<ServiceResult<Lead[]>> {
   if (leadIds.length === 0) {
     return { data: null, error: "Pilih minimal satu lead." };
@@ -704,19 +682,6 @@ export async function assignLeadPIC(
     }
   }
 
-  for (const id of changed) {
-    const oldPic = byId.get(id)?.picName ?? "";
-    await logAudit({
-      actorId: actor.id,
-      actorName: actor.name,
-      action: "lead.assign-pic",
-      entityType: "lead",
-      entityId: id,
-      oldValue: oldPic,
-      newValue: picName,
-    });
-  }
-
   return {
     data: leadIds.map((id) => {
       const lead = byId.get(id)!;
@@ -729,12 +694,12 @@ export async function assignLeadPIC(
 }
 
 /**
- * Atur tanggal follow-up berikutnya (US-012). Dicatat audit `lead.followup`.
+ * Atur tanggal follow-up berikutnya (US-012). Perubahan dicatat otomatis
+ * oleh trigger audit database.
  */
 export async function setNextFollowUp(
   leadId: string,
-  nextFollowUp: string,
-  actor: AssignPicActor
+  nextFollowUp: string
 ): Promise<ServiceResult<Lead>> {
   if (!nextFollowUp || Number.isNaN(Date.parse(nextFollowUp))) {
     return { data: null, error: "Tanggal follow-up tidak valid." };
@@ -764,16 +729,6 @@ export async function setNextFollowUp(
   if ((data ?? []).length === 0) {
     return { data: null, error: "Lead tidak ditemukan." };
   }
-
-  await logAudit({
-    actorId: actor.id,
-    actorName: actor.name,
-    action: "lead.followup",
-    entityType: "lead",
-    entityId: leadId,
-    oldValue: current.data.nextFollowUp ?? null,
-    newValue: nextFollowUp,
-  });
 
   return {
     data: { ...current.data, nextFollowUp, updatedAt: now },
