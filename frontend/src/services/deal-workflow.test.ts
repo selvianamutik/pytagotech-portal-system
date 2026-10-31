@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { listAudit, resetMockAudit } from "@/services/audit";
 import { resetMockClients } from "@/services/clients";
-import { getUnreadNotificationCount, resetMockCollaboration } from "@/services/collaboration";
+import { getUnreadNotificationCount } from "@/services/collaboration";
 import { resetMockDeals } from "@/services/deals";
 import { resetMockTerms } from "@/services/deal-terms";
 import { transitionDealStatus } from "@/services/deal-workflow";
@@ -16,7 +16,6 @@ beforeEach(() => {
   resetMockDeals();
   resetMockTerms();
   resetMockAudit();
-  resetMockCollaboration();
 });
 
 describe("transitionDealStatus", () => {

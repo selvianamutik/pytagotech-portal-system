@@ -1573,5 +1573,24 @@
 - **Acceptance Criteria:** US-012 (Activity log per lead) DB-backed: timeline catatan + perubahan status/tahap/PIC/follow-up dengan penulis dan waktu; follow-up berikutnya + penanda Overdue tetap berfungsi.
 - **Langkah berikutnya:** FR-4 komentar/lampiran/notifikasi reusable (US-006), lalu Proyek & Task (FR-15..FR-20).
 
+---
+
+## 2026-10-31 - Tahap 18 - Komentar, Lampiran & Notifikasi DB-Backed (FR-4)
+
+- **Fase AGENT_RULES:** 3 (Backend)
+- **Branch:** develop
+- **Commit:** commit ini (Komentar, Lampiran & Notifikasi DB-Backed)
+- **Yang dilakukan:**
+  - Menulis ulang `services/collaboration.ts`: komentar dibaca/ditulis ke `comments`, lampiran ke tabel `attachments` + bucket privat `portal-attachments`, notifikasi ke `notifications`. Display ID dari UI dipetakan ke UUID internal per tipe entitas (DEC-023).
+  - Mention di-resolve dari `team_members` aktif yang punya `profile_id`; mention diri sendiri diabaikan; notifikasi mention memakai `recipient_id` profil penerima dan bersifat best-effort agar komentar tetap tersimpan bila penulisan notifikasi ditolak.
+  - Lampiran memakai file asli: unggah ke Storage lebih dulu, simpan metadata, lalu buat signed URL 1 jam. Jika metadata gagal, objek Storage dihapus; hapus lampiran menghapus baris dan objek.
+  - Memperbarui tipe kolaborasi (`file`, `authorName`, `uploaderName`, `recipientId`, entitas `deal`) dan komponen `comment-section`/`attachment-list` agar memakai sesi auth nyata, bukan ID demo.
+  - Fake Supabase diberi storage palsu (upload/signed URL/remove), auto-id komentar/lampiran/notifikasi, seed task/fitur/konten, serta seed komentar/lampiran/notifikasi; test collaboration, komponen komentar, notifikasi, dan deal-workflow disesuaikan.
+  - Menghapus `mocks/collaboration.ts` dan halaman galeri `/demo/kolaborasi`; menambah migration idempoten `20261031000100_portal_attachments_bucket.sql` agar bucket ikut terbentuk saat `db reset` dari database kosong.
+- **File berubah:** `frontend/src/services/collaboration.ts`, `frontend/src/services/collaboration.test.ts`, `frontend/src/types/collaboration.ts`, `frontend/src/components/collaboration/comment-section.tsx`, `frontend/src/components/collaboration/comment-section.test.tsx`, `frontend/src/components/collaboration/attachment-list.tsx`, `frontend/src/store/notifications.test.ts`, `frontend/src/services/deal-workflow.test.ts`, `frontend/src/test/supabase-fake.ts`, `frontend/supabase/migrations/20261031000100_portal_attachments_bucket.sql`, `frontend/src/mocks/collaboration.ts` (dihapus), `frontend/src/app/(portal)/demo/kolaborasi/page.tsx` (dihapus), `docs/API.md`, `docs/DECISIONS.md`, `docs/PROGRESS.md`, `docs/WORKLOG.md`, `CHANGELOG.md`
+- **Verifikasi:** lint OK (0 error, 0 warning), type-check OK, test 263/263 (55 file) lolos. Verifikasi live REST: membuat lead uji, insert komentar lalu membaca kembali, upload file ke bucket `portal-attachments`, insert metadata lampiran, membuat signed URL dan mengunduh isi file (cocok), insert notifikasi lalu membaca dan menandainya dibaca. Seluruh baris uji, audit terkait, dan objek Storage dibersihkan (0 baris).
+- **Acceptance Criteria:** FR-4 reusable: komentar + mention + notifikasi, lampiran dengan batas ukuran + signed URL, dan notifikasi in-app (bell, daftar, tandai dibaca) memakai database nyata untuk lead/deal; host task/fitur/konten siap setelah modulnya DB-backed.
+- **Langkah berikutnya:** Proyek & Task (FR-15..FR-20): proyek mewarisi handover, generate task dari template, Kanban/List/sub-task/progress, jadwal fitur, Gantt, dashboard produksi.
+
 
 

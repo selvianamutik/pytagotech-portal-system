@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { resetMockCollaboration } from "@/services/collaboration";
 import { useNotificationStore } from "@/store/notifications";
 
 beforeEach(() => {
-  resetMockCollaboration();
   useNotificationStore.setState({ items: [], unreadCount: 0, loading: true });
 });
 

@@ -14,9 +14,6 @@ import type {
 } from "@/types/collaboration";
 import { ENTITY_TYPE_LABELS } from "@/types/collaboration";
 
-/** ID penulis demo saat belum masuk (Fase 1, halaman demo). */
-const DEMO_AUTHOR_ID = "USR-001";
-
 function initials(name: string): string {
   return name
     .split(" ")
@@ -72,12 +69,17 @@ export function CommentSection({ entityType, entityId }: CommentSectionProps) {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (!currentUser) {
+      setError("Masuk untuk menulis komentar.");
+      return;
+    }
     setPending(true);
     setError(null);
     const { data, error: submitError } = await addComment({
       entityType,
       entityId,
-      authorId: currentUser?.id ?? DEMO_AUTHOR_ID,
+      authorId: currentUser.id,
+      authorName: currentUser.name,
       body: draft,
     });
     setPending(false);

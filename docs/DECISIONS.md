@@ -113,7 +113,7 @@
   - Galeri verifikasi di `/demo/kolaborasi` me-mount komponen yang sama pada 4 tipe entitas; halaman `/notifikasi` adalah permukaan nyata (diakses dari bell header).
 - **Alternatif yang dipertimbangkan:** Autocomplete mention penuh (butuh popover + pencarian user — over-engineering untuk mock); menunda US-006 sampai host ada (melanggar urutan PRD).
 - **Alasan:** AC "dapat dipasang pada lead, task, fitur, dan konten" terverifikasi langsung; komponen tidak berubah saat host asli tiba.
-- **Konsekuensi:** `/demo/kolaborasi` adalah scaffolding — diganti host asli bertahap (US-012/022/030) dan dihapus sebelum Gate 4 bila sudah tak dipakai.
+- **Konsekuensi:** `/demo/kolaborasi` adalah scaffolding — diganti host asli bertahap (US-012/022/030) dan dihapus sebelum Gate 4 bila sudah tak dipakai. **Update 2026-10-31:** halaman demo dan mock kolaborasi sudah dihapus saat FR-4 DB-backed; implementasi final (mention dari `team_members` aktif berprofil, tabel + Storage) dicatat di DEC-023.
 
 ---
 
@@ -296,4 +296,16 @@
 - **Keputusan:** `Lead.id` tetap berisi `display_id`. `services/leads.ts` memetakan display ID ↔ UUID secara internal saat select/insert/update; join nama PIC memakai `team_members` (termasuk anggota nonaktif). Validasi industri/status memakai `master_options` aktif, bukan konstanta lokal, karena nilai live sudah berbeda dari fallback Fase 1. `findDuplicates` menjadi async; impor CSV memakai helper `findDuplicatesIn` dengan satu kali prefetch.
 - **Alternatif yang dipertimbangkan:** Mengekspos UUID ke UI (ditolak - churn besar dan ID tidak ramah user); mempertahankan validasi `INDUSTRY_CATEGORIES` lokal (ditolak - menolak opsi live seperti `Retail`/`Jasa Profesional`); query duplikat per baris impor (ditolak - N query).
 - **Alasan:** Mempertahankan kontrak UI stabil sambil menjadikan Supabase sumber kebenaran; FR-3 tetap terpenuhi.
-- **Konsekuensi:** Setiap modul baru yang memakai UUID (komentar/lampiran/audit) harus me-resolve display ID lewat service lead. `logAudit()` mock masih dipanggil sementara untuk timeline US-012 sampai migrasi `lead-activities`; trigger DB tetap menulis audit sebenarnya. Verifikasi live REST 2026-10-27: insert menghasilkan `LEAD-xxx`, select/update berdasarkan display ID berhasil, audit trigger mencatat UUID lead; data uji dibersihkan.
+- **Konsekuensi:** Setiap modul baru yang memakai UUID (komentar/lampiran/audit) harus me-resolve display ID lewat service terkait. `logAudit()` mock sudah dihapus dari service lead/interest saat US-012; trigger DB menulis audit sebenarnya. Verifikasi live REST 2026-10-27: insert menghasilkan `LEAD-xxx`, select/update berdasarkan display ID berhasil, audit trigger mencatat UUID lead; data uji dibersihkan.
+
+---
+
+## DEC-023 - Kolaborasi: Display ID di UI, UUID di Tabel Polimorfik, Storage Privat (FR-4)
+
+- **Tanggal:** 2026-10-31
+- **Terkait:** US-006 / FR-4
+- **Konteks:** Tabel `comments` dan `attachments` menyimpan `entity_id` sebagai UUID polimorfik tanpa FK, sedangkan komponen dan route memakai display ID (`LEAD-xxx`, `TSK-xxx`, `FIT-xxx`, `MAT-xxxx`, `HDV-xxx`). Lampiran juga memerlukan tempat penyimpanan yang tidak dapat diakses publik.
+- **Keputusan:** UI tetap memakai display ID; service `collaboration.ts` memetakan per tipe entitas (`lead→leads`, `task→tasks`, `fitur→features`, `konten→content_materials`, `deal→deals`) dan menerima UUID apa adanya. File disimpan di bucket privat `portal-attachments` dengan path `${entityType}/${entityUuid}/${uuid}-${nama-aman}`; metadata di tabel `attachments`; tampilan memakai signed URL 1 jam. Migration `20261031000100_portal_attachments_bucket.sql` membuat bucket secara idempoten (privat, limit 10MB, MIME png/jpeg/webp/pdf/text/docx/xlsx) agar `db reset` dari database kosong konsisten; policy Storage sudah ada di baseline.
+- **Alternatif yang dipertimbangkan:** Mengekspos UUID ke UI (ditolak — kontrak UI berubah dan ID tidak ramah pengguna); bucket publik (ditolak — lampiran internal); menyimpan signed URL permanen di metadata (ditolak — kedaluwarsa dan tidak dapat diperbarui).
+- **Alasan:** Mempertahankan kontrak UI yang sudah dipakai lintas modul, menjaga data tetap privat, dan membuat hasil `db reset` reproduksibel tanpa mengubah policy yang sudah disetujui.
+- **Konsekuensi:** Setiap host baru wajib menyediakan baris entitas nyata agar komentar/lampiran dapat ditampilkan; saat ini baru lead dan deal yang DB-backed, sehingga host task/fitur/konten menunggu FR-16/FR-17/FR-23. `author_id`/`uploaded_by` di-resolve ke `team_members`; selama profil live belum tertaut, nama tampil `"Tim"`. Signed URL harus dibuat ulang setiap kali daftar dimuat. Verifikasi live REST 2026-10-31: komentar, upload file, metadata lampiran, signed URL + unduh isi, notifikasi insert/baca/tandai dibaca berhasil; seluruh data uji dan objek Storage dibersihkan (0 baris).

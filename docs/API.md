@@ -633,49 +633,46 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ---
 
-## Modul: Komentar & Lampiran
+## Modul: Komentar, Lampiran & Notifikasi
 
-> **Status:** Draft Fase 1 (US-006) — mock di `frontend/src/mocks/collaboration.ts`,
-> diakses via `frontend/src/services/collaboration.ts`, tipe di
-> `frontend/src/types/collaboration.ts`. Komponen reusable di
+> **Status:** Backend Fase 3 (US-006, FR-4) — `frontend/src/services/collaboration.ts`,
+> tipe di `frontend/src/types/collaboration.ts`. Komponen reusable di
 > `frontend/src/components/collaboration/` (satu komponen untuk lead, task,
-> fitur, konten — cukup ganti `entityType` + `entityId`).
-> Fase 2: komentar → tabel `comments`; lampiran → Supabase Storage + tabel
-> `attachments`; mention resolution → tabel user nyata.
+> fitur, konten, deal — cukup ganti `entityType` + `entityId`).
+>
+> Data disimpan di tabel `comments`, `attachments`, dan `notifications`.
+> `entityId` di UI adalah display ID dan dipetakan service ke UUID internal:
+> `lead → leads`, `task → tasks`, `fitur → features`,
+> `konten → content_materials`, `deal → deals` (DEC-023).
+>
+> Lampiran disimpan di bucket privat `portal-attachments`; service mengunggah
+> file asli lalu mengembalikan signed URL berlaku 1 jam. Metadata penulis/
+> pengunggah di-resolve dari `team_members`; nama fallback `"Tim"` bila profil
+> belum tertaut. Hapus lampiran menghapus baris metadata + objek Storage.
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|
-| `listComments(entityType, entityId)` | Filter per entitas |
-| `addComment({entityType, entityId, authorId, body})` | Body wajib isi, maks 2000 karakter; token `@Nama` (nama depan/lengkap, case-insensitive) otomatis membuat notifikasi mention |
-| `listAttachments(entityType, entityId)` | Filter per entitas |
-| `uploadAttachment({... fileName, fileSizeBytes, mimeType})` | Batas dari `NEXT_PUBLIC_MAX_ATTACHMENT_SIZE_BYTES` (default 10MB); error jelas jika melebihi |
-| `deleteAttachment(id)` | Error jika id tidak dikenal |
+| `listComments(entityType, entityId)` | Resolve display ID → UUID, lalu filter per entitas; urut terlama→terbaru |
+| `addComment({entityType, entityId, authorId, authorName?, body})` | Body wajib isi, maks 2000 karakter; `author_id` diambil dari `team_members` (boleh null); token `@Nama` (nama depan/lengkap, case-insensitive) hanya cocok dengan anggota aktif ber-`profile_id`, mention diri sendiri diabaikan; notifikasi mention dibuat best-effort |
+| `listAttachments(entityType, entityId)` | Filter per entitas; setiap item mendapat signed URL 1 jam |
+| `uploadAttachment({entityType, entityId, file, uploaderId, uploaderName?})` | Batas dari `NEXT_PUBLIC_MAX_ATTACHMENT_SIZE_BYTES` (default 10MB); nama/ukuran/MIME dibaca dari `File`; unggah ke Storage lalu simpan metadata; metadata gagal → objek Storage dihapus |
+| `deleteAttachment(id)` | Hapus baris `attachments` lalu objek Storage; error jika id tidak dikenal |
+| `pushNotification({type, title, message, entityType?, entityId?, actorName?, recipientId?})` | Penerima default sesi saat ini; `recipient_id` FK ke `profiles`; dipakai alur handover/change request |
+| `listNotifications()` | Terurut terbaru; tipe `assignment` \| `mention` \| `status`; RLS hanya penerima atau Super Admin |
+| `getUnreadNotificationCount()` | Sumber badge bell (`is_read = false`) |
+| `markNotificationRead(id)` / `markAllNotificationsRead()` | Tandai dibaca; jumlah baris terupdate dikembalikan |
 
 ```ts
-type CollaborableEntityType = "lead" | "task" | "fitur" | "konten";
+type CollaborableEntityType = "lead" | "task" | "fitur" | "konten" | "deal";
 interface CommentItem { id: string; entityType: CollaborableEntityType; entityId: string; authorId: string; authorName: string; body: string; mentionedUserIds: string[]; createdAt: string; }
 interface AttachmentItem { id: string; entityType: CollaborableEntityType; entityId: string; fileName: string; fileSizeBytes: number; mimeType: string; url: string; uploadedById: string; uploadedByName: string; createdAt: string; }
-```
-
----
-
-## Modul: Notifikasi
-
-> **Status:** Draft Fase 1 (US-006) — mock + `store/notifications.ts` (Zustand)
-> untuk badge bell di header. Halaman `/notifikasi` (daftar, filter, tandai
-> dibaca). Galeri verifikasi: `/demo/kolaborasi`.
-> Fase 2: diganti Supabase Realtime + tabel `notifications`.
-
-| Fungsi service | Deskripsi |
-|----------------|-----------|
-| `listNotifications()` | Terurut terbaru; tipe `assignment` \| `mention` \| `status` |
-| `getUnreadNotificationCount()` | Sumber badge bell |
-| `markNotificationRead(id)` / `markAllNotificationsRead()` | Tandai dibaca |
-
-```ts
 type NotificationType = "assignment" | "mention" | "status";
-interface NotificationItem { id: string; type: NotificationType; title: string; message: string; entityType?: CollaborableEntityType; entityId?: string; actorName?: string; isRead: boolean; createdAt: string; }
+interface NotificationItem { id: string; type: NotificationType; title: string; message: string; entityType?: CollaborableEntityType; entityId?: string; actorName?: string; recipientId?: string; isRead: boolean; createdAt: string; }
 ```
+
+> **Catatan cakupan:** komentar/lampiran untuk task, fitur, dan konten sudah
+> siap dipakai begitu modul tersebut DB-backed (FR-16/FR-17/FR-23). Saat ini
+> baris nyata baru tersedia untuk lead dan deal.
 
 ---
 

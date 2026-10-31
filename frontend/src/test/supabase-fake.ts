@@ -64,6 +64,11 @@ export interface FakeDb {
   teamMembers?: FakeTeamMember[];
   /** Tabel tambahan untuk cek referensi (leads, projects, dst.). */
   tables?: Record<string, Record<string, unknown>[]>;
+  /** Objek Supabase Storage palsu, key = `${bucket}/${path}`. */
+  storageObjects?: Record<
+    string,
+    { bucket: string; path: string; name: string; size: number; type: string }
+  >;
   /** Tabel yang menolak DELETE tanpa error (mensimulasikan RLS/trigger di DB live). */
   blockedDeleteTables?: string[];
   /** Error yang dipaksa muncul dari setiap panggilan RPC. */
@@ -322,6 +327,22 @@ class FakeQuery {
           stored["author_id"] ??= null;
           stored["created_at"] ??= new Date().toISOString();
         }
+        if (this.table === "comments") {
+          stored["id"] ??= `cmt-${rows.length + 1}`;
+          stored["author_id"] ??= null;
+          stored["created_at"] ??= new Date().toISOString();
+        }
+        if (this.table === "attachments") {
+          stored["id"] ??= `att-${rows.length + 1}`;
+          stored["uploaded_by"] ??= null;
+          stored["created_at"] ??= new Date().toISOString();
+        }
+        if (this.table === "notifications") {
+          stored["id"] ??= `ntf-${rows.length + 1}`;
+          stored["is_read"] ??= false;
+          stored["recipient_id"] ??= null;
+          stored["created_at"] ??= new Date().toISOString();
+        }
         if (this.table === "clients") {
           const now = new Date().toISOString();
           const maxDisplay = rows.reduce((max, row) => {
@@ -495,6 +516,29 @@ export interface FakeSupabaseClient {
     };
   };
   from: (table: TableName) => FakeQuery;
+  storage: {
+    from: (bucket: string) => {
+      upload: (
+        path: string,
+        file: File,
+        options?: { contentType?: string; upsert?: boolean }
+      ) => Promise<{
+        data: { path: string } | null;
+        error: { message: string } | null;
+      }>;
+      createSignedUrl: (
+        path: string,
+        expiresIn: number
+      ) => Promise<{
+        data: { signedUrl: string } | null;
+        error: { message: string } | null;
+      }>;
+      remove: (paths: string[]) => Promise<{
+        data: { name: string }[];
+        error: { message: string } | null;
+      }>;
+    };
+  };
   rpc: (
     name: string,
     args?: Record<string, unknown>
@@ -514,7 +558,7 @@ export function seedCrmFake(): Partial<FakeDb> {
   const teamMembers: FakeTeamMember[] = [
     {
       id: "tm-feby",
-      profile_id: null,
+      profile_id: "user-2",
       name: "Feby",
       status: "internal",
       is_active: true,
@@ -523,7 +567,7 @@ export function seedCrmFake(): Partial<FakeDb> {
     },
     {
       id: "tm-fira",
-      profile_id: null,
+      profile_id: "user-1",
       name: "Fira",
       status: "internal",
       is_active: true,
@@ -540,8 +584,26 @@ export function seedCrmFake(): Partial<FakeDb> {
       updated_at: createdAt,
     },
     {
+      id: "tm-raka",
+      profile_id: "user-3",
+      name: "Raka",
+      status: "internal",
+      is_active: true,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: "tm-nabila",
+      profile_id: "user-4",
+      name: "Nabila",
+      status: "internal",
+      is_active: true,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
       id: "tm-sinta",
-      profile_id: null,
+      profile_id: "user-5",
       name: "Sinta",
       status: "internal",
       is_active: false,
@@ -868,10 +930,174 @@ export function seedCrmFake(): Partial<FakeDb> {
     },
   ];
 
+  const tasks: Record<string, unknown>[] = [
+    {
+      id: "task-1",
+      display_id: "TSK-118",
+      project_id: "proj-1",
+      title: "Review desain landing Pytabelajar",
+      status: "In Progress",
+    },
+  ];
+
+  const features: Record<string, unknown>[] = [
+    {
+      id: "feat-1",
+      display_id: "FIT-011",
+      project_id: "proj-1",
+      name: "Login SSO",
+    },
+    {
+      id: "feat-2",
+      display_id: "FIT-012",
+      project_id: "proj-1",
+      name: "Halaman kontak",
+    },
+  ];
+
+  const content_materials: Record<string, unknown>[] = [
+    {
+      id: "mat-1",
+      display_id: "MAT-0018",
+      title: "Carousel edukasi API",
+      status: "Draf",
+    },
+  ];
+
+  const comments: Record<string, unknown>[] = [
+    {
+      id: "CMT-001",
+      entity_type: "lead",
+      entity_id: "lead-1",
+      author_id: "tm-feby",
+      body: "Sudah follow up via WA, @Dinda minta tolong siapkan deck penawaran.",
+      created_at: "2026-10-04T03:10:00Z",
+    },
+    {
+      id: "CMT-002",
+      entity_type: "lead",
+      entity_id: "lead-1",
+      author_id: "tm-fira",
+      body: "Deck siap, aku kirim ke email mereka sore ini.",
+      created_at: "2026-10-04T03:40:00Z",
+    },
+    {
+      id: "CMT-003",
+      entity_type: "task",
+      entity_id: "task-1",
+      author_id: "tm-raka",
+      body: "@Nabila revisi hero section dulu, copy menyusul.",
+      created_at: "2026-10-04T02:50:00Z",
+    },
+    {
+      id: "CMT-004",
+      entity_type: "konten",
+      entity_id: "mat-1",
+      author_id: "tm-nabila",
+      body: "Carousel slide 3 diganti dengan data terbaru.",
+      created_at: "2026-10-04T01:55:00Z",
+    },
+  ];
+
+  const attachments: Record<string, unknown>[] = [
+    {
+      id: "ATT-001",
+      entity_type: "lead",
+      entity_id: "lead-1",
+      file_name: "penawaran-aruna-v2.pdf",
+      file_size_bytes: 482_312,
+      mime_type: "application/pdf",
+      storage_path: "lead/lead-1/penawaran-aruna-v2.pdf",
+      uploaded_by: "tm-fira",
+      created_at: "2026-10-04T03:45:00Z",
+    },
+    {
+      id: "ATT-002",
+      entity_type: "task",
+      entity_id: "task-1",
+      file_name: "referensi-hero.png",
+      file_size_bytes: 1_208_442,
+      mime_type: "image/png",
+      storage_path: "task/task-1/referensi-hero.png",
+      uploaded_by: "tm-nabila",
+      created_at: "2026-10-04T02:55:00Z",
+    },
+  ];
+
+  const notifications: Record<string, unknown>[] = [
+    {
+      id: "NTF-001",
+      type: "mention",
+      title: "Dinda Prameswari me-mention Anda",
+      message: "Feby: “@Dinda minta tolong siapkan deck penawaran.” (LEAD-001)",
+      entity_type: "lead",
+      entity_id: "LEAD-001",
+      actor_name: "Feby",
+      recipient_id: "user-1",
+      is_read: false,
+      created_at: "2026-10-04T03:10:00Z",
+    },
+    {
+      id: "NTF-002",
+      type: "assignment",
+      title: "Task baru untuk Anda",
+      message: "Raka menugaskan “Review desain landing Pytabelajar” (TSK-118).",
+      entity_type: "task",
+      entity_id: "TSK-118",
+      actor_name: "Raka",
+      recipient_id: "user-4",
+      is_read: false,
+      created_at: "2026-10-04T02:30:00Z",
+    },
+    {
+      id: "NTF-003",
+      type: "status",
+      title: "Status handover berubah",
+      message: "Deal handover HDV-007 kini “Menunggu Konfirmasi Produksi”.",
+      entity_type: "deal",
+      entity_id: "HDV-007",
+      actor_name: "Sistem",
+      recipient_id: null,
+      is_read: true,
+      created_at: "2026-10-04T01:20:00Z",
+    },
+  ];
+
   return {
     teamMembers,
     masterOptions,
-    tables: { leads, lead_interests, clients, deals, deal_features, deal_versions, deal_payment_terms, change_requests },
+    storageObjects: {
+      "portal-attachments/lead/lead-1/penawaran-aruna-v2.pdf": {
+        bucket: "portal-attachments",
+        path: "lead/lead-1/penawaran-aruna-v2.pdf",
+        name: "penawaran-aruna-v2.pdf",
+        size: 482_312,
+        type: "application/pdf",
+      },
+      "portal-attachments/task/task-1/referensi-hero.png": {
+        bucket: "portal-attachments",
+        path: "task/task-1/referensi-hero.png",
+        name: "referensi-hero.png",
+        size: 1_208_442,
+        type: "image/png",
+      },
+    },
+    tables: {
+      leads,
+      lead_interests,
+      clients,
+      deals,
+      deal_features,
+      deal_versions,
+      deal_payment_terms,
+      change_requests,
+      tasks,
+      features,
+      content_materials,
+      comments,
+      attachments,
+      notifications,
+    },
   };
 }
 
@@ -944,6 +1170,40 @@ export function createSupabaseFake(seed: Partial<FakeDb>): {
       },
     },
     from: (table) => new FakeQuery(db, table),
+    storage: {
+      from: (bucket) => ({
+        upload: async (path, file, options) => {
+          db.storageObjects ??= {};
+          db.storageObjects[`${bucket}/${path}`] = {
+            bucket,
+            path,
+            name: file.name,
+            size: file.size,
+            type: options?.contentType || file.type,
+          };
+          return { data: { path }, error: null };
+        },
+        createSignedUrl: async (path) => {
+          const key = `${bucket}/${path}`;
+          if (!db.storageObjects?.[key]) {
+            return { data: null, error: { message: "Object not found" } };
+          }
+          return {
+            data: { signedUrl: `#fake/${bucket}/${path}` },
+            error: null,
+          };
+        },
+        remove: async (paths) => {
+          for (const path of paths) {
+            delete db.storageObjects?.[`${bucket}/${path}`];
+          }
+          return {
+            data: paths.map((name) => ({ name })),
+            error: null,
+          };
+        },
+      }),
+    },
     rpc: async (name, args) => {
       if (db.rpcError) {
         return { data: null, error: db.rpcError };

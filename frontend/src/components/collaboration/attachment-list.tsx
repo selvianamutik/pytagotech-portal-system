@@ -19,8 +19,6 @@ import type {
 } from "@/types/collaboration";
 import { ENTITY_TYPE_LABELS } from "@/types/collaboration";
 
-const DEMO_UPLOADER_ID = "USR-001";
-
 interface AttachmentListProps {
   entityType: CollaborableEntityType;
   entityId: string;
@@ -58,15 +56,18 @@ export function AttachmentList({ entityType, entityId }: AttachmentListProps) {
     if (!file) {
       return;
     }
+    if (!currentUser) {
+      setError("Masuk untuk mengunggah file.");
+      return;
+    }
     setPending(true);
     setError(null);
     const { data, error: uploadError } = await uploadAttachment({
       entityType,
       entityId,
-      fileName: file.name,
-      fileSizeBytes: file.size,
-      mimeType: file.type,
-      uploaderId: currentUser?.id ?? DEMO_UPLOADER_ID,
+      file,
+      uploaderId: currentUser.id,
+      uploaderName: currentUser.name,
     });
     setPending(false);
     if (uploadError || !data) {

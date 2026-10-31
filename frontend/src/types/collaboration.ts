@@ -1,8 +1,9 @@
 /**
  * Kontrak data kolaborasi reusable (US-006, FR-4).
- * Dipakai lintas entitas: lead, task, fitur, konten.
- * Fase 1: mock (`@/mocks/collaboration`) via `services/collaboration`.
- * Fase 2: tabel `comments`, `attachments` (Supabase Storage), `notifications`.
+ * Dipakai lintas entitas: lead, task, fitur, konten, deal.
+ * Data disimpan di tabel `comments`, `attachments` (Supabase Storage), dan
+ * `notifications`; `entityId` tetap display ID di UI dan dipetakan ke UUID
+ * internal oleh service.
  */
 
 /** Entitas yang bisa ditempeli komentar & lampiran. */
@@ -28,7 +29,7 @@ export interface AttachmentItem {
   fileName: string;
   fileSizeBytes: number;
   mimeType: string;
-  /** URL file (mock Fase 1; URL Supabase Storage di Fase 2). */
+  /** URL bertanda tangan (signed URL) dari Supabase Storage. */
   url: string;
   uploadedById: string;
   uploadedByName: string;
@@ -45,6 +46,8 @@ export interface NotificationItem {
   entityType?: CollaborableEntityType;
   entityId?: string;
   actorName?: string;
+  /** Profil penerima; null = notifikasi sistem (terlihat oleh Super Admin). */
+  recipientId?: string;
   isRead: boolean;
   createdAt: string;
 }
@@ -53,16 +56,19 @@ export interface AddCommentInput {
   entityType: CollaborableEntityType;
   entityId: string;
   authorId: string;
+  /** Nama tampilan saat profil belum tertaut ke `team_members`. */
+  authorName?: string;
   body: string;
 }
 
 export interface UploadAttachmentInput {
   entityType: CollaborableEntityType;
   entityId: string;
-  fileName: string;
-  fileSizeBytes: number;
-  mimeType: string;
+  /** File asli dari input pengguna; nama/ukuran/MIME dibaca dari sini. */
+  file: File;
   uploaderId: string;
+  /** Nama tampilan saat profil belum tertaut ke `team_members`. */
+  uploaderName?: string;
 }
 
 /** Label Indonesia untuk tipe entitas (dipakai di UI). */
