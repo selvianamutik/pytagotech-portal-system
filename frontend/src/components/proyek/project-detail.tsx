@@ -39,6 +39,7 @@ export function ProjectDetail({
   const user = useAuthStore((state) => state.user);
   const [item, setItem] = useState<ProjectWithNames | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [pmOptions, setPmOptions] = useState<string[]>([]);
   const [editing, setEditing] = useState(false);
   const [status, setStatus] = useState("");
   const [pmName, setPmName] = useState("");
@@ -49,16 +50,19 @@ export function ProjectDetail({
 
   useEffect(() => {
     let cancelled = false;
-    void getProject(projectId).then(({ data }) => {
-      if (cancelled) {
-        return;
+    void Promise.all([getProject(projectId), listProjectManagers()]).then(
+      ([{ data }, pmResult]) => {
+        if (cancelled) {
+          return;
+        }
+        if (data) {
+          setItem(data);
+        } else {
+          setNotFound(true);
+        }
+        setPmOptions(pmResult.data ?? []);
       }
-      if (data) {
-        setItem(data);
-      } else {
-        setNotFound(true);
-      }
-    });
+    );
     return () => {
       cancelled = true;
     };
@@ -220,7 +224,7 @@ export function ProjectDetail({
                 label="Project Manager"
                 value={pmName}
                 onChange={setPmName}
-                options={listProjectManagers()}
+                options={pmOptions}
                 required
               />
               <div className="space-y-2">

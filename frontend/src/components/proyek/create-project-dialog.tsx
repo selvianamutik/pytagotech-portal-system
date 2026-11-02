@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -31,9 +31,22 @@ export function CreateProjectDialog({
 }) {
   const router = useRouter();
   const [pmName, setPmName] = useState("");
+  const [pmOptions, setPmOptions] = useState<string[]>([]);
   const [startDate, setStartDate] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void listProjectManagers().then(({ data }) => {
+      if (!cancelled) {
+        setPmOptions(data ?? []);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -68,7 +81,7 @@ export function CreateProjectDialog({
             label="Project Manager"
             value={pmName}
             onChange={setPmName}
-            options={listProjectManagers()}
+            options={pmOptions}
             required
           />
           <div className="space-y-2">

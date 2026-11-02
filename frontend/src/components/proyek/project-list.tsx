@@ -64,6 +64,7 @@ export function ProjectList() {
   const user = useAuthStore((state) => state.user);
   const [items, setItems] = useState<ProjectWithNames[]>([]);
   const [clients, setClients] = useState<{ id: string; companyName: string }[]>([]);
+  const [pmOptions, setPmOptions] = useState<string[]>([]);
   const [dashboard, setDashboard] = useState<ProductionDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -75,19 +76,22 @@ export function ProjectList() {
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([listClients(), getProductionDashboard({})]).then(
-      ([clientsResult, dashboardResult]) => {
-        if (!cancelled) {
-          setClients(
-            (clientsResult.data ?? []).map((client) => ({
-              id: client.id,
-              companyName: client.companyName,
-            }))
-          );
-          setDashboard(dashboardResult.data);
-        }
+    void Promise.all([
+      listClients(),
+      getProductionDashboard({}),
+      listProjectManagers(),
+    ]).then(([clientsResult, dashboardResult, pmResult]) => {
+      if (!cancelled) {
+        setClients(
+          (clientsResult.data ?? []).map((client) => ({
+            id: client.id,
+            companyName: client.companyName,
+          }))
+        );
+        setDashboard(dashboardResult.data);
+        setPmOptions(pmResult.data ?? []);
       }
-    );
+    });
     return () => {
       cancelled = true;
     };
@@ -246,7 +250,7 @@ export function ProjectList() {
           label="PM"
           value={pmName}
           onChange={setPmName}
-          options={listProjectManagers()}
+          options={pmOptions}
         />
         <FormSelect
           id="project-filter-client"

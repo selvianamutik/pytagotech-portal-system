@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 
@@ -23,14 +23,31 @@ export function HandoverProjectSection({
   handoverId: string;
   handoverStatus: string;
 }) {
-  // Store mock dibaca sinkron (Fase 1) — tanpa effect.
   const user = useAuthStore((state) => state.user);
-  const [project] = useState<Project | null>(() => findProjectByHandover(handoverId));
+  const [project, setProject] = useState<Project | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const manageable = canManageProjects(user);
 
+  useEffect(() => {
+    let cancelled = false;
+    void findProjectByHandover(handoverId).then((found) => {
+      if (!cancelled) {
+        setProject(found);
+        setLoaded(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [handoverId]);
+
   // Seluruh seksi proyek disembunyikan untuk non-PM/Admin (permintaan pemilik).
   if (!manageable) {
+    return null;
+  }
+
+  if (!loaded) {
     return null;
   }
 

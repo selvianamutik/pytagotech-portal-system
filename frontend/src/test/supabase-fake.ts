@@ -567,8 +567,17 @@ export function seedCrmFake(): Partial<FakeDb> {
     },
     {
       id: "tm-fira",
-      profile_id: "user-1",
+      profile_id: null,
       name: "Fira",
+      status: "internal",
+      is_active: true,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: "tm-dinda",
+      profile_id: "user-1",
+      name: "Dinda Prameswari",
       status: "internal",
       is_active: true,
       created_at: createdAt,
@@ -886,6 +895,41 @@ export function seedCrmFake(): Partial<FakeDb> {
     },
   ];
 
+  const projects: Record<string, unknown>[] = [
+    {
+      id: "proj-1",
+      display_id: "PRJ-001",
+      name: "Website Katalog Yayasan - Yayasan Maju Bersama (PYT-2026-003)",
+      code: "PYT-2026-003",
+      client_id: "cli-2",
+      pm_id: "tm-raka",
+      start_date: "2026-09-22",
+      target_date: "2026-12-15",
+      value_idr: 25000000,
+      status: "Planning",
+      handover_id: "deal-3",
+      archived_at: null,
+      created_at: "2026-09-22T03:00:00Z",
+      updated_at: "2026-09-22T03:00:00Z",
+    },
+    {
+      id: "proj-2",
+      display_id: "PRJ-002",
+      name: "Landing Page Properti - PT Sinar Abadi Properti (PYT-2026-004)",
+      code: "PYT-2026-004",
+      client_id: "cli-1",
+      pm_id: "tm-dinda",
+      start_date: "2026-09-20",
+      target_date: "2027-01-31",
+      value_idr: 15000000,
+      status: "Active",
+      handover_id: "deal-4",
+      archived_at: null,
+      created_at: "2026-09-20T03:00:00Z",
+      updated_at: "2026-09-20T03:00:00Z",
+    },
+  ];
+
   const deal_features: Record<string, unknown>[] = [
     { deal_id: "deal-1", name: "Landing page", description: "Hero, layanan, galeri, kontak.", sort_order: 0 },
     { deal_id: "deal-1", name: "Katalog produk", description: "20 halaman + filter kategori + PDF.", sort_order: 1 },
@@ -1087,6 +1131,7 @@ export function seedCrmFake(): Partial<FakeDb> {
       lead_interests,
       clients,
       deals,
+      projects,
       deal_features,
       deal_versions,
       deal_payment_terms,
@@ -1227,6 +1272,50 @@ export function createSupabaseFake(seed: Partial<FakeDb>): {
             created_at: entry.created_at,
           }));
         return { data: rows, error: null };
+      }
+      if (name === "create_project_from_handover") {
+        const handoverId = String(args?.["handover_id"] ?? "");
+        const pmId = String(args?.["pm_id"] ?? "");
+        const startDate = String(args?.["start_date"] ?? "");
+        db.tables ??= {};
+        db.tables.projects ??= [];
+        const deal = (db.tables.deals ?? []).find(
+          (row) => row["id"] === handoverId
+        );
+        if (!deal || deal["status"] !== "Dikonfirmasi") {
+          return {
+            data: null,
+            error: { message: "Handover terkonfirmasi tidak ditemukan.", code: "22023" },
+          };
+        }
+        const existing = db.tables.projects.find(
+          (row) => row["handover_id"] === handoverId
+        );
+        if (existing) {
+          return { data: String(existing["id"]), error: null };
+        }
+        const client = (db.tables.clients ?? []).find(
+          (row) => row["id"] === deal["client_id"]
+        );
+        const now = new Date().toISOString();
+        const id = `proj-${db.tables.projects.length + 1}`;
+        db.tables.projects.push({
+          id,
+          display_id: `PRJ-${String(db.tables.projects.length + 1).padStart(3, "0")}`,
+          name: `${deal["title"]} - ${client?.["company_name"] ?? "Klien"} (${deal["code"]})`,
+          code: deal["code"],
+          client_id: deal["client_id"],
+          pm_id: pmId,
+          start_date: startDate,
+          target_date: deal["deadline"],
+          value_idr: deal["value_idr"],
+          status: "Planning",
+          handover_id: handoverId,
+          archived_at: null,
+          created_at: now,
+          updated_at: now,
+        });
+        return { data: id, error: null };
       }
       const tableByType: Record<string, string> = {
         lead: "leads",

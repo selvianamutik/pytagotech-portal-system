@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import { ProjectCalendar } from "@/components/proyek/project-calendar";
@@ -9,11 +9,19 @@ import { resetMockClients } from "@/services/clients";
 import { resetMockDeals } from "@/services/deals";
 
 beforeEach(() => {
+  // Kalender memakai tanggal hari ini sebagai kursor; kunci ke periode
+  // seed agar test tidak bergantung pada tanggal mesin.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-10-15T00:00:00Z"));
   resetMockClients();
   resetMockDeals();
   resetMockProjects();
   resetMockTasks();
   resetMockFeatures();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("ProjectCalendar universal", () => {

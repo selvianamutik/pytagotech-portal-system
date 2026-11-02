@@ -31,11 +31,11 @@ beforeEach(() => {
 });
 
 describe("listProjectManagers", () => {
-  it("berisi PM dan Super Admin aktif", () => {
-    const pms = listProjectManagers();
+  it("berisi PM dan Super Admin aktif", async () => {
+    const pms = await listProjectManagers();
 
-    expect(pms).toContain("Raka");
-    expect(pms).toContain("Dinda Prameswari");
+    expect(pms.data).toContain("Raka");
+    expect(pms.data).toContain("Dinda Prameswari");
   });
 });
 
@@ -56,7 +56,7 @@ describe("createProjectFromHandover", () => {
     expect(result.data?.value).toBe(45000000);
     expect(result.data?.targetDate).toBe("2026-12-20");
     expect(result.data?.status).toBe("Planning");
-    expect(findProjectByHandover("HDV-001")?.id).toBe(result.data?.id);
+    expect((await findProjectByHandover("HDV-001"))?.id).toBe(result.data?.id);
   });
 
   it("menolak handover belum Dikonfirmasi, ganda, PM asing, tanggal invalid", async () => {
