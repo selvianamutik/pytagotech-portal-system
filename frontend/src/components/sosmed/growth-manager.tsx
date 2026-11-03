@@ -34,6 +34,7 @@ import { netGrowth, NET_GROWTH_FORMULA, type AccountGrowth } from "@/types/growt
 export function GrowthManager() {
   const { options } = useMasterOptions();
   const [platform, setPlatform] = useState<string>("Instagram");
+  const [brand, setBrand] = useState<string>("Pytagotech");
   const [entries, setEntries] = useState<AccountGrowth[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -47,7 +48,7 @@ export function GrowthManager() {
   const [error, setError] = useState<string | null>(null);
 
   async function refresh(selected: string) {
-    const { data } = await listGrowth(selected);
+    const { data } = await listGrowth(selected, brand);
     if (data) {
       setEntries(data);
     }
@@ -55,7 +56,7 @@ export function GrowthManager() {
 
   useEffect(() => {
     let cancelled = false;
-    void listGrowth(platform || undefined).then(({ data }) => {
+    void listGrowth(platform || undefined, brand || undefined).then(({ data }) => {
       if (!cancelled) {
         setEntries(data ?? []);
         setLoading(false);
@@ -64,7 +65,7 @@ export function GrowthManager() {
     return () => {
       cancelled = true;
     };
-  }, [platform]);
+  }, [platform, brand]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -72,6 +73,7 @@ export function GrowthManager() {
     setError(null);
     const { error: recordError } = await recordGrowth({
       platform,
+      brand,
       month,
       followersStart: Number(followersStart),
       followersGained: Number(followersGained),
@@ -105,7 +107,7 @@ export function GrowthManager() {
         </Button>
       </div>
 
-      <div className="max-w-xs">
+      <div className="grid max-w-lg gap-3 sm:grid-cols-2">
         <FormSelect
           id="growth-platform"
           label="Platform"
@@ -113,6 +115,7 @@ export function GrowthManager() {
           onChange={setPlatform}
           options={options.platform}
         />
+        <FormSelect id="growth-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={options.brand} />
       </div>
 
       {loading ? (

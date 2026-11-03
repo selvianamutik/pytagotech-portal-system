@@ -6,6 +6,7 @@
 export interface AccountGrowth {
   id: string;
   platform: string;
+  brand: string;
   /** Bulan YYYY-MM. */
   month: string;
   followersStart: number;
@@ -17,6 +18,7 @@ export interface AccountGrowth {
 
 export interface GrowthInput {
   platform: string;
+  brand: string;
   month: string;
   followersStart: number;
   followersGained: number;

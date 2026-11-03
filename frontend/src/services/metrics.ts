@@ -1,139 +1,16 @@
-import { listPublications } from "@/services/publications";
+import { createClient } from "@/lib/supabase/client";
+import { resolveDisplayUuid } from "@/services/production-refs";
 import type { MetricInput, PostMetric } from "@/types/metric";
 import { FINAL_UNLOCK_ROLES } from "@/types/metric";
 import type { ServiceResult } from "@/services/result";
 
-/**
- * Lapisan analytics performa posting (US-035, FR-25).
- * Dedup KPI Final + kunci edit (kecuali role yang diizinkan).
- */
-
-let metricStore: PostMetric[] = [];
-
-/** Mengembalikan state mock ke awal — dipakai test dan demo. */
-export function resetMockMetrics(): void {
-  metricStore = [];
-}
-
-function validateMetricInput(input: MetricInput): string | null {
-  const fields: [string, number][] = [
-    ["Views/Impresi", input.views],
-    ["Reach", input.reach],
-    ["Likes", input.likes],
-    ["Comments", input.comments],
-    ["Shares", input.shares],
-    ["Saves", input.saves],
-  ];
-  for (const [label, value] of fields) {
-    if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
-      return `${label} harus bilangan bulat ≥ 0.`;
-    }
-  }
-  if (input.snapshot !== "Monitoring" && input.snapshot !== "Final") {
-    return "Snapshot harus Monitoring atau Final.";
-  }
-  return null;
-}
-
-function canUnlockFinal(roles: string[]): boolean {
-  return roles.some((role) => (FINAL_UNLOCK_ROLES as readonly string[]).includes(role));
-}
-
-export async function listMetrics(
-  publicationId?: string
-): Promise<ServiceResult<PostMetric[]>> {
-  const items = publicationId
-    ? metricStore.filter((metric) => metric.publicationId === publicationId)
-    : metricStore;
-  return {
-    data: [...items]
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map((metric) => ({ ...metric })),
-    error: null,
-  };
-}
-
-export async function recordMetric(
-  publicationId: string,
-  input: MetricInput,
-  recordedBy: string
-): Promise<ServiceResult<PostMetric>> {
-  const { data: publications } = await listPublications();
-  if (!(publications ?? []).some((publication) => publication.id === publicationId)) {
-    return { data: null, error: "Publikasi tidak ditemukan." };
-  }
-  const validationError = validateMetricInput(input);
-  if (validationError) {
-    return { data: null, error: validationError };
-  }
-  if (
-    input.snapshot === "Final" &&
-    metricStore.some(
-      (metric) => metric.publicationId === publicationId && metric.snapshot === "Final"
-    )
-  ) {
-    return { data: null, error: "Publikasi ini sudah memiliki snapshot KPI Final." };
-  }
-  const metric: PostMetric = {
-    id: `MET-${String(metricStore.length + 1).padStart(3, "0")}`,
-    publicationId,
-    ...input,
-    recordedBy,
-    createdAt: new Date().toISOString(),
-  };
-  metricStore.push(metric);
-  return { data: { ...metric }, error: null };
-}
-
-export async function updateMetric(
-  metricId: string,
-  input: MetricInput,
-  actorRoles: string[]
-): Promise<ServiceResult<PostMetric>> {
-  const metric = metricStore.find((item) => item.id === metricId);
-  if (!metric) {
-    return { data: null, error: "Metrik tidak ditemukan." };
-  }
-  if (metric.snapshot === "Final" && !canUnlockFinal(actorRoles)) {
-    return {
-      data: null,
-      error: "Snapshot Final terkunci. Hanya Super Admin / Leader yang dapat mengubah.",
-    };
-  }
-  const validationError = validateMetricInput(input);
-  if (validationError) {
-    return { data: null, error: validationError };
-  }
-  if (
-    input.snapshot === "Final" &&
-    metric.snapshot !== "Final" &&
-    metricStore.some(
-      (item) =>
-        item.id !== metricId &&
-        item.publicationId === metric.publicationId &&
-        item.snapshot === "Final"
-    )
-  ) {
-    return { data: null, error: "Publikasi ini sudah memiliki snapshot KPI Final." };
-  }
-  Object.assign(metric, input);
-  return { data: { ...metric }, error: null };
-}
-
-export async function deleteMetric(
-  metricId: string,
-  actorRoles: string[]
-): Promise<ServiceResult<true>> {
-  const index = metricStore.findIndex((item) => item.id === metricId);
-  if (index === -1) {
-    return { data: null, error: "Metrik tidak ditemukan." };
-  }
-  if (metricStore[index]?.snapshot === "Final" && !canUnlockFinal(actorRoles)) {
-    return {
-      data: null,
-      error: "Snapshot Final terkunci. Hanya Super Admin / Leader yang dapat menghapus.",
-    };
-  }
-  metricStore.splice(index, 1);
-  return { data: true, error: null };
-}
+type Row = Record<string, unknown> & { id: string; publication_id: string; views: number; reach: number; likes: number; comments: number; shares: number; saves: number; snapshot: PostMetric["snapshot"]; created_at: string };
+export function resetMockMetrics(): void {}
+function validate(input: MetricInput): string | null { for (const [name, value] of Object.entries({ "Views/Impresi": input.views, Reach: input.reach, Likes: input.likes, Comments: input.comments, Shares: input.shares, Saves: input.saves })) if (!Number.isInteger(value) || value < 0) return `${name} harus bilangan bulat ≥ 0.`; return input.snapshot === "Monitoring" || input.snapshot === "Final" ? null : "Snapshot harus Monitoring atau Final."; }
+async function map(row: Row): Promise<PostMetric> { const { data } = await createClient().from("publications").select("display_id").eq("id", row.publication_id).limit(1); const { data: member } = await createClient().from("team_members").select("name").eq("id", row.recorded_by as string).limit(1); return { id: row.id, publicationId: ((data ?? []) as { display_id: string }[])[0]?.display_id ?? row.publication_id, views: Number(row.views_impressions), reach: Number(row.reach), likes: Number(row.likes), comments: Number(row.comments), shares: Number(row.shares), saves: Number(row.saves), snapshot: row.snapshot, recordedBy: ((member ?? []) as { name: string }[])[0]?.name ?? "", createdAt: row.created_at }; }
+const payload = (input: MetricInput) => ({ views_impressions: input.views, reach: input.reach, likes: input.likes, comments: input.comments, shares: input.shares, saves: input.saves, snapshot: input.snapshot });
+export async function listMetrics(publicationId?: string): Promise<ServiceResult<PostMetric[]>> { const db = createClient(); let q = db.from("post_metrics").select("*").order("created_at", { ascending: false }); if (publicationId) { const id = await resolveDisplayUuid("publications", publicationId, "Publikasi"); if (!id.data) return { data: null, error: id.error }; q = q.eq("publication_id", id.data); } const { data, error } = await q; return error ? { data: null, error: error.message } : { data: await Promise.all(((data ?? []) as Row[]).map(map)), error: null }; }
+export async function recordMetric(publicationId: string, input: MetricInput, recordedBy: string): Promise<ServiceResult<PostMetric>> { const invalid = validate(input); if (invalid) return { data: null, error: invalid }; const db = createClient(); const [publication, member] = await Promise.all([resolveDisplayUuid("publications", publicationId, "Publikasi"), db.from("team_members").select("id").eq("name", recordedBy).limit(1)]); if (!publication.data) return { data: null, error: publication.error }; if (input.snapshot === "Final") { const { data: finalRows, error: finalError } = await db.from("post_metrics").select("id").eq("publication_id", publication.data).eq("snapshot", "Final").limit(1); if (finalError) return { data: null, error: finalError.message }; if ((finalRows ?? []).length) return { data: null, error: "Publikasi ini sudah memiliki snapshot KPI Final." }; } const memberId = ((member.data ?? []) as { id: string }[])[0]?.id ?? null; const { data, error } = await db.from("post_metrics").insert({ ...payload(input), publication_id: publication.data, recorded_by: memberId }).select("*").single(); return error ? { data: null, error: error.message } : { data: await map(data as Row), error: null }; }
+function canUnlock(roles: string[]) { return roles.some((role) => (FINAL_UNLOCK_ROLES as readonly string[]).includes(role)); }
+export async function updateMetric(id: string, input: MetricInput, roles: string[]): Promise<ServiceResult<PostMetric>> { const current = await createClient().from("post_metrics").select("*").eq("id", id).single(); if (current.error) return { data: null, error: current.error.message }; if ((current.data as Row).snapshot === "Final" && !canUnlock(roles)) return { data: null, error: "Snapshot Final terkunci. Hanya Super Admin / Leader yang dapat mengubah." }; const invalid = validate(input); if (invalid) return { data: null, error: invalid }; const { data, error } = await createClient().from("post_metrics").update(payload(input)).eq("id", id).select("*").single(); return error ? { data: null, error: error.message } : { data: await map(data as Row), error: null }; }
+export async function deleteMetric(id: string, roles: string[]): Promise<ServiceResult<true>> { const current = await createClient().from("post_metrics").select("snapshot").eq("id", id).single(); if (current.error) return { data: null, error: current.error.message }; if (current.data?.snapshot === "Final" && !canUnlock(roles)) return { data: null, error: "Snapshot Final terkunci. Hanya Super Admin / Leader yang dapat menghapus." }; const { error } = await createClient().from("post_metrics").delete().eq("id", id); return error ? { data: null, error: error.message } : { data: true, error: null }; }

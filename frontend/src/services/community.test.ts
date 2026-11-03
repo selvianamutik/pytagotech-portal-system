@@ -33,6 +33,7 @@ describe("recordInteraction", () => {
     const result = await recordInteraction({
       channel: "DM",
       platform: "Instagram",
+      brand: "Pytagotech",
       type: "Spam",
       receivedAt: "2026-10-04T03:00:00Z",
       handler: "Alya",
@@ -44,6 +45,7 @@ describe("recordInteraction", () => {
         await recordInteraction({
           channel: "email",
           platform: "Instagram",
+          brand: "Pytagotech",
           type: "Spam",
           receivedAt: "2026-10-04T03:00:00Z",
           handler: "Alya",
@@ -55,6 +57,7 @@ describe("recordInteraction", () => {
         await recordInteraction({
           channel: "DM",
           platform: "Instagram",
+          brand: "Pytagotech",
           type: "Spam",
           receivedAt: "2026-10-04T03:00:00Z",
           repliedAt: "2026-10-04T02:00:00Z",

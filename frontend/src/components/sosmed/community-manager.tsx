@@ -51,6 +51,7 @@ export function CommunityManager() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [channel, setChannel] = useState("");
   const [platform, setPlatform] = useState("");
+  const [brand, setBrand] = useState("");
   const [type, setType] = useState("");
   const [receivedAt, setReceivedAt] = useState("");
   const [handler, setHandler] = useState("");
@@ -104,6 +105,7 @@ export function CommunityManager() {
     const { error: recordError } = await recordInteraction({
       channel,
       platform,
+      brand,
       type,
       receivedAt,
       handler,
@@ -238,6 +240,7 @@ export function CommunityManager() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <FormSelect id="int-channel" label="Kanal" value={channel} onChange={setChannel} options={INTERACTION_CHANNELS} required />
             <FormSelect id="int-platform" label="Platform" value={platform} onChange={setPlatform} options={options.platform} required />
+            <FormSelect id="int-brand" label="Lini bisnis" value={brand} onChange={setBrand} options={options.brand} required />
             <FormSelect id="int-type" label="Tipe" value={type} onChange={setType} options={INTERACTION_TYPES} required />
             <div className="space-y-2">
               <label htmlFor="int-received" className="text-sm font-medium">

@@ -1,93 +1,10 @@
+import { createClient } from "@/lib/supabase/client";
 import type { AccountGrowth, GrowthInput } from "@/types/growth";
-import { isSosmedPlatform } from "@/types/sosmed";
+import { isSosmedBrand, isSosmedPlatform } from "@/types/sosmed";
 import type { ServiceResult } from "@/services/result";
-
-/** Lapisan pertumbuhan akun bulanan (US-036). Satu baris per platform/bulan. */
-
-let growthStore: AccountGrowth[] = [];
-
-/** Mengembalikan state mock ke awal — dipakai test dan demo. */
-export function resetMockGrowth(): void {
-  growthStore = [
-    {
-      id: "GRO-001",
-      platform: "Instagram",
-      month: "2026-08",
-      followersStart: 10000,
-      followersGained: 800,
-      unfollows: 200,
-      reach: 120000,
-      profileVisits: 5000,
-    },
-    {
-      id: "GRO-002",
-      platform: "Instagram",
-      month: "2026-09",
-      followersStart: 10600,
-      followersGained: 900,
-      unfollows: 150,
-      reach: 140000,
-      profileVisits: 6200,
-    },
-  ];
-}
-
-resetMockGrowth();
-
-function validateGrowthInput(input: GrowthInput): string | null {
-  if (!isSosmedPlatform(input.platform)) {
-    return "Platform tidak dikenal.";
-  }
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(input.month)) {
-    return "Bulan harus format YYYY-MM.";
-  }
-  const fields: [string, number][] = [
-    ["Followers Awal", input.followersStart],
-    ["Followers Masuk", input.followersGained],
-    ["Unfollows", input.unfollows],
-    ["Account Reach", input.reach],
-    ["Profile Visits", input.profileVisits],
-  ];
-  for (const [label, value] of fields) {
-    if (!Number.isInteger(value) || value < 0) {
-      return `${label} harus bilangan bulat ≥ 0.`;
-    }
-  }
-  return null;
-}
-
-export async function listGrowth(
-  platform?: string
-): Promise<ServiceResult<AccountGrowth[]>> {
-  const items = platform
-    ? growthStore.filter((entry) => entry.platform === platform)
-    : growthStore;
-  return {
-    data: [...items]
-      .sort((a, b) => a.month.localeCompare(b.month))
-      .map((entry) => ({ ...entry })),
-    error: null,
-  };
-}
-
-export async function recordGrowth(
-  input: GrowthInput
-): Promise<ServiceResult<AccountGrowth>> {
-  const validationError = validateGrowthInput(input);
-  if (validationError) {
-    return { data: null, error: validationError };
-  }
-  if (
-    growthStore.some(
-      (entry) => entry.platform === input.platform && entry.month === input.month
-    )
-  ) {
-    return { data: null, error: "Data bulan ini untuk platform tersebut sudah ada." };
-  }
-  const entry: AccountGrowth = {
-    id: `GRO-${String(growthStore.length + 1).padStart(3, "0")}`,
-    ...input,
-  };
-  growthStore.push(entry);
-  return { data: { ...entry }, error: null };
-}
+type Row = Record<string, unknown> & { platform: string; brand: string; month: string; followers_start: number; followers_gained: number; unfollows: number; reach: number; profile_visits: number };
+export function resetMockGrowth(): void {}
+function validate(i: GrowthInput) { if (!isSosmedPlatform(i.platform)) return "Platform tidak dikenal."; if (!isSosmedBrand(i.brand)) return "Lini bisnis tidak dikenal."; if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(i.month)) return "Bulan harus format YYYY-MM."; for (const [name, value] of Object.entries({ "Followers Awal": i.followersStart, "Followers Masuk": i.followersGained, Unfollows: i.unfollows, "Account Reach": i.reach, "Profile Visits": i.profileVisits })) if (!Number.isInteger(value) || value < 0) return `${name} harus bilangan bulat ≥ 0.`; return null; }
+const map = (r: Row): AccountGrowth => ({ id: `${r.platform}/${r.brand}/${r.month}`, platform: r.platform, brand: r.brand, month: r.month, followersStart: Number(r.followers_start), followersGained: Number(r.followers_gained), unfollows: Number(r.unfollows), reach: Number(r.account_reach), profileVisits: Number(r.profile_visits) });
+export async function listGrowth(platform?: string, brand?: string): Promise<ServiceResult<AccountGrowth[]>> { let q = createClient().from("account_growth").select("*").order("month"); if (platform) q = q.eq("platform", platform); if (brand) q = q.eq("brand", brand); const { data, error } = await q; return error ? { data: null, error: error.message } : { data: ((data ?? []) as Row[]).map(map), error: null }; }
+export async function recordGrowth(input: GrowthInput): Promise<ServiceResult<AccountGrowth>> { const invalid = validate(input); if (invalid) return { data: null, error: invalid }; const db = createClient(); const { data: existing, error: lookupError } = await db.from("account_growth").select("platform").eq("platform", input.platform).eq("brand", input.brand).eq("month", input.month).limit(1); if (lookupError) return { data: null, error: lookupError.message }; if ((existing ?? []).length) return { data: null, error: "Data bulan ini untuk platform dan lini bisnis tersebut sudah ada." }; const { data, error } = await db.from("account_growth").insert({ platform: input.platform, brand: input.brand, month: input.month, followers_start: input.followersStart, followers_gained: input.followersGained, unfollows: input.unfollows, account_reach: input.reach, profile_visits: input.profileVisits }).select("*").single(); return error ? { data: null, error: error.message } : { data: map(data as Row), error: null }; }

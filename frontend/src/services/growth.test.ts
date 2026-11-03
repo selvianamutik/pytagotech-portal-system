@@ -20,6 +20,7 @@ describe("growth CRUD", () => {
 
     const result = await recordGrowth({
       platform: "TikTok",
+      brand: "Pytagotech",
       month: "2026-09",
       followersStart: 5000,
       followersGained: 700,
@@ -33,6 +34,7 @@ describe("growth CRUD", () => {
       (
         await recordGrowth({
           platform: "Instagram",
+          brand: "Pytagotech",
           month: "2026-09",
           followersStart: 1,
           followersGained: 1,
@@ -46,6 +48,7 @@ describe("growth CRUD", () => {
       (
         await recordGrowth({
           platform: "Instagram",
+          brand: "Pytagotech",
           month: "2026-13",
           followersStart: 1,
           followersGained: 1,

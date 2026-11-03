@@ -21,6 +21,7 @@ export interface CommunityInteraction {
   id: string;
   channel: InteractionChannel;
   platform: string;
+  brand: string;
   type: InteractionType;
   /** ISO datetime waktu masuk. */
   receivedAt: string;
@@ -32,6 +33,7 @@ export interface CommunityInteraction {
 export interface InteractionInput {
   channel: string;
   platform: string;
+  brand: string;
   type: string;
   receivedAt: string;
   repliedAt?: string;
