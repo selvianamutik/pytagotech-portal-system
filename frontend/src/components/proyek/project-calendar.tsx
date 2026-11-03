@@ -29,6 +29,26 @@ interface CalendarItem {
   href: string;
 }
 
+/** Tinggi satu baris minggu pada grid hari (px) — dipakai untuk posisi bar. */
+const ROW_HEIGHT = 96;
+/** Ruang grid antar sel (gap-px = 1px). */
+const GAP = 1;
+/** Ruang di atas bar untuk nomor tanggal. */
+const TOP_RESERVED = 22;
+/** Tinggi satu bar event yang menyatu antartanggal. */
+const BAR_HEIGHT = 32;
+/** Jarak vertikal antar bar dalam lane yang sama. */
+const BAR_STRIDE = 34;
+
+interface PlacedEvent {
+  key: string;
+  item: CalendarItem;
+  leftPct: number;
+  widthPct: number;
+  top: number;
+  height: number;
+}
+
 function monthStart(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
 }
@@ -190,17 +210,74 @@ export function ProjectCalendar({ projectId }: { projectId?: string }) {
     return Array.from({ length: 42 }, (_, index) => toIso(addDays(gridStart, index)));
   }, [cursor, view]);
 
-  const byDate = useMemo(() => {
-    const map = new Map<string, CalendarItem[]>();
+  /**
+   * Petakan tiap task/fitur ke satu/lebih bar kontinu yang membentang
+   * lintas hari (ala merge sel Excel). Satu item multi-hari tidak lagi
+   * diulang per hari, melainkan dirender sebagai satu bar panjang.
+   * Bar yang melewati batas minggu dipecah per baris; lane assignment
+   * greedy mencegah tumpang-tindih vertikal dalam baris yang sama.
+   */
+  const placedEvents = useMemo<PlacedEvent[]>(() => {
+    const rows = days.length / 7;
+    const firstDay = days[0];
+    const dayDiff = (a: string, b: string) =>
+      Math.round(
+        (new Date(`${a}T00:00:00Z`).getTime() - new Date(`${b}T00:00:00Z`).getTime()) /
+          (24 * 60 * 60 * 1000)
+      );
+
+    const byRow: { startCol: number; endCol: number; event: PlacedEvent }[][] =
+      Array.from({ length: rows }, () => []);
+
     for (const item of items) {
-      for (let day = item.startDate; day <= item.endDate; day = shiftDate(day, 1)) {
-        const list = map.get(day) ?? [];
-        list.push(item);
-        map.set(day, list);
+      const startIdx = dayDiff(item.startDate, firstDay);
+      const endIdx = dayDiff(item.endDate, firstDay);
+      // Di luar jendela tanggal terlihat — lewati.
+      if (endIdx < 0 || startIdx >= days.length) {
+        continue;
+      }
+      const visibleStart = Math.max(startIdx, 0);
+      const visibleEnd = Math.min(endIdx, days.length - 1);
+      const firstRow = Math.floor(visibleStart / 7);
+      const lastRow = Math.floor(visibleEnd / 7);
+      for (let row = firstRow; row <= lastRow; row++) {
+        const startCol = row === firstRow ? visibleStart - row * 7 : 0;
+        const endCol = row === lastRow ? visibleEnd - row * 7 : 6;
+        byRow[row].push({
+          startCol,
+          endCol,
+          event: {
+            key: `${item.key}-${row}`,
+            item,
+            leftPct: (startCol / 7) * 100,
+            widthPct: ((endCol - startCol + 1) / 7) * 100,
+            top: 0,
+            height: BAR_HEIGHT,
+          },
+        });
       }
     }
-    return map;
-  }, [items]);
+
+    const result: PlacedEvent[] = [];
+    byRow.forEach((segments, row) => {
+      const sorted = [...segments].sort((a, b) => a.startCol - b.startCol);
+      const laneEnds: number[] = [];
+      for (const segment of sorted) {
+        let lane = laneEnds.findIndex((end) => end < segment.startCol);
+        if (lane === -1) {
+          lane = laneEnds.length;
+          laneEnds.push(segment.endCol);
+        } else {
+          laneEnds[lane] = segment.endCol;
+        }
+        result.push({
+          ...segment.event,
+          top: row * (ROW_HEIGHT + GAP) + TOP_RESERVED + lane * BAR_STRIDE,
+        });
+      }
+    });
+    return result;
+  }, [items, days]);
 
   async function handleDrop(item: CalendarItem, date: string) {
     setError(null);
@@ -346,56 +423,69 @@ export function ProjectCalendar({ projectId }: { projectId?: string }) {
                   </p>
                 ))}
               </div>
-              <div className="grid grid-cols-7 gap-px bg-border">
-                {days.map((day) => (
-                  <div
-                    key={day}
-                    className="min-h-20 bg-card p-1"
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      try {
-                        const dropped = JSON.parse(
-                          event.dataTransfer.getData("text/plain")
-                        ) as { key: string; id: string; kind: string };
-                        const item = items.find((candidate) => candidate.key === dropped.key);
-                        if (item) {
-                          void handleDrop(item, day);
+              <div className="relative">
+                <div className="grid grid-cols-7 gap-px bg-border">
+                  {days.map((day) => (
+                    <div
+                      key={day}
+                      style={{ height: ROW_HEIGHT }}
+                      className="bg-card p-1"
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        try {
+                          const dropped = JSON.parse(
+                            event.dataTransfer.getData("text/plain")
+                          ) as { key: string; id: string; kind: string };
+                          const item = items.find((candidate) => candidate.key === dropped.key);
+                          if (item) {
+                            void handleDrop(item, day);
+                          }
+                        } catch {
+                          // Payload drag asing — abaikan.
                         }
-                      } catch {
-                        // Payload drag asing — abaikan.
-                      }
-                    }}
-                  >
-                    <p className="text-xs text-muted-foreground">{day.slice(8, 10)}</p>
-                    <div className="space-y-1">
-                      {(byDate.get(day) ?? []).map((entry) => (
-                        <Link
-                          key={`${day}-${entry.key}`}
-                          href={entry.href}
-                          draggable
-                          onDragStart={(event) => {
-                            event.dataTransfer.setData(
-                              "text/plain",
-                              JSON.stringify({ key: entry.key, id: entry.id, kind: entry.kind })
-                            );
-                          }}
-                          className={`block truncate rounded px-1.5 py-0.5 text-[11px] leading-4 ${
-                            entry.kind === "task"
-                              ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300"
-                              : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                          }`}
-                          title={`${entry.label} (${entry.sub})`}
-                        >
-                          <span className="block truncate font-medium">{entry.label}</span>
-                          {entry.pic ? (
-                            <span className="block truncate opacity-80">👤 {entry.pic}</span>
-                          ) : null}
-                        </Link>
-                      ))}
+                      }}
+                    >
+                      <p className="text-xs text-muted-foreground">{day.slice(8, 10)}</p>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <div className="pointer-events-none absolute inset-0">
+                  {placedEvents.map((entry) => (
+                    <Link
+                      key={entry.key}
+                      href={entry.item.href}
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData(
+                          "text/plain",
+                          JSON.stringify({
+                            key: entry.item.key,
+                            id: entry.item.id,
+                            kind: entry.item.kind,
+                          })
+                        );
+                      }}
+                      style={{
+                        left: `${entry.leftPct}%`,
+                        width: `${entry.widthPct}%`,
+                        top: entry.top,
+                        height: entry.height,
+                      }}
+                      className={`pointer-events-auto absolute block overflow-hidden rounded border border-white/50 px-1.5 py-0.5 text-[11px] leading-4 ${
+                        entry.item.kind === "task"
+                          ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300"
+                          : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                      }`}
+                      title={`${entry.item.label} (${entry.item.sub})`}
+                    >
+                      <span className="block truncate font-medium">{entry.item.label}</span>
+                      {entry.item.pic ? (
+                        <span className="block truncate opacity-80">👤 {entry.item.pic}</span>
+                      ) : null}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           )}
