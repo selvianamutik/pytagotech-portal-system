@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { FormSelect } from "@/components/crm/lead-table";
 import { useMasterOptions } from "@/hooks/use-master-options";
+import { usePersistQueue } from "@/hooks/use-persist-queue";
 import {
   getPipeline,
   moveInterestStage,
@@ -63,6 +64,17 @@ export function InterestPipeline() {
     }
   }
 
+  // Perpindahan tahap diantrekan: UI pindah seketika (optimis), server
+  // menerima tahap final setelah user diam 500ms (gerakan beruntun digabung).
+  const { enqueue } = usePersistQueue<InterestStage>({
+    delay: 500,
+    persist: async (leadId, stage) => {
+      const { error: moveError } = await moveInterestStage(leadId, stage);
+      return { error: moveError };
+    },
+    onError: (message) => setError(message),
+  });
+
   useEffect(() => {
     let cancelled = false;
     void getPipeline().then(({ data }) => {
@@ -77,14 +89,13 @@ export function InterestPipeline() {
     };
   }, []);
 
-  async function handleDrop(stage: InterestStage, leadId: string) {
+  function handleDrop(stage: InterestStage, leadId: string) {
     setError(null);
-    const { error: moveError } = await moveInterestStage(leadId, stage);
-    if (moveError) {
-      setError(moveError);
-      return;
-    }
-    await refresh();
+    // Optimis: pindahkan kartu sekarang juga tanpa menunggu server.
+    setCards((prev) =>
+      prev.map((card) => (card.lead.id === leadId ? { ...card, stage } : card))
+    );
+    enqueue(leadId, stage);
   }
 
   function openEdit(card: PipelineCard) {
@@ -179,7 +190,7 @@ export function InterestPipeline() {
                   event.preventDefault();
                   const leadId = event.dataTransfer.getData("text/plain");
                   if (leadId) {
-                    void handleDrop(stage as InterestStage, leadId);
+                    handleDrop(stage as InterestStage, leadId);
                   }
                 }}
               >
