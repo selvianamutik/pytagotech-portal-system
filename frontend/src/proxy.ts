@@ -40,6 +40,6 @@ export const config = {
      * - favicon.ico (favicon)
      * Silakan ubah pola ini bila perlu.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/health|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
