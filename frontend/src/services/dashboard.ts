@@ -49,6 +49,7 @@ const NAVIGATION: NavigationItem[] = [
   { label: "Panduan & RACI", module: "Pengaturan", href: "/pengaturan/panduan", roles: ["Super Admin"] },
   { label: "Master Data", module: "Pengaturan", href: "/pengaturan/master-data", roles: ["Super Admin"] },
   { label: "KPI, SLA & Routing", module: "Pengaturan", href: "/pengaturan/kpi-sla", roles: ["Super Admin"] },
+  { label: "Reset Data Demo", module: "Pengaturan", href: "/pengaturan/reset-data", roles: ["Super Admin"] },
 ];
 
 interface ProfileRow {
