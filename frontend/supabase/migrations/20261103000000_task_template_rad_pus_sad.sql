@@ -68,7 +68,7 @@ begin
   end if;
   select * into deal_record from public.deals where id = handover_id and status = 'Dikonfirmasi' for update;
   if not found then raise exception 'Handover terkonfirmasi tidak ditemukan.' using errcode = '22023'; end if;
-  select p.id into project_id from public.projects p where p.handover_id = handover_id limit 1;
+  select p.id into project_id from public.projects p where p.handover_id = create_project_from_handover.handover_id limit 1;
   if project_id is not null then return project_id; end if;
   if start_date > deal_record.deadline then raise exception 'Tanggal mulai proyek tidak boleh melewati deadline.' using errcode = '23514'; end if;
   select c.company_name into client_name from public.clients c where c.id = deal_record.client_id;
@@ -77,8 +77,8 @@ begin
   returning id into project_id;
   insert into public.tasks (project_id, title, start_date, target_date)
   select project_id, tt.name,
-    private.add_workdays(start_date, coalesce((select sum(previous.duration_days) from public.task_templates previous where previous.is_active and previous.ord < tt.ord), 0)),
-    private.add_workdays(start_date, coalesce((select sum(previous.duration_days) from public.task_templates previous where previous.is_active and previous.ord < tt.ord), 0) + tt.duration_days - 1)
+    private.add_workdays(start_date, coalesce((select sum(previous.duration_days)::integer from public.task_templates previous where previous.is_active and previous.ord < tt.ord), 0)),
+    private.add_workdays(start_date, coalesce((select sum(previous.duration_days)::integer from public.task_templates previous where previous.is_active and previous.ord < tt.ord), 0) + tt.duration_days - 1)
   from public.task_templates tt where tt.is_active order by tt.ord;
   insert into public.features (project_id, name, category, priority, estimate_days, source)
   select project_id, df.name, 'Backend', 'Medium', 1, 'handover' from public.deal_features df where df.deal_id = handover_id;
