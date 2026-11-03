@@ -276,3 +276,68 @@
   - C: paling sesuai AC2 + PRD, tetapi menambah migration, RPC, perubahan service, dan verifikasi ulang.
 - **Catatan:** Tidak ada policy, migration, atau frontend yang diubah sampai pemilik memilih. `db reset` dari database kosong masih belum bisa dijalankan karena Docker/Supabase CLI/WSL tidak tersedia; verifikasi live dipakai sebagai bukti sementara.
 - **Jawaban:** Pemilik memilih **opsi A (pertahankan role-based)** pada 2026-10-27. AC2 US-003 direvisi lewat **CR-003**: Sales/Marketing dapat mengubah lead dan Project Manager dapat mengubah proyek sesuai batas role modul; Super Admin penuh. PRD telah diperbarui oleh pemilik pada 2026-10-27; **US-003 DONE 4/4**.
+
+---
+
+## Q-020 — [OPEN] — Deploy target
+
+- **Terkait:** Gate 4 — Deploy Ready (Bagian 8, docs/DEPLOYMENT.md)
+- **Pertanyaan:** Frontend Next.js di-deploy ke mana?
+- **Opsi yang dipertimbangkan:**
+  - A) Vercel (managed, paling cepat, dukungan Next.js penuh)
+  - B) VPS + Docker (kontrol penuh, self-host)
+- **Dampak jika salah:** Menentukan CI/CD, konfigurasi env, domain, dan prosedur rollback.
+
+---
+
+## Q-021 — [OPEN] — Plan Supabase
+
+- **Terkait:** Gate 4; Q-018 (backup/PITR); residual Gate 3
+- **Pertanyaan:** Plan Supabase mana yang dipakai untuk produksi?
+- **Opsi yang dipertimbangkan:** Free / Pro / Team.
+- **Dampak jika salah:** Plan Free tidak bisa mengunduh backup (Q-018 mensyaratkan backup harian 7 hari + bulanan 12 bulan) dan PITR tidak tersedia; rate-limit Free juga memicu intermitten 404 saat verifikasi RLS live. Pro memasukkan backup download + PITR → memenuhi Q-018.
+
+---
+
+## Q-022 — [OPEN] — Project Supabase produksi
+
+- **Terkait:** Gate 4
+- **Pertanyaan:** Project Supabase produksi: pakai project ycqgtazlcxbedfoykhpl yang terhubung saat ini, atau buat project baru khusus produksi?
+- **Dampak jika salah:** Tujuan db push (migration termasuk Q-005) dan nilai env berbeda.
+
+---
+
+## Q-023 — [OPEN] — Domain & environment
+
+- **Terkait:** Gate 4
+- **Pertanyaan:** Apakah perlu environment staging vs production terpisah, dan custom domain apa yang dipakai?
+- **Opsi yang dipertimbangkan:** A) prod saja; B) staging + prod.
+- **Dampak jika salah:** Butuh 1 vs 2 project Supabase + konfigurasi domain, memengaruhi rollback.
+
+---
+
+## Q-024 — [OPEN] — Email provider Auth
+
+- **Terkait:** US-002 (invite user, reset password)
+- **Pertanyaan:** Email invite/reset password lewat SMTP apa?
+- **Opsi yang dipertimbangkan:** A) default supabase.co (rate limit, bukan domain sendiri); B) SMTP custom (Resend/SendGrid, pakai domain sendiri).
+- **Dampak jika salah:** Email invite/reset bisa masuk spam atau tidak terkirim di produksi.
+
+---
+
+## Q-025 — [OPEN] — Akun pilot & strategi seed
+
+- **Terkait:** Gate 4 smoke test + go-live
+- **Pertanyaan:** Siapa user pertama per role (akun pilot), dan konfirmasi strategi "tanpa migrasi data lama" tetap berlaku?
+- **Opsi yang dipertimbangkan:** A) mulai nol sesuai Non-Goals PRD; B) seed beberapa data contoh untuk demo/pilot.
+- **Dampak jika salah:** Smoke test butuh akun nyata per role; data seed menentukan hasil uji browser.
+
+---
+
+## Q-026 — [OPEN] — CI/CD, secrets & monitoring
+
+- **Terkait:** Gate 4
+- **Pertanyaan:** Apakah remote GitHub / runner CI tersedia, dan butuh monitoring error apa (Sentry/alternatif)?
+- **Opsi yang dipertimbangkan:** A) GitHub Actions + Vercel; B) manual deploy.
+- **Dampak jika salah:** Deploy otomatis tidak berjalan; tidak ada observability error produksi.
+
