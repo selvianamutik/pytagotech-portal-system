@@ -17,10 +17,7 @@ import { FormSelect } from "@/components/crm/lead-table";
 import { createDeal, updateDeal } from "@/services/deals";
 import type { CreateDealInput, DealFeature, DealHandover } from "@/types/deal";
 
-/**
- * Panduan pengisian interim (US-015) — diturunkan dari field PRD.
- * Akan diganti SOP resmi dari sheet "Read me" setelah Q-012 dijawab.
- */
+/** Panduan pengisian ringkas per field (Q-012 opsi B). */
 const SOP_GUIDE: { field: string; hint: string }[] = [
   { field: "Judul proyek", hint: "Nama singkat hasil akhir, tanpa nama klien (otomatis digabung)." },
   { field: "Kode proyek", hint: "Unik, format PYT-TAHUN-NOMOR. Tidak bisa diubah setelah dipakai." },
@@ -173,7 +170,7 @@ export function HandoverForm({ open, onOpenChange, initial, clients, onSaved }: 
             </div>
             <div className="space-y-2">
               <label htmlFor="deal-value" className="text-sm font-medium">Nilai deal (IDR)</label>
-              <Input id="deal-value" type="number" min="1" step="1000" placeholder="45000000" value={value} onChange={(event) => setValue(event.target.value)} required />
+              <Input id="deal-value" type="number" min="1" placeholder="45000000" value={value} onChange={(event) => setValue(event.target.value)} required />
             </div>
             <div className="space-y-2">
               <label htmlFor="deal-scheme" className="text-sm font-medium">Skema termin</label>
@@ -199,7 +196,7 @@ export function HandoverForm({ open, onOpenChange, initial, clients, onSaved }: 
           <aside aria-label="Panduan pengisian" className="h-fit rounded-xl border bg-muted/40 p-3 md:sticky md:top-4">
             <p className="text-sm font-semibold">Panduan pengisian</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Interim dari PRD — SOP resmi menyusul (Q-012).
+              Ringkasan aturan pengisian untuk setiap field.
             </p>
             <ul className="mt-2 space-y-2">
               {SOP_GUIDE.map((guide) => (

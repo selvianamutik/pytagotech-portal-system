@@ -1,5 +1,4 @@
 import { createClient as getSupabaseClient } from "@/lib/supabase/client";
-import { logAudit } from "@/services/audit";
 import { pushNotification } from "@/services/collaboration";
 import { applyApprovedChangeRequest, getDeal } from "@/services/deals";
 import type {
@@ -220,16 +219,6 @@ export async function decideChangeRequest(
       actorName: input.actor.name,
     });
   }
-
-  await logAudit({
-    actorId: input.actor.id,
-    actorName: input.actor.name,
-    action: "deal.change-request",
-    entityType: "deal",
-    entityId: dealDisplayId,
-    oldValue: "Diajukan",
-    newValue: input.decision,
-  });
 
   return {
     data: rowToCr(updated as ChangeRequestRow, dealDisplayId),

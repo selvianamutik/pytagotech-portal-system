@@ -1,5 +1,4 @@
 import { addComment, pushNotification } from "@/services/collaboration";
-import { logAudit } from "@/services/audit";
 import { listTerms } from "@/services/deal-terms";
 import { getDeal, setDealStatus } from "@/services/deals";
 import type { DealHandover, HandoverStatus } from "@/types/deal";
@@ -86,21 +85,10 @@ export async function transitionDealStatus(
     }
   }
 
-  const oldStatus = deal.status;
   const { data: updated, error: statusError } = await setDealStatus(deal.id, input.to);
   if (statusError || !updated) {
     return { data: null, error: statusError ?? "Gagal mengubah status." };
   }
-
-  await logAudit({
-    actorId: input.actor.id,
-    actorName: input.actor.name,
-    action: "deal.status",
-    entityType: "deal",
-    entityId: deal.id,
-    oldValue: oldStatus,
-    newValue: input.to,
-  });
 
   if (comment) {
     await addComment({

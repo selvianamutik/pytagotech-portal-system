@@ -1,50 +1,108 @@
-import { mockAuditLog } from "@/mocks/audit";
 import { createClient } from "@/lib/supabase/client";
 import type { AuditEntry, LogAuditInput } from "@/types/audit";
 import type { ServiceResult } from "@/services/result";
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type BrowserSupabase = ReturnType<typeof createClient>;
+
 /**
- * Lapisan audit trail append-only (US-004, dipakai US-009).
- * Entri tidak dapat diubah/dihapus — hanya tambah dan baca.
- * Penulisan mock (Fase 1) tetap dipakai modul lain; pembaca log backend
- * (`queryAuditLogs`) memakai tabel `audit_logs` (trigger DB, FR-2).
+ * Lapisan audit trail append-only (US-004, FR-2).
+ *
+ * Penulisan audit dilakukan oleh trigger database `private.audit_row_change()`
+ * (SECURITY DEFINER, `action = lower(TG_OP)`, `entity_type = TG_TABLE_NAME`,
+ * `entity_id` dari kolom primary key). Aplikasi TIDAK menulis `audit_logs`
+ * secara langsung: policy insert untuk role ter-autentikasi sengaja dicabut
+ * (lihat `backend_parity_fixes.sql`), jadi setiap perubahan data yang sudah
+ * DB-backed otomatis tercatat oleh trigger.
+ *
+ * `logAudit` dipertahankan sebagai no-op backward-compatible bagi pemanggil
+ * lama (alur handover dan change request) — perubahan mereka sudah terekam
+ * oleh trigger pada tabel `deals`/`change_requests`.
  */
 
-let auditStore: AuditEntry[] = structuredClone(mockAuditLog);
+/** Deprecated no-op — audit kini dicatat oleh trigger database. */
+export function resetMockAudit(): void {}
 
-/** Mengembalikan state mock ke awal — dipakai test dan demo. */
-export function resetMockAudit(): void {
-  auditStore = structuredClone(mockAuditLog);
-}
-
+/**
+ * Deprecated no-op. Perubahan data dictat oleh trigger DB secara otomatis;
+ * entri yang dikembalikan hanyalah artefak agar pemanggil lama tetap kompilasi.
+ */
 export async function logAudit(
   input: LogAuditInput
 ): Promise<ServiceResult<AuditEntry>> {
-  const entry: AuditEntry = {
-    id: `AUD-${String(auditStore.length + 1).padStart(4, "0")}`,
-    actorId: input.actorId,
-    actorName: input.actorName,
-    action: input.action,
-    entityType: input.entityType,
-    entityId: input.entityId,
-    oldValue: input.oldValue ?? null,
-    newValue: input.newValue ?? null,
-    createdAt: new Date().toISOString(),
-  };
-  auditStore.push(entry);
-  return { data: { ...entry }, error: null };
+  void input;
+  return { data: null, error: null };
 }
 
+/** Resolve display ID (`HDV-xxx`) sebuah deal ke UUID internal. */
+async function resolveDealId(
+  supabase: BrowserSupabase,
+  dealId: string
+): Promise<string | null> {
+  if (UUID_PATTERN.test(dealId)) {
+    return dealId;
+  }
+  const { data, error } = await supabase
+    .from("deals")
+    .select("id")
+    .eq("display_id", dealId)
+    .limit(1);
+  if (error) {
+    return null;
+  }
+  const row = ((data ?? []) as { id: string }[])[0];
+  return row?.id ?? null;
+}
+
+interface AuditLogRow {
+  id: string;
+  actor_id: string | null;
+  actor_name: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  old_value: unknown | null;
+  new_value: unknown | null;
+  created_at: string;
+}
+
+/** Baca log audit suatu deal dari tabel `audit_logs` (terbaru dulu). */
 export async function listAudit(
-  entityId?: string
+  dealId?: string
 ): Promise<ServiceResult<AuditEntry[]>> {
-  const items = entityId
-    ? auditStore.filter((entry) => entry.entityId === entityId)
-    : auditStore;
+  if (!dealId) {
+    return { data: [], error: null };
+  }
+  const supabase = createClient();
+  const entityUuid = await resolveDealId(supabase, dealId);
+  if (!entityUuid) {
+    return { data: [], error: null };
+  }
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select(
+      "id, actor_id, actor_name, action, entity_type, entity_id, old_value, new_value, created_at"
+    )
+    .eq("entity_type", "deals")
+    .eq("entity_id", entityUuid)
+    .order("created_at", { ascending: false });
+  if (error || !data) {
+    return { data: null, error: "Gagal memuat riwayat audit." };
+  }
   return {
-    data: [...items]
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map((entry) => ({ ...entry })),
+    data: (data as AuditLogRow[]).map((row) => ({
+      id: row.id,
+      actorId: row.actor_id ?? "",
+      actorName: row.actor_name,
+      action: row.action,
+      entityType: row.entity_type,
+      entityId: row.entity_id,
+      oldValue: stringifyValue(row.old_value),
+      newValue: stringifyValue(row.new_value),
+      createdAt: row.created_at,
+    })),
     error: null,
   };
 }
@@ -61,7 +119,7 @@ export interface AuditLogFilter {
   limit?: number;
 }
 
-interface AuditLogRow {
+interface AuditLogQueryRow {
   id: string;
   actor_id: string | null;
   actor_name: string;
@@ -113,7 +171,7 @@ export async function queryAuditLogs(
     return { data: null, error: "Gagal memuat audit log." };
   }
   return {
-    data: (data as AuditLogRow[]).map((row) => ({
+    data: (data as AuditLogQueryRow[]).map((row) => ({
       id: row.id,
       actorId: row.actor_id ?? "",
       actorName: row.actor_name,

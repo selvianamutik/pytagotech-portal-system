@@ -71,14 +71,17 @@ describe("transitionDealStatus", () => {
     expect(resubmitted.error).toBeNull();
   });
 
-  it("setiap perubahan membuat notifikasi + audit", async () => {
+  it("setiap perubahan membuat notifikasi + audit (trigger DB)", async () => {
     const unreadBefore = (await getUnreadNotificationCount()).data ?? 0;
     await transitionDealStatus({ dealId: "HDV-001", to: "Dikonfirmasi", actor: pm });
 
     expect(((await getUnreadNotificationCount()).data ?? 0) - unreadBefore).toBe(1);
+    // Trigger DB mencatat aksi "update" pada `deals` dengan snapshot baris
+    // JSON lama/baru; ekstrak `status` dari snapshot tersebut.
     const audit = await listAudit("HDV-001");
-    const entry = (audit.data ?? []).find((item) => item.action === "deal.status");
-    expect(entry?.oldValue).toBe("Menunggu Konfirmasi Produksi");
-    expect(entry?.newValue).toBe("Dikonfirmasi");
+    const update = (audit.data ?? []).find((item) => item.action === "update");
+    expect(update).toBeTruthy();
+    expect(JSON.parse(update!.oldValue!).status).toBe("Menunggu Konfirmasi Produksi");
+    expect(JSON.parse(update!.newValue!).status).toBe("Dikonfirmasi");
   });
 });

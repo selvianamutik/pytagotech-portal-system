@@ -70,13 +70,13 @@ export default async function Home() {
     <main id="beranda" className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6">
       <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
-          <p className="text-sm font-medium text-primary">Fase 1 - Fondasi Platform</p>
+          <p className="text-sm font-medium text-primary">Ringkasan operasional</p>
           <h1 className="mt-1 text-3xl font-bold leading-10 md:text-4xl">
             Ruang kerja operasional Pytagotech
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Ringkasan lintas CRM, handover, produksi, dan sosmed dengan data dummy
-            terstruktur untuk menggantikan spreadsheet secara bertahap.
+            Ringkasan lintas CRM, handover, produksi, dan sosmed yang dibaca
+            langsung dari database Supabase.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -113,7 +113,7 @@ export default async function Home() {
           <CardHeader className="border-b">
             <CardTitle>Antrean kerja prioritas</CardTitle>
             <CardDescription>
-              Contoh data lintas modul untuk validasi layout, tabel, status, dan role.
+              Antrean kerja lintas modul yang dibaca dari database.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -164,7 +164,7 @@ export default async function Home() {
           <Card className="border shadow-[0_1px_2px_rgba(26,25,24,0.03)]">
             <CardHeader className="border-b">
               <CardTitle>Aktivitas terbaru</CardTitle>
-              <CardDescription>Audit-style preview untuk perubahan penting.</CardDescription>
+              <CardDescription>Preview perubahan penting dari jejak audit.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {data.activities.map((activity) => {
@@ -195,15 +195,15 @@ export default async function Home() {
             <CardHeader>
               <CardTitle>Fondasi siap dipakai</CardTitle>
               <CardDescription>
-                Komponen dasar, tema, layout, dan service mock sudah disusun untuk user story
-                berikutnya.
+                Komponen dasar, tema, dan layout saling terhubung dengan layanan
+                database untuk seluruh modul.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
                 "Button, Input, Select, Table, Dialog, Tabs, Badge, Toast tersedia",
                 "Light/dark mode aktif di seluruh halaman",
-                "Dummy data lewat services/dashboard.ts",
+                "Data ringkasan dibaca dari database (services/dashboard.ts)",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2 text-sm">
                   <CircleCheckIcon className="size-4 text-emerald-600" aria-hidden="true" />

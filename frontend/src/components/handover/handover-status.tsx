@@ -19,6 +19,23 @@ interface HistoryItem {
   createdAt: string;
 }
 
+/** Ambil `status` dari nilai audit (JSON snapshot baris atau string polos). */
+function statusFrom(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{")) {
+    return value;
+  }
+  try {
+    const parsed = JSON.parse(value) as { status?: string };
+    return typeof parsed.status === "string" ? parsed.status : null;
+  } catch {
+    return null;
+  }
+}
+
 function buildHistory(
   comments: { id: string; authorName: string; body: string; createdAt: string }[],
   audits: { id: string; action: string; actorName: string; oldValue: string | null; newValue: string | null; createdAt: string }[]
@@ -31,15 +48,24 @@ function buildHistory(
       detail: item.body,
       createdAt: item.createdAt,
     })),
-    ...audits
-      .filter((entry) => entry.action === "deal.status")
-      .map((entry) => ({
-        key: `audit-${entry.id}`,
-        actor: entry.actorName,
-        title: `Status: ${entry.oldValue} → ${entry.newValue}`,
-        detail: "",
-        createdAt: entry.createdAt,
-      })),
+    ...audits.flatMap((entry) => {
+      // Trigger DB mencatat aksi "update" pada `deals` dengan snapshot baris
+      // JSON lama/baru; hanya tampilkan perubahan yang menyentuh `status`.
+      const oldStatus = statusFrom(entry.oldValue);
+      const newStatus = statusFrom(entry.newValue);
+      if (entry.action !== "update" || !oldStatus || !newStatus || oldStatus === newStatus) {
+        return [];
+      }
+      return [
+        {
+          key: `audit-${entry.id}`,
+          actor: entry.actorName,
+          title: `Status: ${oldStatus} → ${newStatus}`,
+          detail: "",
+          createdAt: entry.createdAt,
+        },
+      ];
+    }),
   ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 

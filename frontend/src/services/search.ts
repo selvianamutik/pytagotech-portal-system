@@ -1,4 +1,3 @@
-import { listClients } from "@/services/clients";
 import { listInteractions } from "@/services/community";
 import { listLeads } from "@/services/leads";
 import { isFollowUpOverdue } from "@/services/lead-activities";
@@ -27,83 +26,19 @@ export async function globalSearch(
   query: string,
   user: PortalUser | null
 ): Promise<ServiceResult<SearchHit[]>> {
-  // Fase 2: user dipakai RLS server-side untuk memfilter hasil per hak akses.
   void user;
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   if (q.length < 2) {
     return { data: [], error: null };
   }
-  const hits: SearchHit[] = [];
-  const match = (...fields: (string | undefined)[]) =>
-    fields.some((field) => (field ?? "").toLowerCase().includes(q));
-
-  const [{ data: leads }, { data: clients }, { data: projects }, { data: materials }] =
-    await Promise.all([listLeads(), listClients(), listProjects(), listMaterials()]);
-
-  for (const lead of leads ?? []) {
-    if (match(lead.companyName, lead.email, lead.whatsapp, lead.id)) {
-      hits.push({
-        kind: "lead",
-        id: lead.id,
-        title: lead.companyName,
-        subtitle: `Lead · ${lead.status} · ${lead.picName}`,
-        href: "/crm/leads",
-      });
-    }
-  }
-  for (const client of clients ?? []) {
-    if (match(client.companyName, client.email, client.phone, client.id)) {
-      hits.push({
-        kind: "klien",
-        id: client.id,
-        title: client.companyName,
-        subtitle: `Klien · ${client.picName}`,
-        href: "/klien",
-      });
-    }
-  }
-  for (const item of projects ?? []) {
-    if (match(item.project.name, item.project.code, item.clientName, item.project.id)) {
-      hits.push({
-        kind: "proyek",
-        id: item.project.id,
-        title: item.project.name,
-        subtitle: `Proyek · ${item.project.status} · ${item.project.pmName}`,
-        href: `/proyek/${item.project.id}`,
-      });
-    }
-  }
-  for (const material of materials ?? []) {
-    if (match(material.title, material.id)) {
-      hits.push({
-        kind: "materi",
-        id: material.id,
-        title: material.title,
-        subtitle: `Materi · ${material.brand} · ${material.status}`,
-        href: `/sosmed/materi/${material.id}`,
-      });
-    }
-  }
-  // Task dicari per proyek (mock kecil — iterasi semua proyek).
-  for (const item of projects ?? []) {
-    const { data: tasks } = await listTaskSummaries(item.project.id);
-    for (const task of tasks ?? []) {
-      if (match(task.title, task.id, task.assignee)) {
-        hits.push({
-          kind: "task",
-          id: task.id,
-          title: task.title,
-          subtitle: `Task · ${item.project.name} · ${task.status}`,
-          href: `/proyek/${item.project.id}/tasks`,
-        });
-      }
-    }
-    if (hits.length >= 30) {
-      break;
-    }
-  }
-
-  return { data: hits.slice(0, 30), error: null };
+  const { createClient } = await import("@/lib/supabase/client");
+  const { data, error } = await createClient().rpc("global_search", {
+    search_query: q,
+    result_limit: 30,
+  });
+  if (error) return { data: null, error: error.message };
+  const kindMap: Record<string, SearchHit["kind"]> = { lead: "lead", client: "klien", project: "proyek", task: "task", content_material: "materi" };
+  return { data: ((data ?? []) as { entity_type: string; display_id: string; title: string; subtitle: string; href: string }[]).flatMap((row) => kindMap[row.entity_type] ? [{ kind: kindMap[row.entity_type]!, id: row.display_id, title: row.title, subtitle: row.subtitle, href: row.href }] : []), error: null };
 }
 
 export interface MyWorkItem {
