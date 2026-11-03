@@ -25,9 +25,9 @@ const NAVIGATION: NavigationItem[] = [
   // Beranda (selalu pertama).
   { label: "Ringkasan kerja", module: "Beranda", href: "/", roles: ["Semua role"] },
   // CRM — alur prospecting Sales.
+  { label: "Dashboard CRM", module: "CRM", href: "/crm/dashboard", roles: ["Sales / Marketing", "Executive / Leader"] },
   { label: "Database Lead", module: "CRM", href: "/crm/leads", roles: ["Sales / Marketing", "Executive / Leader"] },
   { label: "Interested Leads", module: "CRM", href: "/crm/interested", roles: ["Sales / Marketing", "Executive / Leader"] },
-  { label: "Dashboard CRM", module: "CRM", href: "/crm/dashboard", roles: ["Sales / Marketing", "Executive / Leader"] },
   // Klien & Handover — serah terima Closing → Produksi.
   { label: "Deal Handover", module: "Klien & Handover", href: "/handover", roles: ["Sales / Marketing", "Project Manager"] },
   { label: "Master Klien", module: "Klien & Handover", href: "/klien", roles: ["Sales / Marketing", "Project Manager"] },
@@ -36,14 +36,14 @@ const NAVIGATION: NavigationItem[] = [
   { label: "Task Board", module: "Proyek", href: "/proyek/board", roles: ["Project Manager", "Developer"] },
   { label: "Kalender Kerja", module: "Proyek", href: "/kalender", roles: ["Project Manager", "Developer", "Executive / Leader"] },
   // Sosmed — alur konten & distribusi.
-  { label: "Content Planner", module: "Sosmed", href: "/sosmed/planner", roles: ["Social Media Specialist", "Executive / Leader"] },
+  { label: "Analytics", module: "Sosmed", href: "/sosmed/analitik", roles: ["Social Media Specialist", "Executive / Leader"] },
+  { label: "KPI Scorecard", module: "Sosmed", href: "/sosmed/scorecard", roles: ["Social Media Specialist", "Executive / Leader"] },
+  { label: "Pertumbuhan Akun", module: "Sosmed", href: "/sosmed/pertumbuhan", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Produksi Konten", module: "Sosmed", href: "/sosmed/materi", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Kalender Publikasi", module: "Sosmed", href: "/sosmed/kalender", roles: ["Social Media Specialist", "Executive / Leader"] },
-  { label: "Analytics", module: "Sosmed", href: "/sosmed/analitik", roles: ["Social Media Specialist", "Executive / Leader"] },
-  { label: "Pertumbuhan Akun", module: "Sosmed", href: "/sosmed/pertumbuhan", roles: ["Social Media Specialist", "Executive / Leader"] },
+  { label: "Content Planner", module: "Sosmed", href: "/sosmed/planner", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Komunitas", module: "Sosmed", href: "/sosmed/komunitas", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Inquiry", module: "Sosmed", href: "/sosmed/inquiry", roles: ["Social Media Specialist", "Executive / Leader"] },
-  { label: "KPI Scorecard", module: "Sosmed", href: "/sosmed/scorecard", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Evaluasi KIST", module: "Sosmed", href: "/sosmed/evaluasi", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Asset Library", module: "Sosmed", href: "/sosmed/aset", roles: ["Social Media Specialist", "Executive / Leader"] },
   // Pengaturan — tata kelola (Super Admin).
@@ -195,7 +195,7 @@ export async function getDashboardSnapshot(): Promise<
         .from("audit_logs")
         .select("id, actor_id, actor_name, action, entity_type, entity_id, old_value, new_value, created_at")
         .order("created_at", { ascending: false })
-        .limit(8),
+        .limit(3),
       supabase.from("team_members").select("id, name"),
     ]);
 

@@ -116,7 +116,7 @@ export async function getMyWork(user: PortalUser | null): Promise<ServiceResult<
           label: `Review ${material.title}`,
           detail: `${material.brand} · menunggu approval`,
           href: `/sosmed/materi/${material.id}`,
-          urgent: false,
+          urgent: true,
         }))
     : [];
 

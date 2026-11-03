@@ -39,6 +39,14 @@ export function MyWorkSection() {
     : [];
   const total = sections.reduce((sum, section) => sum + section.items.length, 0);
 
+  // Aksen kuat untuk bagian yang butuh tindakan segera.
+  const sectionAccent: Record<string, string> = {
+    "Menunggu review":
+      "border-2 border-red-300 bg-red-50/50 shadow-[0_0_0_1px_rgba(186,26,26,0.08)] dark:border-red-800 dark:bg-red-950/30",
+    "Follow-up overdue":
+      "border-2 border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30",
+  };
+
   if (!work || total === 0) {
     return null;
   }
@@ -48,7 +56,7 @@ export function MyWorkSection() {
       {sections
         .filter((section) => section.items.length > 0)
         .map((section) => (
-          <Card key={section.title}>
+          <Card key={section.title} className={sectionAccent[section.title]}>
             <CardHeader className="border-b">
               <CardTitle className="text-base">{section.title}</CardTitle>
               <CardDescription>{section.items.length} item</CardDescription>
