@@ -62,22 +62,20 @@ begin
     public.post_metrics
   cascade;
 
-  -- Lead.
+  -- Lead. Disisipkan dengan status "New" lalu di-update ke status final agar
+  -- trigger `sync_lead_status_side_effects` mengisi lead_status_history dan
+  -- (untuk status Interest) lead_interests, persis seperti alur produksi.
   insert into public.leads
-    (id, display_id, contact_date, company_name, industry, industry_category, whatsapp, instagram, email, pic_id, status, status_category, next_follow_up)
+    (id, display_id, contact_date, company_name, industry, whatsapp, instagram, email, pic_id, status, next_follow_up)
   values
-    (v_lead_012, 'LEAD-012', '2026-11-01', 'test', 'F&B', 'industry', '6281234567890', '@arunadigital2', 'sales@arunadigital.id', v_pic, 'Follow Up', 'lead_status', '2026-11-05'),
-    (v_lead_013, 'LEAD-013', '2026-11-01', 'test', 'F&B', 'industry', '628965457232', null, 'test@test.com', v_pic, 'Interest', 'lead_status', null);
+    (v_lead_012, 'LEAD-012', '2026-11-01', 'test', 'F&B', '6281234567890', '@arunadigital2', 'sales@arunadigital.id', v_pic, 'New', '2026-11-05'),
+    (v_lead_013, 'LEAD-013', '2026-11-01', 'test', 'F&B', '628965457232', null, 'test@test.com', v_pic, 'New', null);
 
-  insert into public.lead_interests (lead_id, stage, stage_category, need)
-  values (v_lead_013, 'Contacted', 'interest_stage', '');
+  update public.leads set status = 'Follow Up' where id = v_lead_012;
+  update public.leads set status = 'Interest' where id = v_lead_013;
 
-  insert into public.lead_status_history (lead_id, status, status_category, changed_by)
-  values
-    (v_lead_013, 'New', 'lead_status', null),
-    (v_lead_013, 'Interest', 'lead_status', null),
-    (v_lead_012, 'New', 'lead_status', null),
-    (v_lead_012, 'Follow Up', 'lead_status', null);
+  -- Samakan stage interest dgn snapshot UAT.
+  update public.lead_interests set stage = 'Contacted', need = '' where lead_id = v_lead_013;
 
   -- Klien.
   insert into public.clients
@@ -115,20 +113,20 @@ begin
 
   -- Konten.
   insert into public.content_ideas
-    (id, display_id, title, brand, brand_key, pillar, pillar_key, funnel, hook, angle, key_points, cta, asset_ref, readiness)
+    (id, display_id, title, brand, pillar, funnel, hook, angle, key_points, cta, asset_ref, readiness)
   values
-    (v_idea_001, 'IDE-001', 'Edukasi: 5 Tips Coding untuk UMKM', 'Pytagotech', 'brand', 'Edukasi', 'pillar', 'Awareness', '5 tips coding praktis', 'Sudut pandang praktis untuk pemula', '3 poin kunci yang gampang dipahami', 'Kunjungi web kami', 'asset/ide1.png', 'Siap Masuk Produksi'),
-    (v_idea_002, 'IDE-002', 'Promo: Diskon Jasa Landing Page', 'Pytagotech', 'brand', 'Promo', 'pillar', 'Conversion', null, null, null, null, null, 'Ditunda');
+    (v_idea_001, 'IDE-001', 'Edukasi: 5 Tips Coding untuk UMKM', 'Pytagotech', 'Edukasi', 'Awareness', '5 tips coding praktis', 'Sudut pandang praktis untuk pemula', '3 poin kunci yang gampang dipahami', 'Kunjungi web kami', 'asset/ide1.png', 'Siap Masuk Produksi'),
+    (v_idea_002, 'IDE-002', 'Promo: Diskon Jasa Landing Page', 'Pytagotech', 'Promo', 'Conversion', null, null, null, null, null, 'Ditunda');
 
   insert into public.content_materials
-    (id, display_id, title, brand, brand_key, status, schedule_date, idea_id)
+    (id, display_id, title, brand, status, schedule_date, idea_id)
   values
-    (v_material, 'MAT-0002', 'Materi edukasi tips coding', 'Pytagotech', 'brand', 'Draf', '2026-11-20', v_idea_001);
+    (v_material, 'MAT-0002', 'Materi edukasi tips coding', 'Pytagotech', 'Draf', '2026-11-20', v_idea_001);
 
   insert into public.publications
-    (id, display_id, material_id, platform, platform_key, pattern, schedule_date)
+    (id, display_id, material_id, platform, pattern, schedule_date)
   values
-    (v_pub, 'PUB-0001', v_material, 'Instagram', 'platform', 'Single', '2026-11-20');
+    (v_pub, 'PUB-0001', v_material, 'Instagram', 'Single', '2026-11-20');
 
   return 'Data demo berhasil dikembalikan ke snapshot UAT.';
 end;
