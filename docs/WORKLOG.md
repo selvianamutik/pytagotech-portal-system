@@ -1831,3 +1831,14 @@ ext build\ (produksi) \✓ Compiled successfully\, 36 halaman statis, tanpa erro
   - Dev server Next.js sudah berjalan di `localhost:3000` (PID 14192). Halaman login `Masuk ke Pytagotech Portal` render OK tanpa error konsol.
   - Login browser gagal tembus Supabase: `net::ERR_TUNNEL_CONNECTION_FAILED` pada `https://ycqgtazlcxbedfoykhpl.supabase.co/auth/v1/token` — trafik browser desktop app tak bisa lewati proxy/tunnel ke Supabase (environment limitation, bukan defect kode/DB; API `fetch` harness tetap normal).
 - **Status:** browser per-US UI dicatat residual (setara penanganan Q-014). Gate 4 ditandai **DONE**: seluruh verifikasi substantif hijau — migration live, RLS tulis live, seed, smoke data-level, build/test/lint/typecheck.
+---
+
+## 2026-11-03 — Tahap 33 — Fitur Reset Data Demo (Super Admin, US-044)
+
+- **Yang dilakukan:**
+  - Migration 20261103000100_reset_demo_data.sql: RPC public.reset_demo_data() SECURITY DEFINER, guard private.has_any_role(array['Super Admin']), TRUNCATE 23 tabel operasional CASCADE (daftar eksplisit; tidak menyentuh auth/profiles/user_roles/team_members/master_options/settings/holidays/audit/notifications) lalu isi ulang seed snapshot Q-027 A.
+  - Seeding lead memakai INSERT status New lalu UPDATE ke status final agar trigger sync_lead_status_side_effects mengisi lead_status_history + lead_interests otomatis (hindari duplikat PK). Kolom generated (industry_category, status_category, stage_category, *_key) dihilangkan dari daftar kolom INSERT.
+  - Route POST /api/admin/reset-data (guard Super Admin sisi sesi, lalu createClient().rpc("reset_demo_data") — bukan service role agar uth.uid() = Super Admin).
+  - Halaman /pengaturan/reset-data + komponen konfirmasi + nav "Reset Data Demo".
+- **Verifikasi:** lint/typecheck/build hijau; test 265/265. Live: reset RPC dieksekusi via JWT Super Admin → seluruh count kembali ke snapshot (leads 2, lead_interests 1 stage Contacted, lead_status_history 4, clients 1, deals 1, deal_payment_terms 3, deal_versions 1, projects 1, tasks 3, content_ideas 2, content_materials 1, publications 1).
+- **Status:** selesai. Commit 59ed644 + 78aa5f6.

@@ -85,6 +85,7 @@ Membuktikan seluruh alur inti PRD bekerja secara end-to-end terhadap database li
 | UAT-G3 | SOP / panduan (RACI) | Edit panduan markdown + sel RACI | |
 | UAT-G4 | Arsip data | Arsipkan lead → tak tampil; restore | |
 | UAT-G5 | Ekspor CSV | File terunduh | |
+| UAT-G6 | Pengaturan → Reset Data Demo | Konfirmasi → data operasional kembali ke snapshot (2 lead, 1 klien, 1 handover, 1 proyek, 3 task, 2 ide, 1 materi, 1 publikasi) tanpa menyentuh akun/role/master | |
 
 ## 9. RLS — kontrol akses tulis (hasil live terverifikasi 2026-11-03)
 

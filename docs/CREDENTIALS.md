@@ -30,6 +30,14 @@
 | Content material | `MAT-0002` (Draf, jadwal 20 Nov) |
 | Publication | `PUB-0001` (Instagram, Single, 20 Nov) |
 
+## Reset data demo (Super Admin)
+
+Halaman **Pengaturan → Reset Data Demo** (khusus Super Admin) memulihkan data
+operasional ke snapshot di atas dalam satu klik. Memanggil RPC
+`public.reset_demo_data()` (SECURITY DEFINER): menghapus semua data operasional
+lalu mengisi ulang seed (lead, klien, handover, proyek, task, konten). Akun
+login, role, tim, master data, dan pengaturan **tidak** disentuh.
+
 ## Perhatian keamanan
 
 - Kredensial ini hanya untuk UAT/pilot, bukan produksi sungguhan.
