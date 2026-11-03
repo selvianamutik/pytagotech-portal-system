@@ -70,11 +70,9 @@ insert into settings (key, value) values
 on conflict (key) do update set value = excluded.value;
 
 insert into task_templates (name, ord, duration_days, is_active) values
-  ('Kickoff dan klarifikasi scope', 1, 1, true),
-  ('Perencanaan teknis', 2, 2, true),
-  ('Implementasi fitur inti', 3, 5, true),
-  ('QA internal', 4, 2, true),
-  ('Handover dan dokumentasi', 5, 1, true)
+  ('Pembuatan dokumen RAD', 1, 3, true),
+  ('Pembuatan dokumen PUS', 2, 3, true),
+  ('Pembuatan dokumen SAD', 3, 3, true)
 on conflict (name) do update
 set ord = excluded.ord,
     duration_days = excluded.duration_days,

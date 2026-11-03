@@ -54,7 +54,7 @@ export function isTaskStatus(value: string): value is TaskStatus {
 
 /**
  * Template task standar (US-021, FR-16).
- * Isi seed = placeholder sampai Q-005 dijawab tim Produksi.
+ * Urutan resmi: RAD → PUS → SAD; masing-masing tiga hari kerja (Q-005).
  */
 export interface TaskTemplate {
   id: string;

@@ -11,10 +11,14 @@ import {
   updateFeature,
 } from "@/services/features";
 import { resetMockTasks } from "@/services/tasks";
+import { seedProjectFixture } from "@/test/fixtures";
 
-beforeEach(() => {
+beforeEach(async () => {
   resetMockFeatures();
   resetMockTasks();
+  await seedProjectFixture("PRJ-900");
+  await seedProjectFixture("PRJ-901");
+  await seedProjectFixture("PRJ-902");
 });
 
 describe("feature CRUD", () => {

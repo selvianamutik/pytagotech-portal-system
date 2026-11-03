@@ -13,7 +13,7 @@ import {
   resetMockProjects,
   updateProject,
 } from "@/services/projects";
-import { addTaskSummary, resetMockTasks } from "@/services/tasks";
+import { addTaskSummary, deleteTaskSummary, listTaskSummaries, resetMockTasks } from "@/services/tasks";
 import { mockUsers } from "@/mocks/auth";
 
 const pm = { id: "USR-003", name: "Raka", roles: ["Project Manager"] };
@@ -55,8 +55,10 @@ describe("queryProjects", () => {
 describe("progress", () => {
   it("rata-rata task level atas; 0 bila tanpa task", async () => {
     const projectId = await seedProject();
-    // Bersihkan task hasil generate agar skenario terkendali.
-    resetMockTasks();
+    // Bersihkan task hasil generate RPC agar skenario terkendali.
+    for (const task of (await listTaskSummaries(projectId)).data ?? []) {
+      await deleteTaskSummary(task.id);
+    }
     expect((await queryProjects({})).data?.[0]?.progress).toBe(0);
 
     await addTaskSummary({ projectId, title: "A", percent: 100 });

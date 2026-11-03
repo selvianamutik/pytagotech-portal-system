@@ -9,18 +9,24 @@ import {
   updateTaskTemplate,
 } from "@/services/task-templates";
 import { listTaskSummaries, resetMockTasks } from "@/services/tasks";
+import { seedProjectFixture } from "@/test/fixtures";
 
-beforeEach(() => {
+beforeEach(async () => {
   resetMockTaskTemplates();
   resetMockTasks();
+  await seedProjectFixture("PRJ-900");
 });
 
 describe("listTaskTemplates", () => {
-  it("terurut dan berisi seed placeholder Q-005", async () => {
+  it("terurut dan berisi seed RAD, PUS, SAD Q-005", async () => {
     const result = await listTaskTemplates();
 
     expect(result.error).toBeNull();
-    expect((result.data ?? []).map((template) => template.order)).toEqual([1, 2, 3, 4]);
+    expect(result.data).toMatchObject([
+      { name: "Pembuatan dokumen RAD", order: 1, defaultDurationDays: 3 },
+      { name: "Pembuatan dokumen PUS", order: 2, defaultDurationDays: 3 },
+      { name: "Pembuatan dokumen SAD", order: 3, defaultDurationDays: 3 },
+    ]);
   });
 });
 
@@ -63,28 +69,30 @@ describe("generateTasksForProject", () => {
     const result = await generateTasksForProject("PRJ-900", "2026-10-05");
 
     expect(result.error).toBeNull();
-    expect(result.data).toHaveLength(4);
+    expect(result.data).toHaveLength(3);
     expect(result.data?.[0]).toMatchObject({
-      title: "Kickoff & brief internal",
+      title: "Pembuatan dokumen RAD",
       startDate: "2026-10-05",
-      targetDate: "2026-10-06",
+      targetDate: "2026-10-07",
     });
-    // 2 + 10 + 3 + 1 hari = selesai 2026-10-20.
-    expect(result.data?.[3]?.targetDate).toBe("2026-10-20");
-    expect((await listTaskSummaries("PRJ-900")).data).toHaveLength(4);
+    // 3 + 3 + 3 hari kerja, melewati akhir pekan = selesai 2026-10-15.
+    expect(result.data?.[2]?.targetDate).toBe("2026-10-15");
+    expect((await listTaskSummaries("PRJ-900")).data).toHaveLength(3);
   });
 
   it("melewati template nonaktif", async () => {
-    await updateTaskTemplate("TPL-002", {
-      name: "Pengerjaan utama",
+    const templates = (await listTaskTemplates()).data ?? [];
+    const second = templates.find((template) => template.order === 2)!;
+    await updateTaskTemplate(second.id, {
+      name: "Pembuatan dokumen PUS",
       order: 2,
-      defaultDurationDays: 10,
+      defaultDurationDays: 3,
       isActive: false,
     });
 
     const result = await generateTasksForProject("PRJ-900", "2026-10-05");
 
-    expect(result.data).toHaveLength(3);
-    expect(result.data?.map((task) => task.title)).not.toContain("Pengerjaan utama");
+    expect(result.data).toHaveLength(2);
+    expect(result.data?.map((task) => task.title)).not.toContain("Pembuatan dokumen PUS");
   });
 });

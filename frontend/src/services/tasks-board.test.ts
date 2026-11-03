@@ -10,6 +10,7 @@ import {
   resetMockTasks,
   updateTaskSummary,
 } from "@/services/tasks";
+import { seedProjectFixture } from "@/test/fixtures";
 
 beforeEach(() => {
   resetMockTasks();
@@ -35,6 +36,7 @@ describe("task CRUD", () => {
   });
 
   it("ubah field, pindah status, hapus beserta sub-task", async () => {
+    await seedProjectFixture("PRJ-900");
     const parent = await addTaskSummary({ projectId: "PRJ-900", title: "Induk" });
     await addTaskSummary({ projectId: "PRJ-900", title: "Anak", parentId: parent.data!.id });
 
@@ -78,6 +80,8 @@ describe("effectiveTaskPercent", () => {
 
 describe("listAllTaskSummaries", () => {
   it("menggabungkan task lintas proyek", async () => {
+    await seedProjectFixture("PRJ-901");
+    await seedProjectFixture("PRJ-902");
     await addTaskSummary({ projectId: "PRJ-901", title: "A" });
     await addTaskSummary({ projectId: "PRJ-902", title: "B" });
 

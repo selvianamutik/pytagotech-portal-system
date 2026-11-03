@@ -24,6 +24,11 @@ export function formatDate(
   date: string | Date,
   options?: Intl.DateTimeFormatOptions
 ): string {
+  const value = typeof date === "string" ? new Date(date) : date;
+  if (Number.isNaN(value.getTime())) {
+    // Tanggal kosong/tidak valid (mis. due date belum diisi) → tanpa crash.
+    return "";
+  }
   const defaultOptions: Intl.DateTimeFormatOptions = {
     timeZone: APP_TIMEZONE,
     day: "2-digit",
@@ -31,9 +36,7 @@ export function formatDate(
     year: "numeric",
     ...options,
   };
-  return new Intl.DateTimeFormat("id-ID", defaultOptions).format(
-    typeof date === "string" ? new Date(date) : date
-  );
+  return new Intl.DateTimeFormat("id-ID", defaultOptions).format(value);
 }
 
 /**

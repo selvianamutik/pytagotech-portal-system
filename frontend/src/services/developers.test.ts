@@ -14,10 +14,10 @@ beforeEach(() => {
 });
 
 describe("developers", () => {
-  it("seed 4 dengan status internal/external", async () => {
+  it("seed tim dengan status internal/external", async () => {
     const { data } = await listDevelopers();
 
-    expect(data).toHaveLength(4);
+    expect(data?.length).toBeGreaterThanOrEqual(4);
     expect(data?.find((item) => item.name === "Dimas (Freelance)")?.status).toBe("external");
     expect((await listDeveloperNames()).data).toContain("Nabila");
   });

@@ -1,82 +1,189 @@
-import { mockDevelopers } from "@/mocks/developers";
+import { createClient as getSupabaseClient } from "@/lib/supabase/client";
+import { isTeamMemberInUse } from "@/services/master-data";
 import type { Developer, DeveloperInput } from "@/types/developer";
 import { isEmploymentStatus } from "@/types/developer";
 import type { ServiceResult } from "@/services/result";
 
-/** Lapisan master data developer (dropdown assignee task/fitur). */
+/**
+ * Master data developer (dropdown assignee task/fitur).
+ *
+ * Skema APPROVED tidak punya tabel `developers`; developer adalah anggota
+ * `team_members` dengan status `internal`/`external`. UI memakai UUID anggota
+ * sebagai ID (tabel ini tidak punya display ID). Anggota yang sudah dipakai
+ * tidak dihapus agar penugasan lama tidak hilang.
+ */
 
-let developerStore: Developer[] = structuredClone(mockDevelopers);
+interface MemberRow {
+  id: string;
+  name: string;
+  status: string;
+  is_active: boolean;
+  created_at: string;
+}
 
-/** Mengembalikan state mock ke awal — dipakai test dan demo. */
+const MEMBER_COLUMNS = "id, name, status, is_active, created_at";
+
+/** Backward-compat no-op untuk test runner. */
 export function resetMockDevelopers(): void {
-  developerStore = structuredClone(mockDevelopers);
+  // Database-backed — pembersihan ditangani oleh fake Supabase per-test.
+}
+
+function toDeveloper(row: MemberRow): Developer | null {
+  if (!isEmploymentStatus(row.status)) {
+    return null;
+  }
+  return {
+    id: row.id,
+    name: row.name,
+    status: row.status,
+    createdAt: row.created_at,
+  };
 }
 
 export async function listDevelopers(): Promise<ServiceResult<Developer[]>> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("team_members")
+    .select(MEMBER_COLUMNS)
+    .order("name", { ascending: true });
+  if (error) {
+    return { data: null, error: error.message };
+  }
   return {
-    data: [...developerStore]
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((developer) => ({ ...developer })),
+    data: ((data ?? []) as MemberRow[])
+      .map(toDeveloper)
+      .filter((row): row is Developer => row !== null),
     error: null,
   };
 }
 
-/** Nama developer untuk dropdown penugasan. */
+/** Nama developer aktif untuk dropdown penugasan. */
 export async function listDeveloperNames(): Promise<ServiceResult<string[]>> {
-  const { data } = await listDevelopers();
-  return { data: (data ?? []).map((developer) => developer.name), error: null };
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("team_members")
+    .select(MEMBER_COLUMNS)
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+  if (error) {
+    return { data: null, error: error.message };
+  }
+  return {
+    data: ((data ?? []) as MemberRow[])
+      .map(toDeveloper)
+      .filter((row): row is Developer => row !== null)
+      .map((developer) => developer.name),
+    error: null,
+  };
+}
+
+async function findMemberByName(name: string): Promise<MemberRow | null> {
+  const supabase = getSupabaseClient();
+  const { data } = await supabase
+    .from("team_members")
+    .select(MEMBER_COLUMNS)
+    .eq("name", name)
+    .limit(1);
+  return ((data ?? []) as MemberRow[])[0] ?? null;
 }
 
 export async function createDeveloper(
   input: DeveloperInput
 ): Promise<ServiceResult<Developer>> {
-  if (input.name.trim().length === 0) {
+  const name = input.name.trim();
+  if (name.length === 0) {
     return { data: null, error: "Nama developer wajib diisi." };
   }
   if (!isEmploymentStatus(input.status)) {
     return { data: null, error: "Status harus internal atau external." };
   }
+  const supabase = getSupabaseClient();
+  const { data: existing } = await supabase
+    .from("team_members")
+    .select("id, name")
+    .ilike("name", name);
   if (
-    developerStore.some(
-      (developer) => developer.name.toLowerCase() === input.name.trim().toLowerCase()
+    ((existing ?? []) as { name: string }[]).some(
+      (row) => row.name.toLowerCase() === name.toLowerCase()
     )
   ) {
     return { data: null, error: "Nama developer sudah terdaftar." };
   }
-  const developer: Developer = {
-    id: `DEV-${String(developerStore.length + 1).padStart(3, "0")}`,
-    name: input.name.trim(),
-    status: input.status,
-    createdAt: new Date().toISOString(),
-  };
-  developerStore.push(developer);
-  return { data: { ...developer }, error: null };
+
+  const { data, error } = await supabase
+    .from("team_members")
+    .insert({ name, status: input.status, is_active: true })
+    .select(MEMBER_COLUMNS);
+  if (error) {
+    return { data: null, error: error.message };
+  }
+  const row = ((data ?? []) as MemberRow[])[0];
+  const developer = row ? toDeveloper(row) : null;
+  if (!developer) {
+    return { data: null, error: "Developer gagal dibuat." };
+  }
+  return { data: developer, error: null };
 }
 
 export async function updateDeveloper(
   developerId: string,
   input: DeveloperInput
 ): Promise<ServiceResult<Developer>> {
-  const developer = developerStore.find((item) => item.id === developerId);
-  if (!developer) {
-    return { data: null, error: "Developer tidak ditemukan." };
-  }
-  if (input.name.trim().length === 0) {
+  const name = input.name.trim();
+  if (name.length === 0) {
     return { data: null, error: "Nama developer wajib diisi." };
   }
   if (!isEmploymentStatus(input.status)) {
     return { data: null, error: "Status harus internal atau external." };
   }
-  developer.name = input.name.trim();
-  developer.status = input.status;
-  return { data: { ...developer }, error: null };
-}
+  const existing = await findMemberByName(name);
+  if (existing && existing.id !== developerId) {
+    return { data: null, error: "Nama developer sudah terdaftar." };
+  }
 
-export async function deleteDeveloper(developerId: string): Promise<ServiceResult<true>> {
-  const index = developerStore.findIndex((item) => item.id === developerId);
-  if (index === -1) {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("team_members")
+    .update({ name, status: input.status })
+    .eq("id", developerId)
+    .select(MEMBER_COLUMNS);
+  if (error) {
+    return { data: null, error: error.message };
+  }
+  const row = ((data ?? []) as MemberRow[])[0];
+  const developer = row ? toDeveloper(row) : null;
+  if (!developer) {
     return { data: null, error: "Developer tidak ditemukan." };
   }
-  developerStore.splice(index, 1);
+  return { data: developer, error: null };
+}
+
+export async function deleteDeveloper(
+  developerId: string
+): Promise<ServiceResult<true>> {
+  const usage = await isTeamMemberInUse(developerId);
+  if (usage.error) {
+    return { data: null, error: "Gagal memeriksa pemakaian developer." };
+  }
+  if (usage.inUse) {
+    return {
+      data: null,
+      error:
+        "Developer ini sudah dipakai pada task/fitur dan tidak bisa dihapus. Nonaktifkan agar tidak muncul di dropdown.",
+    };
+  }
+
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("team_members")
+    .delete()
+    .eq("id", developerId)
+    .select("id");
+  if (error) {
+    return { data: null, error: error.message };
+  }
+  if (!data || data.length === 0) {
+    return { data: null, error: "Developer tidak ditemukan." };
+  }
   return { data: true, error: null };
 }

@@ -5,7 +5,7 @@ import type { ServiceResult } from "@/services/result";
 /**
  * Dashboard eksekutif produksi (US-026, FR-20).
  * Filter: PM, proyek, rentang waktu (tumpang tindih target).
- * "Divisi" menunggu definisi model (Q-013) — filter PMtim dipakai sementara.
+ * "Divisi" = tim pelaksana (Q-013 opsi A); diwakili filter PM yang sudah ada.
  * Fase 2: agregasi SQL.
  */
 

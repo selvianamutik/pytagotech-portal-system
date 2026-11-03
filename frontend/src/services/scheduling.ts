@@ -1,3 +1,5 @@
+import { createClient as getSupabaseClient } from "@/lib/supabase/client";
+import { loadMemberMaps } from "@/services/production-refs";
 import { listFeatures, writeFeatureSchedule } from "@/services/features";
 import { getProject } from "@/services/projects";
 import type { ServiceResult } from "@/services/result";
@@ -12,6 +14,8 @@ import type { ServiceResult } from "@/services/result";
  *   developer berbeda paralel. Tanpa developer = terjadwal tanpa cek bentrok.
  * - Override manual wajib beralasan; bentrok (tumpang tindih developer
  *   yang sama) ditandai peringatan.
+ *
+ * Sumber data: `holidays` (Pengaturan), `developer_capacity`, dan `features`.
  */
 
 export interface ScheduleSettings {
@@ -21,30 +25,115 @@ export interface ScheduleSettings {
   capacityHoursPerDay: Record<string, number>;
 }
 
-const seedSettings: ScheduleSettings = {
-  holidays: ["2026-12-25"],
-  capacityHoursPerDay: {},
-};
-
-let settingsStore: ScheduleSettings = structuredClone(seedSettings);
-
-/** Mengembalikan state mock ke awal — dipakai test dan demo. */
+/** Backward-compat no-op untuk test runner. */
 export function resetMockScheduling(): void {
-  settingsStore = structuredClone(seedSettings);
+  // Database-backed — pembersihan ditangani oleh fake Supabase per-test.
 }
 
 export async function getScheduleSettings(): Promise<ServiceResult<ScheduleSettings>> {
-  return { data: structuredClone(settingsStore), error: null };
+  const supabase = getSupabaseClient();
+  const [holidaysResult, capacityResult, members] = await Promise.all([
+    supabase.from("holidays").select("day, name").order("day", { ascending: true }),
+    supabase.from("developer_capacity").select("developer_id, hours_per_day"),
+    loadMemberMaps(),
+  ]);
+  const error =
+    holidaysResult.error ?? capacityResult.error ?? members.error;
+  if (error || !members.data) {
+    return {
+      data: null,
+      error:
+        (typeof error === "string" ? error : error?.message) ??
+        "Gagal memuat pengaturan jadwal.",
+    };
+  }
+  const holidays = new Set<string>();
+  for (const row of (holidaysResult.data ?? []) as {
+    day: string;
+    name: string | null;
+  }[]) {
+    if (row.day && !Number.isNaN(Date.parse(row.day))) {
+      holidays.add(row.day);
+    }
+  }
+  const capacityHoursPerDay: Record<string, number> = {};
+  for (const row of (capacityResult.data ?? []) as {
+    developer_id: string;
+    hours_per_day: number | string;
+  }[]) {
+    const name = members.data.nameById.get(row.developer_id);
+    const hours = Number(row.hours_per_day);
+    if (name && Number.isFinite(hours) && hours > 0) {
+      capacityHoursPerDay[name] = hours;
+    }
+  }
+  return {
+    data: {
+      holidays: [...holidays].sort(),
+      capacityHoursPerDay,
+    },
+    error: null,
+  };
 }
 
 export async function setScheduleSettings(
   settings: ScheduleSettings
 ): Promise<ServiceResult<ScheduleSettings>> {
-  settingsStore = {
-    holidays: [...new Set(settings.holidays.filter((day) => !Number.isNaN(Date.parse(day))))].sort(),
-    capacityHoursPerDay: { ...settings.capacityHoursPerDay },
-  };
-  return { data: structuredClone(settingsStore), error: null };
+  const holidays = [
+    ...new Set(
+      settings.holidays
+        .filter((day) => !Number.isNaN(Date.parse(day)))
+        .sort()
+    ),
+  ];
+  const capacityNames = Object.keys(settings.capacityHoursPerDay);
+  const members = await loadMemberMaps();
+  if (members.error || !members.data) {
+    return { data: null, error: members.error ?? "Gagal memuat data tim." };
+  }
+
+  const supabase = getSupabaseClient();
+  const [holidayDelete, capacityDelete] = await Promise.all([
+    supabase.from("holidays").delete().neq("day", ""),
+    supabase.from("developer_capacity").delete().neq("developer_id", ""),
+  ]);
+  const deleteError = holidayDelete.error ?? capacityDelete.error;
+  if (deleteError) {
+    return { data: null, error: deleteError.message };
+  }
+
+  if (holidays.length > 0) {
+    const { error } = await supabase
+      .from("holidays")
+      .insert(holidays.map((day) => ({ day, name: null })));
+    if (error) {
+      return { data: null, error: error.message };
+    }
+  }
+
+  const capacityRows = capacityNames
+    .map((name) => {
+      const developerId = members.data!.idByName.get(name);
+      const hours = settings.capacityHoursPerDay[name];
+      if (!developerId || !Number.isFinite(hours) || hours <= 0 || hours > 24) {
+        return null;
+      }
+      return { developer_id: developerId, hours_per_day: Math.round(hours) };
+    })
+    .filter(
+      (row): row is { developer_id: string; hours_per_day: number } =>
+        row !== null
+    );
+  if (capacityRows.length > 0) {
+    const { error } = await supabase
+      .from("developer_capacity")
+      .insert(capacityRows);
+    if (error) {
+      return { data: null, error: error.message };
+    }
+  }
+
+  return getScheduleSettings();
 }
 
 export function isWorkday(dateIso: string, holidays: string[]): boolean {
@@ -55,7 +144,11 @@ export function isWorkday(dateIso: string, holidays: string[]): boolean {
   return !holidays.includes(dateIso);
 }
 
-export function addWorkdays(dateIso: string, days: number, holidays: string[]): string {
+export function addWorkdays(
+  dateIso: string,
+  days: number,
+  holidays: string[]
+): string {
   let current = dateIso;
   let added = 0;
   while (added < days) {
@@ -97,7 +190,12 @@ export interface FeatureSchedule {
   conflictsWith: string[];
 }
 
-function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+function rangesOverlap(
+  aStart: string,
+  aEnd: string,
+  bStart: string,
+  bEnd: string
+): boolean {
   return aStart <= bEnd && bStart <= aEnd;
 }
 
@@ -106,17 +204,27 @@ function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: strin
  * estimasi × kapasitas; berurutan per developer.
  *
  * `holidays` berasal dari Pengaturan (US-041); bila tidak diberikan,
- * nilai mock/cadangan dipakai agar test dan mode demo tetap berjalan.
+ * nilai tersimpan di tabel `holidays` dipakai.
  */
 export async function scheduleProjectFeatures(
   projectId: string,
   options?: { holidays?: string[] }
 ): Promise<ServiceResult<FeatureSchedule[]>> {
-  const holidays = options?.holidays ?? settingsStore.holidays;
-  const [{ data: project }, { data: features }] = await Promise.all([
+  const [settingsResult, projectResult, featuresResult] = await Promise.all([
+    getScheduleSettings(),
     getProject(projectId),
     listFeatures(projectId),
   ]);
+  if (settingsResult.error || !settingsResult.data) {
+    return {
+      data: null,
+      error: settingsResult.error ?? "Gagal memuat pengaturan jadwal.",
+    };
+  }
+  const settings = settingsResult.data;
+  const holidays = options?.holidays ?? settings.holidays;
+  const project = projectResult.data;
+  const features = featuresResult.data;
   if (!project) {
     return { data: null, error: "Proyek tidak ditemukan." };
   }
@@ -130,8 +238,11 @@ export async function scheduleProjectFeatures(
   const developerCursor = new Map<string, string>();
 
   for (const feature of items) {
-    const capacity = settingsStore.capacityHoursPerDay[feature.developer] || 8;
-    const durationDays = Math.max(1, Math.ceil((feature.estimateDays * 8) / capacity));
+    const capacity = settings.capacityHoursPerDay[feature.developer] || 8;
+    const durationDays = Math.max(
+      1,
+      Math.ceil((feature.estimateDays * 8) / capacity)
+    );
     const lane = feature.developer || "(belum ditetapkan)";
     const laneStart = nextWorkday(
       developerCursor.get(lane) ?? project.project.startDate,
@@ -159,7 +270,10 @@ export async function scheduleProjectFeatures(
     } else {
       developerCursor.set(
         lane,
-        maxDate(developerCursor.get(lane) ?? project.project.startDate, shiftDate(end, 1))
+        maxDate(
+          developerCursor.get(lane) ?? project.project.startDate,
+          shiftDate(end, 1)
+        )
       );
     }
   }
@@ -174,7 +288,12 @@ export async function scheduleProjectFeatures(
       if (
         other.featureId !== item.featureId &&
         other.developer === item.developer &&
-        rangesOverlap(item.startDate, item.endDate, other.startDate, other.endDate)
+        rangesOverlap(
+          item.startDate,
+          item.endDate,
+          other.startDate,
+          other.endDate
+        )
       ) {
         item.conflictsWith.push(other.featureId);
       }
@@ -208,7 +327,12 @@ export async function overrideFeatureSchedule(
   featureId: string,
   input: ScheduleOverrideInput
 ): Promise<ServiceResult<true>> {
-  if (!input.startDate || !input.endDate || Number.isNaN(Date.parse(input.startDate)) || Number.isNaN(Date.parse(input.endDate))) {
+  if (
+    !input.startDate ||
+    !input.endDate ||
+    Number.isNaN(Date.parse(input.startDate)) ||
+    Number.isNaN(Date.parse(input.endDate))
+  ) {
     return { data: null, error: "Tanggal override tidak valid." };
   }
   if (input.startDate > input.endDate) {

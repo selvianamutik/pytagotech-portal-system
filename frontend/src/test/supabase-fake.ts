@@ -84,7 +84,13 @@ type TableName = string;
 type FilterOp = "eq" | "neq" | "in" | "ilike" | "gte" | "lte" | "is" | "not";
 
 /** Tabel yang memiliki trigger audit di database live. */
-const AUDITED_TABLES = new Set(["leads", "lead_interests", "lead_activities"]);
+const AUDITED_TABLES = new Set([
+  "leads",
+  "lead_interests",
+  "lead_activities",
+  "deals",
+  "change_requests",
+]);
 
 /**
  * Meniru trigger audit database: simpan snapshot lama/baru ke `auditLogs`.
@@ -119,6 +125,28 @@ function recordAudit(
     new_value: newRow ? { ...newRow } : null,
     created_at: new Date().toISOString(),
   });
+}
+
+/** Menambah hari pada tanggal ISO `YYYY-MM-DD` (dipakai RPC handover). */
+function addDays(date: string, days: number): string {
+  const base = new Date(`${date}T00:00:00Z`);
+  base.setUTCDate(base.getUTCDate() + days);
+  return base.toISOString().slice(0, 10);
+}
+
+/** Nomor urut `display_id` berikutnya untuk prefix tertentu. */
+function nextDisplayId(
+  rows: Record<string, unknown>[],
+  prefix: string,
+  pad = 3
+): string {
+  const maxDisplay = rows.reduce((max, row) => {
+    const match = new RegExp(`^${prefix}-(\\d+)$`).exec(
+      String(row["display_id"] ?? "")
+    );
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+  return `${prefix}-${String(maxDisplay + 1).padStart(pad, "0")}`;
 }
 
 function matches<T extends Record<string, unknown>>(
@@ -407,6 +435,124 @@ class FakeQuery {
           stored["created_at"] ??= now;
           stored["updated_at"] ??= now;
         }
+        if (this.table === "tasks") {
+          const now = new Date().toISOString();
+          const maxDisplay = rows.reduce((max, row) => {
+            const match = /^TSK-(\d+)$/.exec(String(row["display_id"] ?? ""));
+            return match ? Math.max(max, Number(match[1])) : max;
+          }, 0);
+          stored["id"] ??= `task-${rows.length + 1}`;
+          stored["display_id"] ??= `TSK-${String(maxDisplay + 1).padStart(3, "0")}`;
+          stored["parent_id"] ??= null;
+          stored["assignee_id"] ??= null;
+          stored["status"] ??= "To Do";
+          stored["start_date"] ??= null;
+          stored["target_date"] ??= null;
+          stored["percent"] ??= 0;
+          stored["notes"] ??= null;
+          stored["link"] ??= null;
+          stored["is_active"] ??= true;
+          stored["created_at"] ??= now;
+          stored["updated_at"] ??= now;
+        }
+        if (this.table === "features") {
+          const now = new Date().toISOString();
+          const maxDisplay = rows.reduce((max, row) => {
+            const match = /^FIT-(\d+)$/.exec(String(row["display_id"] ?? ""));
+            return match ? Math.max(max, Number(match[1])) : max;
+          }, 0);
+          stored["id"] ??= `feat-${rows.length + 1}`;
+          stored["display_id"] ??= `FIT-${String(maxDisplay + 1).padStart(3, "0")}`;
+          stored["priority"] ??= "Medium";
+          stored["developer_id"] ??= null;
+          stored["estimate_days"] ??= 1;
+          stored["source"] ??= "manual";
+          stored["task_id"] ??= null;
+          stored["scheduled_start"] ??= null;
+          stored["scheduled_end"] ??= null;
+          stored["override_start"] ??= null;
+          stored["override_end"] ??= null;
+          stored["override_reason"] ??= null;
+          stored["created_at"] ??= now;
+          stored["updated_at"] ??= now;
+        }
+        if (this.table === "task_templates") {
+          stored["id"] ??= `tpl-${rows.length + 1}`;
+          stored["ord"] ??= 1;
+          stored["duration_days"] ??= 1;
+          stored["is_active"] ??= true;
+        }
+        if (this.table === "assets") {
+          stored["id"] ??= `asset-${rows.length + 1}`;
+          stored["display_id"] ??= nextDisplayId(rows, "AST");
+          stored["license_expiry"] ??= null;
+          stored["created_at"] ??= new Date().toISOString();
+        }
+        if (this.table === "publications") {
+          stored["id"] ??= `pub-${rows.length + 1}`;
+          stored["display_id"] ??= nextDisplayId(rows, "PUB", 4);
+          stored["schedule_date"] ??= null;
+          stored["release_date"] ??= null;
+          stored["live_link"] ??= null;
+          stored["created_at"] ??= new Date().toISOString();
+        }
+        if (this.table === "post_metrics") {
+          stored["id"] ??= `metric-${rows.length + 1}`;
+          stored["views_impressions"] ??= 0;
+          stored["created_at"] ??= new Date().toISOString();
+        }
+        if (this.table === "community_interactions") {
+          stored["id"] ??= `INT-${String(rows.length + 1).padStart(3, "0")}`;
+          stored["replied_at"] ??= null;
+          stored["created_at"] ??= new Date().toISOString();
+        }
+        if (this.table === "inquiries") {
+          stored["id"] ??= `inq-${rows.length + 1}`;
+          stored["display_id"] ??= nextDisplayId(rows, "INQ");
+          stored["routed_at"] ??= null;
+          stored["lead_id"] ??= null;
+          stored["status"] ??= "Diproses";
+          stored["created_at"] ??= new Date().toISOString();
+        }
+        if (this.table === "strategy_evaluations") {
+          stored["id"] ??= `evaluation-${rows.length + 1}`;
+          stored["display_id"] ??= nextDisplayId(rows, "EVL");
+          stored["created_at"] ??= new Date().toISOString();
+        }
+        if (this.table === "content_revisions") {
+          stored["id"] ??= `revision-${rows.length + 1}`;
+          stored["created_at"] ??= new Date().toISOString();
+        }
+        if (this.table === "content_ideas") {
+          stored["id"] ??= `idea-${rows.length + 1}`;
+          stored["display_id"] ??= nextDisplayId(rows, "IDE");
+          stored["hook"] ??= null;
+          stored["angle"] ??= null;
+          stored["key_points"] ??= null;
+          stored["cta"] ??= null;
+          stored["asset_ref"] ??= null;
+          stored["created_at"] ??= new Date().toISOString();
+        }
+        if (this.table === "content_materials") {
+          stored["id"] ??= `mat-${rows.length + 1}`;
+          stored["display_id"] ??= nextDisplayId(rows, "MAT", 4);
+          stored["status"] ??= "Draf";
+          stored["schedule_date"] ??= null;
+          stored["release_time"] ??= null;
+          stored["draft_link"] ??= null;
+          stored["copywriter_id"] ??= null;
+          stored["designer_id"] ??= null;
+          stored["video_editor_id"] ??= null;
+          stored["idea_id"] ??= null;
+          stored["gate_visual"] ??= false;
+          stored["gate_audio"] ??= false;
+          stored["gate_cover"] ??= false;
+          stored["gate_cta"] ??= false;
+          stored["gate_proofread"] ??= false;
+          stored["gate_override_by"] ??= null;
+          stored["gate_override_reason"] ??= null;
+          stored["created_at"] ??= new Date().toISOString();
+        }
         rows.push(stored);
         recordAudit(this.db, this.table, "insert", null, { ...stored });
         inserted.push({ ...stored });
@@ -448,6 +594,44 @@ class FakeQuery {
       const kept = rows.filter((row) => !matches(row, this.filters));
       rows.length = 0;
       rows.push(...kept);
+
+      // Emulasi ON DELETE CASCADE untuk sub-task + dependensi.
+      if (this.table === "tasks") {
+        const removedIds = new Set(
+          deleted.map((row) => String(row["id"] ?? ""))
+        );
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (const row of rows) {
+            const parentId = String(row["parent_id"] ?? "");
+            const id = String(row["id"] ?? "");
+            if (parentId && removedIds.has(parentId) && !removedIds.has(id)) {
+              removedIds.add(id);
+              changed = true;
+            }
+          }
+        }
+        const remaining = rows.filter(
+          (row) => !removedIds.has(String(row["id"] ?? ""))
+        );
+        rows.length = 0;
+        rows.push(...remaining);
+        this.db.tables ??= {};
+        this.db.tables.task_dependencies = (
+          this.db.tables.task_dependencies ?? []
+        ).filter(
+          (row) =>
+            !removedIds.has(String(row["predecessor_id"] ?? "")) &&
+            !removedIds.has(String(row["successor_id"] ?? ""))
+        );
+        for (const row of this.db.tables.features ?? []) {
+          if (removedIds.has(String(row["task_id"] ?? ""))) {
+            row["task_id"] = null;
+          }
+        }
+      }
+
       return { data: this.returning ? deleted : [], error: null };
     }
 
@@ -619,6 +803,24 @@ export function seedCrmFake(): Partial<FakeDb> {
       created_at: createdAt,
       updated_at: createdAt,
     },
+    {
+      id: "tm-dimas",
+      profile_id: null,
+      name: "Dimas (Freelance)",
+      status: "external",
+      is_active: true,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: "tm-ayu",
+      profile_id: null,
+      name: "Ayu (Magang)",
+      status: "internal",
+      is_active: true,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
   ];
 
   const masterOptions: FakeMasterOption[] = [
@@ -632,6 +834,24 @@ export function seedCrmFake(): Partial<FakeDb> {
     { category: "industry", value: "Lainnya", is_active: true },
     ...LEAD_STATUSES.map((value) => ({
       category: "lead_status",
+      value,
+      is_active: true,
+    })),
+    ...[
+      "Frontend",
+      "Backend",
+      "Integrasi",
+      "UI/UX",
+      "QA",
+      "Handover",
+      "Kontak",
+    ].map((value) => ({
+      category: "feature_category",
+      value,
+      is_active: true,
+    })),
+    ...["High", "Medium", "Low"].map((value) => ({
+      category: "priority",
       value,
       is_active: true,
     })),
@@ -979,8 +1199,86 @@ export function seedCrmFake(): Partial<FakeDb> {
       id: "task-1",
       display_id: "TSK-118",
       project_id: "proj-1",
+      parent_id: null,
       title: "Review desain landing Pytabelajar",
+      assignee_id: "tm-raka",
       status: "In Progress",
+      start_date: "2026-10-01",
+      target_date: "2026-10-09",
+      percent: 25,
+      notes: "Seed demo komentar/lampiran.",
+      link: null,
+      is_active: true,
+      created_at: "2026-10-01T03:00:00Z",
+      updated_at: "2026-10-04T03:00:00Z",
+    },
+    {
+      id: "task-2",
+      display_id: "TSK-001",
+      project_id: "proj-1",
+      parent_id: null,
+      title: "Desain homepage",
+      assignee_id: "tm-nabila",
+      status: "In Progress",
+      start_date: "2026-09-28",
+      target_date: "2026-10-08",
+      percent: 40,
+      notes: "Seed demo.",
+      link: null,
+      is_active: true,
+      created_at: "2026-09-28T03:00:00Z",
+      updated_at: "2026-10-04T03:00:00Z",
+    },
+    {
+      id: "task-3",
+      display_id: "TSK-002",
+      project_id: "proj-1",
+      parent_id: null,
+      title: "Development katalog",
+      assignee_id: "tm-raka",
+      status: "To Do",
+      start_date: "2026-10-06",
+      target_date: "2026-10-16",
+      percent: 0,
+      notes: "Seed demo.",
+      link: null,
+      is_active: true,
+      created_at: "2026-10-01T03:00:00Z",
+      updated_at: "2026-10-01T03:00:00Z",
+    },
+    {
+      id: "task-4",
+      display_id: "TSK-003",
+      project_id: "proj-2",
+      parent_id: null,
+      title: "Testing & UAT",
+      assignee_id: "tm-dimas",
+      status: "To Do",
+      start_date: "2026-10-12",
+      target_date: "2026-10-20",
+      percent: 0,
+      notes: "Seed demo.",
+      link: null,
+      is_active: true,
+      created_at: "2026-10-02T03:00:00Z",
+      updated_at: "2026-10-02T03:00:00Z",
+    },
+    {
+      id: "task-5",
+      display_id: "TSK-004",
+      project_id: "proj-2",
+      parent_id: null,
+      title: "Copywriting landing",
+      assignee_id: "tm-ayu",
+      status: "Review",
+      start_date: "2026-09-29",
+      target_date: "2026-10-05",
+      percent: 80,
+      notes: "Seed demo.",
+      link: null,
+      is_active: true,
+      created_at: "2026-09-29T03:00:00Z",
+      updated_at: "2026-10-04T03:00:00Z",
     },
   ];
 
@@ -990,13 +1288,106 @@ export function seedCrmFake(): Partial<FakeDb> {
       display_id: "FIT-011",
       project_id: "proj-1",
       name: "Login SSO",
+      category: "Backend",
+      priority: "High",
+      developer_id: null,
+      estimate_days: 1,
+      source: "manual",
+      task_id: null,
+      scheduled_start: null,
+      scheduled_end: null,
+      override_start: null,
+      override_end: null,
+      override_reason: null,
+      created_at: "2026-09-20T03:00:00Z",
+      updated_at: "2026-09-20T03:00:00Z",
     },
     {
       id: "feat-2",
       display_id: "FIT-012",
       project_id: "proj-1",
       name: "Halaman kontak",
+      category: "Frontend",
+      priority: "Medium",
+      developer_id: null,
+      estimate_days: 1,
+      source: "manual",
+      task_id: null,
+      scheduled_start: null,
+      scheduled_end: null,
+      override_start: null,
+      override_end: null,
+      override_reason: null,
+      created_at: "2026-09-20T03:00:00Z",
+      updated_at: "2026-09-20T03:00:00Z",
     },
+    {
+      id: "feat-3",
+      display_id: "FIT-001",
+      project_id: "proj-1",
+      name: "Katalog program",
+      category: "Handover",
+      priority: "Medium",
+      developer_id: "tm-nabila",
+      estimate_days: 5,
+      source: "handover",
+      task_id: null,
+      scheduled_start: "2026-10-06",
+      scheduled_end: "2026-10-10",
+      override_start: null,
+      override_end: null,
+      override_reason: null,
+      created_at: "2026-09-22T03:00:00Z",
+      updated_at: "2026-10-01T03:00:00Z",
+    },
+    {
+      id: "feat-4",
+      display_id: "FIT-002",
+      project_id: "proj-1",
+      name: "Galeri kegiatan",
+      category: "Handover",
+      priority: "Low",
+      developer_id: "tm-raka",
+      estimate_days: 3,
+      source: "handover",
+      task_id: null,
+      scheduled_start: "2026-10-13",
+      scheduled_end: "2026-10-15",
+      override_start: null,
+      override_end: null,
+      override_reason: null,
+      created_at: "2026-09-22T03:00:00Z",
+      updated_at: "2026-10-01T03:00:00Z",
+    },
+    {
+      id: "feat-5",
+      display_id: "FIT-003",
+      project_id: "proj-2",
+      name: "Form survei",
+      category: "Kontak",
+      priority: "High",
+      developer_id: "tm-dimas",
+      estimate_days: 2,
+      source: "manual",
+      task_id: null,
+      scheduled_start: "2026-10-05",
+      scheduled_end: "2026-10-06",
+      override_start: null,
+      override_end: null,
+      override_reason: null,
+      created_at: "2026-09-20T03:00:00Z",
+      updated_at: "2026-10-01T03:00:00Z",
+    },
+  ];
+
+  const task_templates: Record<string, unknown>[] = [
+    { id: "tpl-1", name: "Pembuatan dokumen RAD", ord: 1, duration_days: 3, is_active: true },
+    { id: "tpl-2", name: "Pembuatan dokumen PUS", ord: 2, duration_days: 3, is_active: true },
+    { id: "tpl-3", name: "Pembuatan dokumen SAD", ord: 3, duration_days: 3, is_active: true },
+  ];
+
+  const holidays: Record<string, unknown>[] = [
+    { day: "2026-12-25", name: "Hari libur nasional" },
   ];
 
   const content_materials: Record<string, unknown>[] = [
@@ -1004,8 +1395,41 @@ export function seedCrmFake(): Partial<FakeDb> {
       id: "mat-1",
       display_id: "MAT-0018",
       title: "Carousel edukasi API",
+      brand: "Pytagotech",
       status: "Draf",
+      idea_id: "idea-1",
+      gate_visual: true,
+      gate_audio: true,
+      created_at: "2026-10-01T02:00:00Z",
     },
+  ];
+  const content_ideas: Record<string, unknown>[] = [
+    { id: "idea-1", display_id: "IDE-001", title: "Edukasi API", brand: "Pytagotech", pillar: "Edukasi", funnel: "Awareness", readiness: "Disetujui", created_at: "2026-09-01T00:00:00Z" },
+    { id: "idea-2", display_id: "IDE-002", title: "Tips WordPress", brand: "Pytagotech", pillar: "Edukasi", funnel: "Consideration", readiness: "Tahan - Perlu Verifikasi", created_at: "2026-09-02T00:00:00Z" },
+  ];
+  const idea_platforms: Record<string, unknown>[] = [
+    { idea_id: "idea-1", platform: "Instagram" },
+    { idea_id: "idea-1", platform: "TikTok" },
+  ];
+
+  const assets: Record<string, unknown>[] = [
+    { id: "asset-1", display_id: "AST-001", name: "Logo utama", file_type: "SVG", cloud_link: "", owner: "internal", license_type: "Milik perusahaan", license_expiry: null, created_at: "2026-09-01T00:00:00Z" },
+    { id: "asset-2", display_id: "AST-002", name: "Font berlisensi", file_type: "OTF", cloud_link: "", owner: "partner", license_type: "Lisensi", license_expiry: "2026-10-20", created_at: "2026-09-01T00:00:00Z" },
+    { id: "asset-3", display_id: "AST-003", name: "Foto stok lama", file_type: "JPG", cloud_link: "", owner: "partner", license_type: "Lisensi", license_expiry: "2026-10-01", created_at: "2026-09-01T00:00:00Z" },
+  ];
+  const account_growth: Record<string, unknown>[] = [
+    { platform: "Instagram", brand: "Pytagotech", month: "2026-08", followers_start: 10000, followers_gained: 800, unfollows: 200, account_reach: 120000, profile_visits: 5000 },
+    { platform: "Instagram", brand: "Pytagotech", month: "2026-09", followers_start: 10600, followers_gained: 900, unfollows: 150, account_reach: 140000, profile_visits: 6200 },
+  ];
+  const community_interactions: Record<string, unknown>[] = [
+    { id: "INT-001", channel: "komentar", platform: "Instagram", brand: "Pytagotech", type: "Pertanyaan Layanan", received_at: "2026-10-04T01:00:00Z", replied_at: "2026-10-04T01:18:00Z", handler_id: "tm-nabila" },
+    { id: "INT-002", channel: "DM", platform: "TikTok", brand: "Pytagotech", type: "Komplain", received_at: "2026-10-04T02:00:00Z", replied_at: null, handler_id: "tm-nabila" },
+  ];
+  const inquiries: Record<string, unknown>[] = [
+    { id: "inq-1", display_id: "INQ-001", platform: "TikTok", brand: "Pytabelajar", received_at: "2026-10-04T01:00:00Z", routed_at: "2026-10-04T01:10:00Z", status: "Handover Selesai", lead_id: null, handler_id: "tm-nabila" },
+  ];
+  const strategy_evaluations: Record<string, unknown>[] = [
+    { id: "evaluation-1", display_id: "EVL-001", category: "Keep", pillar: "Edukasi", format: "Carousel", brand: "Pytagotech", period: "2026-09", summary: "Carousel edukasi API konsisten di atas rata-rata ER.", evidence: "ER 4,2% vs rata-rata 2,8% (5 posting).", created_at: "2026-10-01T02:00:00Z" },
   ];
 
   const comments: Record<string, unknown>[] = [
@@ -1138,7 +1562,16 @@ export function seedCrmFake(): Partial<FakeDb> {
       change_requests,
       tasks,
       features,
+      task_templates,
+      holidays,
       content_materials,
+      content_ideas,
+      idea_platforms,
+      assets,
+      account_growth,
+      community_interactions,
+      inquiries,
+      strategy_evaluations,
       comments,
       attachments,
       notifications,
@@ -1301,7 +1734,7 @@ export function createSupabaseFake(seed: Partial<FakeDb>): {
         const id = `proj-${db.tables.projects.length + 1}`;
         db.tables.projects.push({
           id,
-          display_id: `PRJ-${String(db.tables.projects.length + 1).padStart(3, "0")}`,
+          display_id: nextDisplayId(db.tables.projects, "PRJ"),
           name: `${deal["title"]} - ${client?.["company_name"] ?? "Klien"} (${deal["code"]})`,
           code: deal["code"],
           client_id: deal["client_id"],
@@ -1315,7 +1748,103 @@ export function createSupabaseFake(seed: Partial<FakeDb>): {
           created_at: now,
           updated_at: now,
         });
+
+        // Meniru RPC: generate task dari template aktif sesuai urutan `ord`.
+        db.tables.tasks ??= [];
+        const templates = db.tables.task_templates
+          ? [...db.tables.task_templates]
+              .filter((row) => row["is_active"] === true)
+              .sort((a, b) => Number(a["ord"]) - Number(b["ord"]))
+          : [];
+        for (const template of templates) {
+          const ord = Number(template["ord"]);
+          const duration = Number(template["duration_days"] ?? 1);
+          db.tables.tasks.push({
+            id: `task-${db.tables.tasks.length + 1}`,
+            display_id: nextDisplayId(db.tables.tasks, "TSK"),
+            project_id: id,
+            parent_id: null,
+            title: String(template["name"]),
+            assignee_id: null,
+            status: "To Do",
+            start_date: addDays(startDate, ord - 1),
+            target_date: addDays(startDate, ord + duration - 2),
+            percent: 0,
+            notes: null,
+            link: null,
+            is_active: true,
+            created_at: now,
+            updated_at: now,
+          });
+        }
+
+        // Meniru RPC: salin fitur handover menjadi backlog `handover`.
+        db.tables.features ??= [];
+        const handoverFeatures = (db.tables.deal_features ?? []).filter(
+          (row) => row["deal_id"] === handoverId
+        );
+        for (const source of handoverFeatures) {
+          db.tables.features.push({
+            id: `feat-${db.tables.features.length + 1}`,
+            display_id: nextDisplayId(db.tables.features, "FIT"),
+            project_id: id,
+            name: String(source["name"]),
+            category: "Backend",
+            priority: "Medium",
+            developer_id: null,
+            estimate_days: 1,
+            source: "handover",
+            task_id: null,
+            scheduled_start: null,
+            scheduled_end: null,
+            override_start: null,
+            override_end: null,
+            override_reason: null,
+            created_at: now,
+            updated_at: now,
+          });
+        }
+
         return { data: id, error: null };
+      }
+      if (name === "convert_inquiry_to_lead") {
+        const inquiryId = String(args?.["inquiry_id"] ?? "");
+        const inquiry = (db.tables?.inquiries ?? []).find((row) => row["id"] === inquiryId);
+        if (!inquiry) return { data: null, error: { message: "Inquiry tidak ditemukan." } };
+        if (inquiry["lead_id"]) return { data: null, error: { message: "Inquiry ini sudah dijadikan lead." } };
+        db.tables ??= {}; db.tables.leads ??= [];
+        const leadId = `lead-${db.tables.leads.length + 1}`;
+        db.tables.leads.push({ id: leadId, display_id: nextDisplayId(db.tables.leads, "LEAD"), contact_date: String(inquiry["received_at"]).slice(0, 10), company_name: args?.["company_name"], industry: "Lainnya", whatsapp: args?.["whatsapp"], instagram: args?.["instagram"] ?? null, email: args?.["email"], pic_id: args?.["pic_id"] ?? null, status: "New", source: `Sosmed/${inquiry["platform"]}`, next_follow_up: null, archived_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+        inquiry["lead_id"] = leadId;
+        inquiry["status"] = "Handover Selesai";
+        return { data: leadId, error: null };
+      }
+      if (name === "global_search") {
+        const q = String(args?.["search_query"] ?? "").toLowerCase();
+        const limit = Number(args?.["result_limit"] ?? 30);
+        const rows: { entity_type: string; display_id: string; title: string; subtitle: string; href: string }[] = [];
+        const push = (entity_type: string, display_id: string, title: string, subtitle: string, href: string) => {
+          rows.push({ entity_type, display_id, title, subtitle, href });
+        };
+        for (const lead of db.tables?.leads ?? []) {
+          const name = String(lead["company_name"] ?? "");
+          if (name.toLowerCase().includes(q)) {
+            push("lead", String(lead["display_id"]), name, `Lead · ${String(lead["status"] ?? "")}`, "/crm/leads");
+          }
+        }
+        for (const client of db.tables?.clients ?? []) {
+          const name = String(client["company_name"] ?? "");
+          if (name.toLowerCase().includes(q)) {
+            push("client", String(client["display_id"]), name, "Klien", "/crm/clients");
+          }
+        }
+        for (const mat of db.tables?.content_materials ?? []) {
+          const title = String(mat["title"] ?? "");
+          if (title.toLowerCase().includes(q)) {
+            push("content_material", String(mat["display_id"]), title, `Materi · ${String(mat["brand"] ?? "")}`, `/sosmed/materi/${String(mat["display_id"])}`);
+          }
+        }
+        return { data: rows.slice(0, limit), error: null };
       }
       const tableByType: Record<string, string> = {
         lead: "leads",
