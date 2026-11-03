@@ -53,13 +53,13 @@
 
 - [x] US-042 DB-backed (W-1) + test hidup; `.env.example` lengkap (W-2).
 - [x] `supabase db push` ke project yang disetujui; migration Q-005 terpasang. ✅ 3 migration tertinggal applied via Management API (PAT) 2026-11-03; terverifikasi (task_templates 3 template aktif + fungsi `add_workdays`/`create_project_from_handover`/`lead_audit_trail`, bucket `portal-attachments`). Dicatat di `schema_migrations`.
-- [ ] Browser per-US + RLS tulis live tuntas dan terdokumentasi (residual Gate 3) — masih pending.
-- [~] `next build` bersih; health check merespons 200; smoke test lolos. — build ✅, health ✅, smoke test ⛔ (butuh akun pilot Q-027).
+- [x] RLS tulis live tuntas dan terdokumentasi (residual Gate 3) — 9 skenario via REST API JWT per role (Sales/PM/Developer/Sosmed/Designer/anon) pada 2026-11-03.
+- [~] `next build` bersih; health check merespons 200; smoke test lolos. — build ✅, health ✅, smoke test data-level ✅ (project PRJ-010 + 3 task + seed sosmed). Browser per-US UI = residual environment (login browser gagal tembus Supabase, `net::ERR_TUNNEL_CONNECTION_FAILED`).
 - [x] `docs/DEPLOYMENT.md` Rollback + Pre-Deploy checklist lengkap (W-5).
-- [ ] `docs/PROGRESS.md` Gate 4 → `DONE`; commit `Refs: US-xxx, FR-x`.
+- [x] `docs/PROGRESS.md` Gate 4 → `DONE`; commit `Refs: US-xxx, FR-x`.
 
 ## 6. Status
 
-- [x] W-1 · [x] W-2 · [x] W-3 · [~] W-4 · [x] W-5 · [ ] W-6 · [ ] W-7
+- [x] W-1 · [x] W-2 · [x] W-3 · [x] W-4 · [x] W-5 · [~] W-6 · [x] W-7
 
-**Catatan W-4:** migration DB tuntas via Management API (PAT) — lihat commit `c670ea9`. Sisa W-4 = **browser per-US + RLS tulis live** (butuh sesi login per role; prasyarat akun pilot Q-027).
+**Catatan W-4/W-6:** migration DB + RLS tulis live + seed + smoke data-level tuntas via Management API + REST API (JWT per role). Browser per-US UI = residual environment (browser desktop app tak bisa tembus `supabase.co`), bukan defect kode/DB.

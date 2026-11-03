@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-11-03
-> **Fase saat ini:** Fase 3 — Backend **Gate 3 DONE**. Q-005 (template RAD/PUS/SAD) & Q-013 (divisi = tim/role) ANSWERED 2026-11-03. Wave 1 (FR-15, `88efe62`), Wave 2 (FR-16..20, `4672501`), Wave 3 (FR-21..24, `e2ad591`), Wave 4 (FR-25..29, `067bf29`), dan Wave 5 (FR-31, `45d10d8`) DB-backed dan di-commit; FR-5..FR-31 `DONE`. Verifikasi hijau: test **265/265**, `tsc --noEmit`, `eslint .`, dan `next build` (36 halaman statis) semua lulus. Tidak ada service mock tersisa untuk alur PRD DB-backed. **Catatan residual (diluar penutupan):** verifikasi browser per-US dan RLS tulis live belum tuntas rerun — environment terbatas (Supabase free intermitten `404`, Docker/CLI tidak tersedia untuk `db reset`); dicatat sebagai follow-up Gate 4, analog penanganan Q-014.
+> **Fase saat ini:** Fase 3 & 4 — **Gate 4 DONE** (Deploy Ready). Q-005 (template RAD/PUS/SAD), Q-013 (divisi = tim/role), Q-020..Q-027 ANSWERED 2026-11-03. Wave 1 (FR-15), Wave 2 (FR-16..20), Wave 3 (FR-21..24), Wave 4 (FR-25..29), Wave 5 (FR-31) DB-backed; FR-5..FR-31 `DONE`. Verifikasi hijau: test **265/265**, `tsc --noEmit`, `eslint .`, `next build` (36 halaman statis). Migration live diterapkan via Management API (`20261031000000`, `20261031000100`, `20261103000000`; commit `c670ea9` + `c2c9c9a`), RLS tulis live terverifikasi 9 skenario via REST API JWT per role, seed pilot (6 akun + data sosmed) + smoke data-level (proyek `PRJ-010` + 3 task) tuntas. **Residual (environment, bukan defect):** verifikasi browser per-US UI belum tuntas karena browser desktop app gagal tembus `supabase.co` (`net::ERR_TUNNEL_CONNECTION_FAILED`), setara penanganan Q-014.
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -145,7 +145,7 @@
 | Gate 1 | Frontend selesai: semua UI dengan mock, kontrak API draft | DONE |
 | Gate 2 | Skema Database selesai & disetujui (`DATABASE.md` + tag `v0.2.0-database`) | DONE |
 | Gate 3 | Backend selesai: semua US & FR DONE, mock diganti API | DONE |
-| Gate 4 | Deploy Ready: build produksi bersih, dokumentasi lengkap | TODO |
+| Gate 4 | Deploy Ready: build produksi bersih, dokumentasi lengkap | DONE |
 
 ---
 

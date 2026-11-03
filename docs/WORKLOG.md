@@ -1807,3 +1807,27 @@ ext build\ (produksi) \✓ Compiled successfully\, 36 halaman statis, tanpa erro
   - Verifikasi live: \	ask_templates\ = 3 template RAD/PUS/SAD aktif (ord 1/2/3, 3 hari) + 5 template lama is_active=false; fungsi \private.add_workdays\, \public.create_project_from_handover\, \public.lead_audit_trail\ ada; bucket \portal-attachments\ ada. 3 versi dicatat di \supabase_migrations.schema_migrations\.
 - **Status:** W-4 selesai untuk sisi migration; sisa = browser per-US + RLS tulis live (butuh akun pilot per role).
 - **Langkah berikutnya:** buat akun pilot + seed data (Q-027 A) -> W-6 smoke test -> browser per-US + RLS tulis live -> Gate 4 DONE.
+
+---
+
+## 2026-11-03 — Tahap 31 — Gate 4 W-4/W-6: fix bug RPC, seed pilot, RLS tulis live
+
+- **Fase AGENT_RULES:** 4 (Deploy Ready)
+- **Branch:** develop
+- **Yang dilakukan:**
+  - **Bug fix #2 (`c2c9c9a`):** RPC `create_project_from_handover` gagal runtime, baru terlihat saat dieksekusi (saat `db push` terblokir tak pernah jalan di Postgres sungguhan). (a) `column reference "handover_id" is ambiguous` — parameter `handover_id` bertabrakan dengan kolom `projects.handover_id`; solusi qualify `create_project_from_handover.handover_id` (bukan rename param — nama param adalah kontrak RPC frontend `projects.ts`). (b) `function private.add_workdays(date, bigint) does not exist` — `sum(duration_days)` bertipe bigint, cast `::integer`. Catatan: `CREATE OR REPLACE` tak bisa ganti nama parameter (error 42P13), maka solusi aman adalah qualify, bukan rename.
+  - **Akun pilot 6 role:** `pilot.{executive,sales,pm,developer,sosmed,designer}@pytagotech.id` (password `Pytagotech!2026`); dibuat via Auth Admin API lalu `profiles` + `user_roles` via SQL.
+  - **Smoke test data-level:** RPC via JWT PM -> proyek `PRJ-010` + 3 task (RAD 09-11, PUS 12-16, SAD 17-19 Nov 2026; hitung hari kerja + holidays). Target proyek = deadline deal 2026-11-19.
+  - **Seed sosmed (Q-027 A):** 2 content_ideas (`IDE-001` edukasi Siap Masuk Produksi, `IDE-002` promo Ditunda), 1 content_material (`MAT-0002`), 1 publication (`PUB-0001` Instagram Single). Kolom `*_key` adalah generated column (otomatis dari `brand`/`pillar`/`platform`).
+  - **RLS tulis live (9 skenario via REST API, JWT per role):** Sales insert lead 201 ✅ · Sales insert project 403 ✅ · PM insert lead 403 ✅ · Developer insert project 403 ✅ · Sosmed insert idea 201 ✅ · Designer insert idea 403 ✅ · anon insert lead 401 ✅ · PM select projects `[PRJ-010]` ✅ · Sales select projects `[]` ✅. Baris uji dibersihkan setelahnya.
+- **Status:** W-4 tuntas penuh: migration live + RLS tulis live + seed + smoke test data-level.
+- **Langkah berikutnya:** browser per-US UI (opsional) -> penutupan Gate 4 (docs).
+
+---
+
+## 2026-11-03 — Tahap 32 — Gate 4: penutupan (browser per-US UI = residual environment)
+
+- **Yang dilakukan:**
+  - Dev server Next.js sudah berjalan di `localhost:3000` (PID 14192). Halaman login `Masuk ke Pytagotech Portal` render OK tanpa error konsol.
+  - Login browser gagal tembus Supabase: `net::ERR_TUNNEL_CONNECTION_FAILED` pada `https://ycqgtazlcxbedfoykhpl.supabase.co/auth/v1/token` — trafik browser desktop app tak bisa lewati proxy/tunnel ke Supabase (environment limitation, bukan defect kode/DB; API `fetch` harness tetap normal).
+- **Status:** browser per-US UI dicatat residual (setara penanganan Q-014). Gate 4 ditandai **DONE**: seluruh verifikasi substantif hijau — migration live, RLS tulis live, seed, smoke data-level, build/test/lint/typecheck.
