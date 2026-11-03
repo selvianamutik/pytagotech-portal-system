@@ -332,6 +332,12 @@ class FakeQuery {
             if (this.table === "lead_interests") {
               return candidate["lead_id"] === row["lead_id"];
             }
+            if (this.table === "raci_matrix") {
+              return (
+                candidate["activity"] === row["activity"] &&
+                candidate["role"] === row["role"]
+              );
+            }
             return candidate["id"] === row["id"];
           });
           if (index >= 0) {
@@ -1531,6 +1537,54 @@ export function seedCrmFake(): Partial<FakeDb> {
     },
   ];
 
+  const guides: Record<string, unknown>[] = [
+    {
+      slug: "panduan-crm",
+      title: "Panduan CRM & Lead",
+      content_md: [
+        "# Panduan CRM & Lead",
+        "",
+        "Alur inti modul CRM: **Database Lead** → **Pipeline** → **Closing**.",
+        "",
+        "## Aturan penting",
+        "",
+        "- Status Interest otomatis masuk pipeline Interested Leads.",
+        "- Lead Closing dijadikan klien tanpa input ulang.",
+        "- Periksa peringatan duplikat sebelum menyimpan.",
+        "",
+        "Lihat juga [Database Lead](/crm/leads).",
+      ].join("\n"),
+      updated_at: "2026-10-01T02:00:00Z",
+    },
+    {
+      slug: "panduan-handover",
+      title: "Panduan Deal Handover",
+      content_md: [
+        "# Panduan Deal Handover",
+        "",
+        "Handover mengalir **Draft → Menunggu → Dikonfirmasi / Perlu Revisi**.",
+        "",
+        "## Checklist Sales",
+        "",
+        "- Total termin sama dengan nilai deal.",
+        "- Fitur dilengkapi penjelasan output.",
+        "- Ajukan ke Produksi setelah termin seimbang.",
+      ].join("\n"),
+      updated_at: "2026-10-02T02:00:00Z",
+    },
+  ];
+
+  const raci_matrix: Record<string, unknown>[] = [
+    { activity: "Input & kelola lead", role: "Sales / Marketing", value: "R" },
+    { activity: "Input & kelola lead", role: "Leader", value: "A" },
+    { activity: "Konfirmasi deal handover", role: "Sales / Marketing", value: "C" },
+    { activity: "Konfirmasi deal handover", role: "Project Manager", value: "R" },
+    { activity: "Konfirmasi deal handover", role: "Leader", value: "A" },
+    { activity: "Review & rilis konten", role: "Social Media Specialist", value: "R" },
+    { activity: "Review & rilis konten", role: "Designer", value: "C" },
+    { activity: "Review & rilis konten", role: "Leader", value: "A" },
+  ];
+
   return {
     teamMembers,
     masterOptions,
@@ -1575,6 +1629,8 @@ export function seedCrmFake(): Partial<FakeDb> {
       comments,
       attachments,
       notifications,
+      guides,
+      raci_matrix,
     },
   };
 }

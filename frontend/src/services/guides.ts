@@ -1,126 +1,72 @@
-import type { Guide, RaciRow } from "@/types/guide";
+import { createClient } from "@/lib/supabase/client";
+import type { Guide, RaciRow, RaciValue } from "@/types/guide";
+import { RACI_ROLES, RACI_VALUES } from "@/types/guide";
 import type { ServiceResult } from "@/services/result";
 
 /**
- * Lapisan panduan SOP & RACI (US-042). Panduan markdown dapat
- * disunting Admin; matriks RACI per aktivitas × role.
+ * Lapisan panduan SOP & RACI (US-042). Panduan markdown disimpan di tabel
+ * `guides` (edit khusus Super Admin via RLS `guides_manage_admin`); matriks
+ * RACI di `raci_matrix` (PK komposit `activity`, `role`).
  */
 
-let guideStore: Guide[] = [];
+type GuideRow = {
+  slug: string; title: string; content_md: string; updated_at: string;
+};
+type RaciCell = { activity: string; role: string; value: string };
 
-let raciStore: RaciRow[] = [];
+export function resetMockGuides(): void {}
 
-function seedGuides(): Guide[] {
-  return [
-    {
-      slug: "panduan-crm",
-      title: "Panduan CRM & Lead",
-      content: [
-        "# Panduan CRM & Lead",
-        "",
-        "Alur inti modul CRM: **Database Lead** → **Pipeline** → **Closing**.",
-        "",
-        "## Aturan penting",
-        "",
-        "- Status Interest otomatis masuk pipeline Interested Leads.",
-        "- Lead Closing dijadikan klien tanpa input ulang.",
-        "- Periksa peringatan duplikat sebelum menyimpan.",
-        "",
-        "Lihat juga [Database Lead](/crm/leads).",
-      ].join("\n"),
-      updatedAt: "2026-10-01T02:00:00Z",
-    },
-    {
-      slug: "panduan-handover",
-      title: "Panduan Deal Handover",
-      content: [
-        "# Panduan Deal Handover",
-        "",
-        "Handover mengalir **Draft → Menunggu → Dikonfirmasi / Perlu Revisi**.",
-        "",
-        "## Checklist Sales",
-        "",
-        "- Total termin sama dengan nilai deal.",
-        "- Fitur dilengkapi penjelasan output.",
-        "- Ajukan ke Produksi setelah termin seimbang.",
-      ].join("\n"),
-      updatedAt: "2026-10-02T02:00:00Z",
-    },
-  ];
+function mapGuide(row: GuideRow): Guide {
+  return {
+    slug: row.slug,
+    title: row.title,
+    content: row.content_md,
+    updatedAt: row.updated_at,
+  };
 }
-
-function seedRaci(): RaciRow[] {
-  return [
-    {
-      activity: "Input & kelola lead",
-      assignments: {
-        "Sales / Marketing": "R",
-        "Project Manager": "",
-        Developer: "",
-        "Social Media Specialist": "",
-        Designer: "",
-        Leader: "A",
-        "Super Admin": "",
-      },
-    },
-    {
-      activity: "Konfirmasi deal handover",
-      assignments: {
-        "Sales / Marketing": "C",
-        "Project Manager": "R",
-        Developer: "",
-        "Social Media Specialist": "",
-        Designer: "",
-        Leader: "A",
-        "Super Admin": "",
-      },
-    },
-    {
-      activity: "Review & rilis konten",
-      assignments: {
-        "Sales / Marketing": "",
-        "Project Manager": "",
-        Developer: "",
-        "Social Media Specialist": "R",
-        "Designer": "C",
-        Leader: "A",
-        "Super Admin": "",
-      },
-    },
-  ];
-}
-
-/** Mengembalikan state mock ke awal — dipakai test dan demo. */
-export function resetMockGuides(): void {
-  guideStore = seedGuides();
-  raciStore = seedRaci();
-}
-
-resetMockGuides();
 
 export async function listGuides(): Promise<ServiceResult<Guide[]>> {
-  return { data: guideStore.map((guide) => ({ ...guide })), error: null };
+  const { data, error } = await createClient().from("guides").select("*");
+  if (error) return { data: null, error: error.message };
+  return { data: ((data ?? []) as GuideRow[]).map(mapGuide), error: null };
 }
 
 export async function updateGuide(
   slug: string,
   content: string
 ): Promise<ServiceResult<Guide>> {
-  const guide = guideStore.find((item) => item.slug === slug);
-  if (!guide) {
-    return { data: null, error: "Panduan tidak ditemukan." };
-  }
   if (!content.trim()) {
     return { data: null, error: "Isi panduan tidak boleh kosong." };
   }
-  guide.content = content;
-  guide.updatedAt = new Date().toISOString();
-  return { data: { ...guide }, error: null };
+  const { data, error } = await createClient()
+    .from("guides")
+    .update({ content_md: content.trim() })
+    .eq("slug", slug)
+    .select("slug,title,content_md,updated_at")
+    .single();
+  if (error) return { data: null, error: error.message };
+  if (!data) return { data: null, error: "Panduan tidak ditemukan." };
+  return { data: mapGuide(data as GuideRow), error: null };
 }
 
 export async function listRaci(): Promise<ServiceResult<RaciRow[]>> {
+  const { data, error } = await createClient()
+    .from("raci_matrix")
+    .select("activity,role,value");
+  if (error) return { data: null, error: error.message };
+  const cells = (data ?? []) as RaciCell[];
+  const grouped = new Map<string, Record<string, RaciValue>>();
+  for (const cell of cells) {
+    if (!grouped.has(cell.activity)) {
+      grouped.set(
+        cell.activity,
+        Object.fromEntries(RACI_ROLES.map((role) => [role, ""])) as Record<string, RaciValue>
+      );
+    }
+    grouped.get(cell.activity)![cell.role] = cell.value as RaciValue;
+  }
   return {
-    data: raciStore.map((row) => ({ activity: row.activity, assignments: { ...row.assignments } })),
+    data: [...grouped].map(([activity, assignments]) => ({ activity, assignments })),
     error: null,
   };
 }
@@ -130,16 +76,34 @@ export async function setRaciCell(
   role: string,
   value: string
 ): Promise<ServiceResult<RaciRow>> {
-  const row = raciStore.find((item) => item.activity === activity);
-  if (!row) {
-    return { data: null, error: "Aktivitas tidak ditemukan." };
-  }
-  if (!(role in row.assignments)) {
+  if (!(RACI_ROLES as readonly string[]).includes(role)) {
     return { data: null, error: "Role tidak dikenal." };
   }
-  if (value !== "" && !["R", "A", "C", "I"].includes(value)) {
+  if (value !== "" && !(RACI_VALUES as readonly string[]).includes(value as RaciValue)) {
     return { data: null, error: "Nilai harus R, A, C, I, atau kosong." };
   }
-  row.assignments[role] = value as "R" | "A" | "C" | "I" | "";
-  return { data: { activity: row.activity, assignments: { ...row.assignments } }, error: null };
+  const db = createClient();
+  const { data: existing } = await db
+    .from("raci_matrix")
+    .select("activity")
+    .eq("activity", activity)
+    .limit(1);
+  if (!((existing ?? []) as { activity: string }[])[0]) {
+    return { data: null, error: "Aktivitas tidak ditemukan." };
+  }
+  const { error } = await db
+    .from("raci_matrix")
+    .upsert({ activity, role, value });
+  if (error) return { data: null, error: error.message };
+  const { data: cells } = await db
+    .from("raci_matrix")
+    .select("role,value")
+    .eq("activity", activity);
+  const assignments = Object.fromEntries(
+    RACI_ROLES.map((r) => [r, ""])
+  ) as Record<string, RaciValue>;
+  for (const cell of (cells ?? []) as { role: string; value: string }[]) {
+    assignments[cell.role] = cell.value as RaciValue;
+  }
+  return { data: { activity, assignments }, error: null };
 }
