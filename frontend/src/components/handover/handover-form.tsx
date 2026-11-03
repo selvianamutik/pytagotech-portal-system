@@ -23,9 +23,9 @@ const SOP_GUIDE: { field: string; hint: string }[] = [
   { field: "Kode proyek", hint: "Unik, format PYT-TAHUN-NOMOR. Tidak bisa diubah setelah dipakai." },
   { field: "Scope & fitur", hint: "Tulis batas pekerjaan + tiap fitur dengan penjelasan outputnya." },
   { field: "Objektif akhir", hint: "Hasil terukur yang dijanjikan ke klien." },
-  { field: "Nilai deal", hint: "Nominal kontrak (IDR). Total termin harus sama (US-016)." },
+  { field: "Nilai deal", hint: "Nominal kontrak (IDR). Total termin harus sama." },
   { field: "Skema termin", hint: "Ringkasan pembagian, mis. 50-30-20. Detail di termin." },
-  { field: "Target deadline", hint: "Tanggal serah terima. PM meninjau kewajarannya (US-017)." },
+  { field: "Target deadline", hint: "Tanggal serah terima. PM meninjau kewajarannya." },
 ];
 
 interface HandoverFormProps {
@@ -97,7 +97,7 @@ export function HandoverForm({ open, onOpenChange, initial, clients, onSaved }: 
           <DialogDescription>
             {initial
               ? "Handover Draft/Perlu Revisi masih bisa diubah."
-              : "Handover baru berstatus Draft. Ajukan ke Produksi setelah termin diisi (US-017)."}
+              : "Handover baru berstatus Draft. Ajukan ke Produksi setelah termin diisi."}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_240px]">

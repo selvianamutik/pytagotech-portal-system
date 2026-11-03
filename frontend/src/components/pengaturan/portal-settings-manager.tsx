@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { CalendarDaysIcon, SaveIcon, Trash2Icon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -282,7 +281,6 @@ function PortalSettingsForm({ settings, loadError, onSaved }: PortalSettingsForm
             kalender hari libur. Perubahan tercatat di audit log dan tidak mengubah data final.
           </p>
         </div>
-        <Badge variant="outline">FR-30 · US-041</Badge>
       </div>
 
       {loadError ? (

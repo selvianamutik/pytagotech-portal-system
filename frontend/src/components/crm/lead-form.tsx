@@ -91,8 +91,8 @@ export function LeadForm({ open, onOpenChange, initial, picNames, onSaved }: Lea
           <DialogTitle>{initial ? `Ubah ${initial.id}` : "Tambah lead baru"}</DialogTitle>
           <DialogDescription>
             {initial
-              ? "Perbarui data lead. Perubahan PIC/tahap tercatat untuk audit (US-004/009)."
-              : "Lead berstatus Interest otomatis masuk pipeline (US-011). Closing menjadi klien tanpa input ulang (US-014)."}
+              ? "Perbarui data lead. Perubahan PIC/tahap tercatat untuk audit."
+              : "Lead berstatus Interest otomatis masuk pipeline. Closing menjadi klien tanpa input ulang."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">

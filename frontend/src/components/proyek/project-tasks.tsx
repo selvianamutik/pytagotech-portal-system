@@ -72,7 +72,7 @@ export function ProjectTasks({ projectId }: { projectId: string }) {
       <CardHeader className="border-b">
         <CardTitle className="text-base">Task proyek</CardTitle>
         <CardDescription>
-          Ter-generate otomatis dari template. Kelola penuh di Task Board (US-022).
+          Ter-generate otomatis dari template. Kelola penuh di Task Board.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">

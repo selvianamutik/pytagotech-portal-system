@@ -203,7 +203,7 @@ export function HandoverStatusActions({
 
         {status === "Dikonfirmasi" ? (
           <p className="text-sm text-emerald-700 dark:text-emerald-300">
-            Handover dikonfirmasi — siap dijadikan proyek (US-019).
+            Handover dikonfirmasi — siap dijadikan proyek.
           </p>
         ) : null}
 

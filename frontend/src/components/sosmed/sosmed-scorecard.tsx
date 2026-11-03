@@ -46,7 +46,7 @@ export function SosmedScorecard() {
           <p className="text-sm font-medium text-primary">Sosmed · Eksekutif</p>
           <h1 className="mt-1 text-2xl font-bold">KPI Scorecard Sosmed</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Target mengikuti Pengaturan per lini bisnis (US-041); tanpa filter brand memakai
+            Target mengikuti Pengaturan per lini bisnis; tanpa filter brand memakai
             target dasar.
           </p>
         </div>

@@ -313,7 +313,7 @@ export function InterestPipeline() {
           <CardTitle className="text-base">Catatan alur</CardTitle>
           <CardDescription>
             Closing dari pipeline dilanjutkan ke klien + deal handover tanpa input
-            ulang (US-014). Lead yang kalah (Lost) keluar dari pipeline.
+            ulang. Lead yang kalah (Lost) keluar dari pipeline.
           </CardDescription>
         </CardHeader>
       </Card>

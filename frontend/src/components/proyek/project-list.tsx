@@ -168,7 +168,7 @@ export function ProjectList() {
       {manageable ? null : (
         <p className="text-xs text-muted-foreground" role="note">
           Hanya PM dan Admin yang dapat membuat/mengubah proyek. Proyek baru dibuat dari
-          handover Dikonfirmasi (US-019).
+          handover Dikonfirmasi.
         </p>
       )}
 

@@ -169,7 +169,7 @@ export function FeatureBacklog({
         <div>
           <CardTitle className="text-base">Backlog fitur</CardTitle>
           <CardDescription>
-            Scope terpetakan per proyek. Penjadwalan otomatis menyusul (US-024).
+            Scope terpetakan per proyek. Penjadwalan otomatis menyusul.
           </CardDescription>
         </div>
         <div className="flex gap-2">

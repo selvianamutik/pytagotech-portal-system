@@ -221,7 +221,7 @@ export function MaterialDetail({
           <CardTitle className="text-base">Jadwal & rilis</CardTitle>          <CardDescription>
             Saat ini: {material.scheduleDate ? formatDate(material.scheduleDate) : "belum dijadwalkan"}
             {material.releaseTime ? ` ${material.releaseTime}` : ""}. Penjadwalan butuh
-            status Disetujui (US-030).
+            status Disetujui.
           </CardDescription>
         </CardHeader>
         <CardContent>

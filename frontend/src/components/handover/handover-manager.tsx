@@ -95,7 +95,7 @@ export function HandoverManager() {
           <p className="text-sm font-medium text-primary">Klien & Handover</p>
           <h1 className="mt-1 text-2xl font-bold">Deal Handover</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Kesepakatan Sales → Produksi. Handover Dikonfirmasi menjadi proyek (US-019).
+            Kesepakatan Sales → Produksi. Handover Dikonfirmasi menjadi proyek.
           </p>
         </div>
         <Button type="button" onClick={() => setDialogOpen(true)}>

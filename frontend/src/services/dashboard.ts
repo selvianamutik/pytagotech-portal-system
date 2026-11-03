@@ -22,18 +22,21 @@ import type { ServiceResult } from "@/services/result";
  */
 
 const NAVIGATION: NavigationItem[] = [
+  // Beranda (selalu pertama).
   { label: "Ringkasan kerja", module: "Beranda", href: "/", roles: ["Semua role"] },
-  { label: "Database Lead", module: "CRM", href: "/crm/leads", badge: 12, roles: ["Sales / Marketing", "Executive / Leader"] },
-  { label: "Interested Leads", module: "CRM", href: "/crm/interested", badge: 2, roles: ["Sales / Marketing", "Executive / Leader"] },
+  // CRM — alur prospecting Sales.
+  { label: "Database Lead", module: "CRM", href: "/crm/leads", roles: ["Sales / Marketing", "Executive / Leader"] },
+  { label: "Interested Leads", module: "CRM", href: "/crm/interested", roles: ["Sales / Marketing", "Executive / Leader"] },
   { label: "Dashboard CRM", module: "CRM", href: "/crm/dashboard", roles: ["Sales / Marketing", "Executive / Leader"] },
-  { label: "Deal Handover", module: "Klien & Handover", href: "/handover", badge: 7, roles: ["Sales / Marketing", "Project Manager"] },
+  // Klien & Handover — serah terima Closing → Produksi.
+  { label: "Deal Handover", module: "Klien & Handover", href: "/handover", roles: ["Sales / Marketing", "Project Manager"] },
   { label: "Master Klien", module: "Klien & Handover", href: "/klien", roles: ["Sales / Marketing", "Project Manager"] },
+  // Proyek — alur produksi.
   { label: "Proyek", module: "Proyek", href: "/proyek", roles: ["Project Manager", "Developer", "Executive / Leader"] },
+  { label: "Task Board", module: "Proyek", href: "/proyek/board", roles: ["Project Manager", "Developer"] },
   { label: "Kalender Kerja", module: "Proyek", href: "/kalender", roles: ["Project Manager", "Developer", "Executive / Leader"] },
-  { label: "Template Task", module: "Pengaturan", href: "/pengaturan/template-task", roles: ["Super Admin"] },
-  { label: "Developer", module: "Pengaturan", href: "/pengaturan/developer", roles: ["Super Admin"] },
-  { label: "Task Board", module: "Proyek", href: "/proyek/board", badge: 18, roles: ["Project Manager", "Developer"] },
-  { label: "Content Planner", module: "Sosmed", href: "/sosmed/planner", badge: 9, roles: ["Social Media Specialist", "Executive / Leader"] },
+  // Sosmed — alur konten & distribusi.
+  { label: "Content Planner", module: "Sosmed", href: "/sosmed/planner", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Produksi Konten", module: "Sosmed", href: "/sosmed/materi", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Kalender Publikasi", module: "Sosmed", href: "/sosmed/kalender", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Analytics", module: "Sosmed", href: "/sosmed/analitik", roles: ["Social Media Specialist", "Executive / Leader"] },
@@ -43,12 +46,15 @@ const NAVIGATION: NavigationItem[] = [
   { label: "KPI Scorecard", module: "Sosmed", href: "/sosmed/scorecard", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Evaluasi KIST", module: "Sosmed", href: "/sosmed/evaluasi", roles: ["Social Media Specialist", "Executive / Leader"] },
   { label: "Asset Library", module: "Sosmed", href: "/sosmed/aset", roles: ["Social Media Specialist", "Executive / Leader"] },
+  // Pengaturan — tata kelola (Super Admin).
   { label: "Pengguna", module: "Pengaturan", href: "/pengaturan/pengguna", roles: ["Super Admin"] },
+  { label: "Master Data", module: "Pengaturan", href: "/pengaturan/master-data", roles: ["Super Admin"] },
+  { label: "KPI, SLA & Routing", module: "Pengaturan", href: "/pengaturan/kpi-sla", roles: ["Super Admin"] },
+  { label: "Template Task", module: "Pengaturan", href: "/pengaturan/template-task", roles: ["Super Admin"] },
+  { label: "Developer", module: "Pengaturan", href: "/pengaturan/developer", roles: ["Super Admin"] },
   { label: "Audit Log", module: "Pengaturan", href: "/pengaturan/audit-log", roles: ["Super Admin", "Executive / Leader"] },
   { label: "Arsip & Backup", module: "Pengaturan", href: "/pengaturan/arsip", roles: ["Super Admin"] },
   { label: "Panduan & RACI", module: "Pengaturan", href: "/pengaturan/panduan", roles: ["Super Admin"] },
-  { label: "Master Data", module: "Pengaturan", href: "/pengaturan/master-data", roles: ["Super Admin"] },
-  { label: "KPI, SLA & Routing", module: "Pengaturan", href: "/pengaturan/kpi-sla", roles: ["Super Admin"] },
   { label: "Reset Data Demo", module: "Pengaturan", href: "/pengaturan/reset-data", roles: ["Super Admin"] },
 ];
 
@@ -100,6 +106,11 @@ interface MaterialSummaryRow {
   display_id: string;
   title: string;
   status: string;
+}
+
+interface ContentIdeaSummaryRow {
+  display_id: string;
+  readiness: string;
 }
 
 interface AuditLogRow {
@@ -166,7 +177,7 @@ export async function getDashboardSnapshot(): Promise<
   }
   const userId = session.user.id;
 
-  const [profileResult, rolesResult, leadsResult, dealsResult, projectsResult, tasksResult, materialsResult, auditResult, membersResult] =
+  const [profileResult, rolesResult, leadsResult, dealsResult, projectsResult, tasksResult, materialsResult, ideasResult, auditResult, membersResult] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -179,6 +190,7 @@ export async function getDashboardSnapshot(): Promise<
       supabase.from("projects").select("display_id, name, status, archived_at"),
       supabase.from("tasks").select("display_id, title, status, assignee_id, target_date, is_active"),
       supabase.from("content_materials").select("display_id, title, status"),
+      supabase.from("content_ideas").select("display_id, readiness"),
       supabase
         .from("audit_logs")
         .select("id, actor_id, actor_name, action, entity_type, entity_id, old_value, new_value, created_at")
@@ -206,6 +218,7 @@ export async function getDashboardSnapshot(): Promise<
   const projects = (projectsResult.data ?? []) as ProjectSummaryRow[];
   const tasks = (tasksResult.data ?? []) as TaskSummaryRow[];
   const materials = (materialsResult.data ?? []) as MaterialSummaryRow[];
+  const ideas = (ideasResult.data ?? []) as ContentIdeaSummaryRow[];
   const auditRows = (auditResult.data ?? []) as AuditLogRow[];
 
   const memberNames = new Map<string, string>(
@@ -213,9 +226,25 @@ export async function getDashboardSnapshot(): Promise<
   );
 
   const activeLeads = leads.filter((lead) => !lead.archived_at && lead.status !== "Lost").length;
+  const interestedLeads = leads.filter((lead) => !lead.archived_at && lead.status === "Interest").length;
   const awaitingDeals = deals.filter((deal) => deal.status === "Menunggu Konfirmasi Produksi").length;
   const activeProjects = projects.filter((project) => !project.archived_at).length;
   const draftMaterials = materials.filter((material) => material.status === "Draf").length;
+  const activeTasks = tasks.filter((task) => task.is_active !== false && task.status !== "Done").length;
+  const readyIdeas = ideas.filter((idea) => idea.readiness === "Siap Masuk Produksi").length;
+
+  // Badge angka di sidebar mengikuti data nyata (bukan angka statis).
+  const badgeByHref: Record<string, number> = {
+    "/crm/leads": activeLeads,
+    "/crm/interested": interestedLeads,
+    "/handover": awaitingDeals,
+    "/proyek/board": activeTasks,
+    "/sosmed/planner": readyIdeas,
+  };
+  const navigation = NAVIGATION.map((item) => ({
+    ...item,
+    badge: badgeByHref[item.href],
+  }));
 
   const metrics: DashboardMetric[] = [
     { label: "Lead aktif", value: String(activeLeads), change: `${leads.length} total lead`, tone: "info" },
@@ -307,7 +336,7 @@ export async function getDashboardSnapshot(): Promise<
     data: {
       currentUser,
       metrics,
-      navigation: NAVIGATION,
+      navigation,
       workQueue: workQueue.slice(0, 12),
       activities,
     },

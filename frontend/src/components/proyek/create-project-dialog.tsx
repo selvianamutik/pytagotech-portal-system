@@ -72,7 +72,7 @@ export function CreateProjectDialog({
           <DialogTitle>Buat proyek dari handover</DialogTitle>
           <DialogDescription>
             Klien, nama, kode, nilai, deadline, dan daftar fitur disalin otomatis.
-            Template task di-generate saat proyek dibuat (US-021).
+            Template task di-generate saat proyek dibuat.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
