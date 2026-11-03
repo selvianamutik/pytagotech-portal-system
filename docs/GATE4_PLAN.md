@@ -51,13 +51,15 @@
 
 ## 5. Kriteria penutupan Gate 4 (Definition of Done)
 
-- [ ] US-042 DB-backed (W-1) + test hidup; `.env.example` lengkap.
-- [ ] `supabase db push` ke project yang disetujui; migration Q-005 terpasang.
+- [x] US-042 DB-backed (W-1) + test hidup; `.env.example` lengkap (W-2).
+- [ ] `supabase db push` ke project yang disetujui; migration Q-005 terpasang. ⛔ CLI/Docker tidak tersedia; Q-005 belum terpasang live.
 - [ ] Browser per-US + RLS tulis live tuntas dan terdokumentasi (residual Gate 3).
-- [ ] `next build` bersih; health check merespons 200; smoke test lolos.
-- [ ] `docs/DEPLOYMENT.md` Rollback + Pre-Deploy checklist lengkap.
+- [~] `next build` bersih; health check merespons 200; smoke test lolos. — build ✅, health ✅, smoke test ⛔ (butuh akun pilot Q-027).
+- [x] `docs/DEPLOYMENT.md` Rollback + Pre-Deploy checklist lengkap (W-5).
 - [ ] `docs/PROGRESS.md` Gate 4 → `DONE`; commit `Refs: US-xxx, FR-x`.
 
 ## 6. Status
 
-- [ ] W-1 · [ ] W-2 · [ ] W-3 · [ ] W-4 · [ ] W-5 · [ ] W-6 · [ ] W-7
+- [x] W-1 · [x] W-2 · [x] W-3 · [ ] W-4 · [x] W-5 · [ ] W-6 · [ ] W-7
+
+**Catatan W-4 (terblokir):** verifikasi live memastikan migration Q-005 **belum** terpasang — `task_templates` live masih berisi 5 template lama aktif (`Kickoff dan klarifikasi scope`, dst), bukan RAD/PUS/SAD. Butuh `supabase db push` (CLI `supabase` + `docker` TIDAK tersedia di environment ini; butuh DB password/access token dari pemilik). Browser per-US + RLS tulis live ikut terblokir pada prasyarat yang sama.

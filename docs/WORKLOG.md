@@ -1779,3 +1779,18 @@ ext build\ (produksi) \✓ Compiled successfully\, 36 halaman statis, tanpa erro
   - RLS tulis + browser per-US tetap belum bisa dituntaskan rerun karena Docker/Supabase CLI tidak tersedia untuk \db reset\ (kondisi yang sudah didokumentasikan di Q-014).
 - **Status:** Gate 3 ditandai \DONE\ di \docs/PROGRESS.md\ — seluruh FR DB-backed, mock store bersih, test/lint/typecheck/build hijau. Residual browser + RLS tulis live dicatat sebagai follow-up Gate 4.
 - **Langkah berikutnya:** Gate 4 — deploy ready (build produksi bersih, dokumentasi lengkap); jalankan \db reset\ + uji browser per-US di mesin yang menyediakan Docker/Supabase CLI.
+
+---
+
+## 2026-11-03 — Tahap 29 — Gate 4: W-1..W-5 selesai, W-4/W-6 terblokir env
+
+- **Fase AGENT_RULES:** 4 (Deploy Ready) — eksekusi Gate 4
+- **Branch:** develop
+- **Yang dilakukan:**
+  - W-1 (\34604b3\): US-042 \guides.ts\ DB-backed (tabel \guides\ + \aci_matrix\); fake seed 2 panduan + 8 sel RACI; upsert \aci_matrix\ match \(activity, role)\. Test 265/265, tsc, eslint hijau.
+  - W-2 (\57a0f9\): \.env.example\ + \NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY\.
+  - W-3 (\1f675c\): \GET /api/health\ (200 ok / 503 degraded, cek \master_options\).
+  - W-5 (\71cfef3\): \docs/DEPLOYMENT.md\ Rollback + Checklist Pre-Deploy + stack Vercel/Resend (DEC-024).
+  - W-4 verifikasi: konfirmasi migration Q-005 **belum terpasang** — \	ask_templates\ live (service role) masih 5 template lama aktif, bukan RAD/PUS/SAD. CLI \supabase\ + \docker\ TIDAK tersedia → \db push\ terblokir; butuh DB password/access token.
+- **Status:** W-1..W-5 DONE; W-4 (db push + browser per-US + RLS tulis) ∩ W-6 (smoke test) terblokir prasyarat env (CLI/Docker/kredensial + akun pilot Q-027). Gate 4 tetap \IN_PROGRESS\ (bukan DONE) — DoD belum penuh.
+- **Langkah berikutnya:** sediakan CLI Supabase + DB password (atau access token) untuk \db push\ Q-005; jawab Q-027 (data seed + akun per role) → W-6.
