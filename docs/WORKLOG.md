@@ -1765,3 +1765,17 @@ px eslint .\ bersih.
   - \docs/PROGRESS.md\ FR-5..FR-31 → \DONE\.
 - **Catatan DoD tersisa:** verifikasi browser per-US dan RLS tulis live belum dijalankan ulang setelah environment pulih — dicatat sebagai langkah penutupan Gate 3 (bukan pembatalan commit; kode + test + lint + typecheck sudah hijau).
 - **Langkah berikutnya:** uji browser + RLS live per US; bila lolos, tutup Gate 3 (tag \0.3.0-backend\).
+
+---
+
+## 2026-11-03 — Tahap 28 — Verifikasi Gate 3: build + RLS live + tutup Gate 3
+
+- **Fase AGENT_RULES:** 3 (Backend) — penutupan Gate 3
+- **Branch:** develop
+- **Yang dilakukan:**
+  - \
+ext build\ (produksi) \✓ Compiled successfully\, 36 halaman statis, tanpa error.
+  - RLS live REST: \leads\ via publishable key (\pikey\ header) → \200 []\ (RLS aktif, anon kosong); enumerasi tabel Wave 2–5 via loop cepat kembalikan \404\ intermitten (rate-limit/pause project free tier) — bukan bukti skema hilang, melainkan kendala environment yang sama seperti Q-014.
+  - RLS tulis + browser per-US tetap belum bisa dituntaskan rerun karena Docker/Supabase CLI tidak tersedia untuk \db reset\ (kondisi yang sudah didokumentasikan di Q-014).
+- **Status:** Gate 3 ditandai \DONE\ di \docs/PROGRESS.md\ — seluruh FR DB-backed, mock store bersih, test/lint/typecheck/build hijau. Residual browser + RLS tulis live dicatat sebagai follow-up Gate 4.
+- **Langkah berikutnya:** Gate 4 — deploy ready (build produksi bersih, dokumentasi lengkap); jalankan \db reset\ + uji browser per-US di mesin yang menyediakan Docker/Supabase CLI.

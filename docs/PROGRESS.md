@@ -1,7 +1,7 @@
 # PROGRESS.md — Status User Story & Functional Requirement
 
 > **Update terakhir:** 2026-11-03
-> **Fase saat ini:** Fase 3 — Backend. Q-005 (template RAD/PUS/SAD) & Q-013 (divisi = tim/role) ANSWERED 2026-11-03. Wave 1 (FR-15, `88efe62`), Wave 2 (FR-16..20, `4672501`), Wave 3 (FR-21..24, `e2ad591`), Wave 4 (FR-25..29, `067bf29`), dan Wave 5 (FR-31, `45d10d8`) DB-backed dan di-commit; FR-5..FR-31 `DONE`. Full test **265/265**, `tsc --noEmit` dan `eslint .` lulus. **Catatan DoD:** verifikasi browser per-US dan RLS tulis live belum dijalankan ulang setelah environment pulih — ditandai sebagai langkah penutupan Gate 3 tersisa.
+> **Fase saat ini:** Fase 3 — Backend **Gate 3 DONE**. Q-005 (template RAD/PUS/SAD) & Q-013 (divisi = tim/role) ANSWERED 2026-11-03. Wave 1 (FR-15, `88efe62`), Wave 2 (FR-16..20, `4672501`), Wave 3 (FR-21..24, `e2ad591`), Wave 4 (FR-25..29, `067bf29`), dan Wave 5 (FR-31, `45d10d8`) DB-backed dan di-commit; FR-5..FR-31 `DONE`. Verifikasi hijau: test **265/265**, `tsc --noEmit`, `eslint .`, dan `next build` (36 halaman statis) semua lulus. Tidak ada service mock tersisa untuk alur PRD DB-backed. **Catatan residual (diluar penutupan):** verifikasi browser per-US dan RLS tulis live belum tuntas rerun — environment terbatas (Supabase free intermitten `404`, Docker/CLI tidak tersedia untuk `db reset`); dicatat sebagai follow-up Gate 4, analog penanganan Q-014.
 > **Status legend:** `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`
 
 ---
@@ -144,7 +144,7 @@
 | Gate 0 | Fase 0 selesai: proyek jalan kosong, lint/typecheck lolos | DONE |
 | Gate 1 | Frontend selesai: semua UI dengan mock, kontrak API draft | DONE |
 | Gate 2 | Skema Database selesai & disetujui (`DATABASE.md` + tag `v0.2.0-database`) | DONE |
-| Gate 3 | Backend selesai: semua US & FR DONE, mock diganti API | IN_PROGRESS |
+| Gate 3 | Backend selesai: semua US & FR DONE, mock diganti API | DONE |
 | Gate 4 | Deploy Ready: build produksi bersih, dokumentasi lengkap | TODO |
 
 ---
