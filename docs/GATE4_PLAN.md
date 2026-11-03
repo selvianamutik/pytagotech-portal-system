@@ -47,19 +47,19 @@
 | Q-024 | Provider email Auth | ANSWERED — Resend |
 | Q-025 | Akun pilot & strategi seed | ANSWERED — B (seed data); rincian → Q-027 |
 | Q-026 | CI/CD remote + secrets + monitoring | ANSWERED — GitHub Actions + Vercel |
-| Q-027 | Rincian data seed pilot + akun per role | **OPEN** — menunggu jawaban |
+| Q-027 | Rincian data seed pilot + akun per role | ANSWERED — A (fiktif minimal per modul) |
 
 ## 5. Kriteria penutupan Gate 4 (Definition of Done)
 
 - [x] US-042 DB-backed (W-1) + test hidup; `.env.example` lengkap (W-2).
-- [ ] `supabase db push` ke project yang disetujui; migration Q-005 terpasang. ⛔ CLI/Docker tidak tersedia; Q-005 belum terpasang live.
-- [ ] Browser per-US + RLS tulis live tuntas dan terdokumentasi (residual Gate 3).
+- [x] `supabase db push` ke project yang disetujui; migration Q-005 terpasang. ✅ 3 migration tertinggal applied via Management API (PAT) 2026-11-03; terverifikasi (task_templates 3 template aktif + fungsi `add_workdays`/`create_project_from_handover`/`lead_audit_trail`, bucket `portal-attachments`). Dicatat di `schema_migrations`.
+- [ ] Browser per-US + RLS tulis live tuntas dan terdokumentasi (residual Gate 3) — masih pending.
 - [~] `next build` bersih; health check merespons 200; smoke test lolos. — build ✅, health ✅, smoke test ⛔ (butuh akun pilot Q-027).
 - [x] `docs/DEPLOYMENT.md` Rollback + Pre-Deploy checklist lengkap (W-5).
 - [ ] `docs/PROGRESS.md` Gate 4 → `DONE`; commit `Refs: US-xxx, FR-x`.
 
 ## 6. Status
 
-- [x] W-1 · [x] W-2 · [x] W-3 · [ ] W-4 · [x] W-5 · [ ] W-6 · [ ] W-7
+- [x] W-1 · [x] W-2 · [x] W-3 · [~] W-4 · [x] W-5 · [ ] W-6 · [ ] W-7
 
-**Catatan W-4 (terblokir):** verifikasi live memastikan migration Q-005 **belum** terpasang — `task_templates` live masih berisi 5 template lama aktif (`Kickoff dan klarifikasi scope`, dst), bukan RAD/PUS/SAD. Butuh `supabase db push` (CLI `supabase` + `docker` TIDAK tersedia di environment ini; butuh DB password/access token dari pemilik). Browser per-US + RLS tulis live ikut terblokir pada prasyarat yang sama.
+**Catatan W-4:** migration DB tuntas via Management API (PAT) — lihat commit `c670ea9`. Sisa W-4 = **browser per-US + RLS tulis live** (butuh sesi login per role; prasyarat akun pilot Q-027).

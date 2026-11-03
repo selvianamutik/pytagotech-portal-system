@@ -1794,3 +1794,16 @@ ext build\ (produksi) \✓ Compiled successfully\, 36 halaman statis, tanpa erro
   - W-4 verifikasi: konfirmasi migration Q-005 **belum terpasang** — \	ask_templates\ live (service role) masih 5 template lama aktif, bukan RAD/PUS/SAD. CLI \supabase\ + \docker\ TIDAK tersedia → \db push\ terblokir; butuh DB password/access token.
 - **Status:** W-1..W-5 DONE; W-4 (db push + browser per-US + RLS tulis) ∩ W-6 (smoke test) terblokir prasyarat env (CLI/Docker/kredensial + akun pilot Q-027). Gate 4 tetap \IN_PROGRESS\ (bukan DONE) — DoD belum penuh.
 - **Langkah berikutnya:** sediakan CLI Supabase + DB password (atau access token) untuk \db push\ Q-005; jawab Q-027 (data seed + akun per role) → W-6.
+
+---
+
+## 2026-11-03 — Tahap 30 — Gate 4 W-4: migration DB applied via Management API (PAT)
+
+- **Fase AGENT_RULES:** 4 (Deploy Ready) — tuntaskan migration live
+- **Branch:** develop
+- **Yang dilakukan:**
+  - Terapkan 3 migration tertinggal ke project \ycqgtazlcxbedfoykhpl\ lewat Supabase Management API \POST /v1/projects/{ref}/database/query\ (auth \sbp_...\): \20261031000000_lead_audit_trail\, \20261031000100_portal_attachments_bucket\, \20261103000000_task_template_rad_pus_sad\.
+  - **Bug ditemukan & diperbaiki (\c670ea9\):** Q-005 gagal karena PL/pgSQL menolak variabel lokal bernama \current_date\ (keyword) saat dipakai \current_date := current_date + 1\. Rename \current_date\ -> \cur\. Root cause tak tertangkap karena \db push\ sebelumnya terblokir (belum pernah jalan di Postgres sungguhan).
+  - Verifikasi live: \	ask_templates\ = 3 template RAD/PUS/SAD aktif (ord 1/2/3, 3 hari) + 5 template lama is_active=false; fungsi \private.add_workdays\, \public.create_project_from_handover\, \public.lead_audit_trail\ ada; bucket \portal-attachments\ ada. 3 versi dicatat di \supabase_migrations.schema_migrations\.
+- **Status:** W-4 selesai untuk sisi migration; sisa = browser per-US + RLS tulis live (butuh akun pilot per role).
+- **Langkah berikutnya:** buat akun pilot + seed data (Q-027 A) -> W-6 smoke test -> browser per-US + RLS tulis live -> Gate 4 DONE.
