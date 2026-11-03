@@ -36,15 +36,18 @@
 
 ## 4. Blocker / keputusan pemilik (lihat `docs/QUESTIONS.md`)
 
-| Q | Isu | Dampak |
+> **Jawaban pemilik 2026-11-03** (DEC-024): Q-020 A (Vercel) · Q-021 Free · Q-022 project sekarang · Q-023 A (prod saja) · Q-024 B (Resend) · Q-025 B (seed data) · Q-026 A (GitHub Actions + Vercel).
+
+| Q | Isu | Status |
 |---|-----|--------|
-| Q-020 | Target deploy (Vercel vs VPS/Docker) | Menentukan CI/CD + env |
-| Q-021 | Plan Supabase (Free vs Pro) | Backup download + PITR (Q-018) + rate-limit intermitten 404 |
-| Q-022 | Project Supabase production (pakai `ycqgtazlcxbedfoykhpl` atau baru) | env + migration apply |
-| Q-023 | Domain & jumlah environment (staging vs prod) | deploy + rollback |
-| Q-024 | Provider email Auth (invite/reset password) | email benar terkirim di prod |
-| Q-025 | Akun pilot & strategi seed (konfirmasi "tanpa migrasi" tetap berlaku) | smoke test + go-live |
-| Q-026 | CI/CD remote + secrets + monitoring | deploy otomatis & observability |
+| Q-020 | Target deploy (Vercel vs VPS/Docker) | ANSWERED — Vercel |
+| Q-021 | Plan Supabase (Free vs Pro) | ANSWERED — Free (risiko backup/PITR diterima) |
+| Q-022 | Project Supabase production | ANSWERED — project sekarang |
+| Q-023 | Domain & jumlah environment | ANSWERED — prod saja |
+| Q-024 | Provider email Auth | ANSWERED — Resend |
+| Q-025 | Akun pilot & strategi seed | ANSWERED — B (seed data); rincian → Q-027 |
+| Q-026 | CI/CD remote + secrets + monitoring | ANSWERED — GitHub Actions + Vercel |
+| Q-027 | Rincian data seed pilot + akun per role | **OPEN** — menunggu jawaban |
 
 ## 5. Kriteria penutupan Gate 4 (Definition of Done)
 

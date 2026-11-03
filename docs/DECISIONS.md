@@ -309,3 +309,27 @@
 - **Alternatif yang dipertimbangkan:** Mengekspos UUID ke UI (ditolak — kontrak UI berubah dan ID tidak ramah pengguna); bucket publik (ditolak — lampiran internal); menyimpan signed URL permanen di metadata (ditolak — kedaluwarsa dan tidak dapat diperbarui).
 - **Alasan:** Mempertahankan kontrak UI yang sudah dipakai lintas modul, menjaga data tetap privat, dan membuat hasil `db reset` reproduksibel tanpa mengubah policy yang sudah disetujui.
 - **Konsekuensi:** Setiap host baru wajib menyediakan baris entitas nyata agar komentar/lampiran dapat ditampilkan; saat ini baru lead dan deal yang DB-backed, sehingga host task/fitur/konten menunggu FR-16/FR-17/FR-23. `author_id`/`uploaded_by` di-resolve ke `team_members`; selama profil live belum tertaut, nama tampil `"Tim"`. Signed URL harus dibuat ulang setiap kali daftar dimuat. Verifikasi live REST 2026-10-31: komentar, upload file, metadata lampiran, signed URL + unduh isi, notifikasi insert/baca/tandai dibaca berhasil; seluruh data uji dan objek Storage dibersihkan (0 baris).
+
+---
+
+## DEC-024 - Platform & Konfigurasi Deploy Gate 4 (Q-020..Q-026)
+
+- **Tanggal:** 2026-11-03
+- **Terkait:** Gate 4 — Deploy Ready; US-001/US-002/US-043
+- **Konteks:** Sebelum Gate 4, pemilik menjawab keputusan platform: target deploy, plan Supabase, project, environment, email provider, seed data, dan CI/CD.
+- **Keputusan:**
+  - Deploy: **Vercel** (Q-020 A).
+  - Plan Supabase: **Free** (Q-021) — risiko backup tak dapat diunduh + PITR tak tersedia diterima; backup manual docs/DEPLOYMENT.md sebagai mitigasi.
+  - Project produksi: **project saat ini ycqgtazlcxbedfoykhpl** (Q-022).
+  - Environment: **produksi saja** (Q-023 A), tanpa staging.
+  - Email Auth: **Resend SMTP** (Q-024 B).
+  - Seed: **data contoh untuk demo/pilot** (Q-025 B); rincian di Q-027 (OPEN).
+  - CI/CD: **GitHub Actions + Vercel** (Q-026 A).
+- **Alternatif yang dipertimbangkan:** VPS/Docker (Q-020 B); Supabase Pro; project baru; staging+prod; supabase.co default; CI manual.
+- **Alasan:** Menyamakan dengan preferensi pemilik; Vercel + Supabase adalah jalur deploy tercepat untuk Next.js; Resend menghindari email masuk spam.
+- **Konsekuensi:**
+  - Vercel env harus berisi NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_APP_NAME, TZ, NEXT_PUBLIC_MAX_ATTACHMENT_SIZE_BYTES.
+  - Plan Free membatasi verifikasi RLS live (intermitten 404) dan tidak memungkinkan unduh backup platform — mitigasi manual db dump tetap butuh Docker/CLI.
+  - Tanpa staging, db push migration dan rollback dilakukan langsung ke project produksi — wajib backup sebelum migration (sesuai docs/DEPLOYMENT.md).
+  - Data seed pilot + akun per role menunggu jawaban **Q-027**.
+

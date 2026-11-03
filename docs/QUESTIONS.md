@@ -279,7 +279,7 @@
 
 ---
 
-## Q-020 — [OPEN] — Deploy target
+## Q-020 — [ANSWERED] — Deploy target
 
 - **Terkait:** Gate 4 — Deploy Ready (Bagian 8, docs/DEPLOYMENT.md)
 - **Pertanyaan:** Frontend Next.js di-deploy ke mana?
@@ -287,57 +287,77 @@
   - A) Vercel (managed, paling cepat, dukungan Next.js penuh)
   - B) VPS + Docker (kontrol penuh, self-host)
 - **Dampak jika salah:** Menentukan CI/CD, konfigurasi env, domain, dan prosedur rollback.
+- **Jawaban (2026-11-03):** A — Vercel.
 
 ---
 
-## Q-021 — [OPEN] — Plan Supabase
+## Q-021 — [ANSWERED] — Plan Supabase
 
 - **Terkait:** Gate 4; Q-018 (backup/PITR); residual Gate 3
 - **Pertanyaan:** Plan Supabase mana yang dipakai untuk produksi?
 - **Opsi yang dipertimbangkan:** Free / Pro / Team.
 - **Dampak jika salah:** Plan Free tidak bisa mengunduh backup (Q-018 mensyaratkan backup harian 7 hari + bulanan 12 bulan) dan PITR tidak tersedia; rate-limit Free juga memicu intermitten 404 saat verifikasi RLS live. Pro memasukkan backup download + PITR → memenuhi Q-018.
+- **Jawaban (2026-11-03):** Free. **Risiko terdokumentasi:** backup platform tak dapat diunduh dan PITR tak tersedia di plan Free — prosedur backup manual `docs/DEPLOYMENT.md` tetap berlaku sebagai mitigasi; intermitten 404 pada verifikasi RLS live adalah efek rate-limit Free, bukan kegagalan skema.
 
 ---
 
-## Q-022 — [OPEN] — Project Supabase produksi
+## Q-022 — [ANSWERED] — Project Supabase produksi
 
 - **Terkait:** Gate 4
 - **Pertanyaan:** Project Supabase produksi: pakai project ycqgtazlcxbedfoykhpl yang terhubung saat ini, atau buat project baru khusus produksi?
 - **Dampak jika salah:** Tujuan db push (migration termasuk Q-005) dan nilai env berbeda.
+- **Jawaban (2026-11-03):** Pakai project saat ini (`ycqgtazlcxbedfoykhpl`).
 
 ---
 
-## Q-023 — [OPEN] — Domain & environment
+## Q-023 — [ANSWERED] — Domain & environment
 
 - **Terkait:** Gate 4
 - **Pertanyaan:** Apakah perlu environment staging vs production terpisah, dan custom domain apa yang dipakai?
 - **Opsi yang dipertimbangkan:** A) prod saja; B) staging + prod.
 - **Dampak jika salah:** Butuh 1 vs 2 project Supabase + konfigurasi domain, memengaruhi rollback.
+- **Jawaban (2026-11-03):** A — produksi saja, tanpa environment staging terpisah.
 
 ---
 
-## Q-024 — [OPEN] — Email provider Auth
+## Q-024 — [ANSWERED] — Email provider Auth
 
 - **Terkait:** US-002 (invite user, reset password)
 - **Pertanyaan:** Email invite/reset password lewat SMTP apa?
 - **Opsi yang dipertimbangkan:** A) default supabase.co (rate limit, bukan domain sendiri); B) SMTP custom (Resend/SendGrid, pakai domain sendiri).
 - **Dampak jika salah:** Email invite/reset bisa masuk spam atau tidak terkirim di produksi.
+- **Jawaban (2026-11-03):** B — Resend (SMTP custom).
 
 ---
 
-## Q-025 — [OPEN] — Akun pilot & strategi seed
+## Q-025 — [ANSWERED] — Akun pilot & strategi seed
 
 - **Terkait:** Gate 4 smoke test + go-live
 - **Pertanyaan:** Siapa user pertama per role (akun pilot), dan konfirmasi strategi "tanpa migrasi data lama" tetap berlaku?
 - **Opsi yang dipertimbangkan:** A) mulai nol sesuai Non-Goals PRD; B) seed beberapa data contoh untuk demo/pilot.
 - **Dampak jika salah:** Smoke test butuh akun nyata per role; data seed menentukan hasil uji browser.
+- **Jawaban (2026-11-03):** B — sediakan data contoh untuk demo/pilot. Rincian data seed dipindah ke **Q-027** (pertanyaan baru).
 
 ---
 
-## Q-026 — [OPEN] — CI/CD, secrets & monitoring
+## Q-026 — [ANSWERED] — CI/CD, secrets & monitoring
 
 - **Terkait:** Gate 4
 - **Pertanyaan:** Apakah remote GitHub / runner CI tersedia, dan butuh monitoring error apa (Sentry/alternatif)?
 - **Opsi yang dipertimbangkan:** A) GitHub Actions + Vercel; B) manual deploy.
 - **Dampak jika salah:** Deploy otomatis tidak berjalan; tidak ada observability error produksi.
+- **Jawaban (2026-11-03):** A — GitHub Actions + Vercel.
+
+---
+
+## Q-027 — [OPEN] — Rincian data seed pilot
+
+- **Terkait:** Gate 4 (W-6); lanjutan Q-025 (B)
+- **Pertanyaan:** Data contoh mana yang perlu di-seed untuk demo/pilot, dan apa sumbernya?
+- **Opsi yang dipertimbangkan:**
+  - A) Fiktif minimal per modul (2–3 lead, 1 klien, 1 deal handover + proyek, 3 task template RAD/PUS/SAD, 2 ide konten + 1 materi, 1 publikasi) — cukup untuk smoke test.
+  - B) Salinan terbatas dari spreadsheet lama (PII dihilangkan) — lebih realistis tapi menyentuh Non-Goals "tanpa migrasi".
+  - C) Kombinasi: fiktif untuk data operasional + kalender hari libur & master data sungguhan (industri/status/platform/brand) dari PRD.
+- **Dampak jika salah:** Tanpa seed, browser per-US dan smoke test tidak bisa dilengkapi; dengan data lama, melanggar Non-Goals PRD (migrasi) kecuali disetujui terpisah.
+- **Tambahan yang perlu dikonfirmasi:** kumpulan akun pilot per role (Super Admin, Executive, Sales, PM, Developer, Sosmed Specialist, tim produksi) — email login untuk masing-masing.
 
