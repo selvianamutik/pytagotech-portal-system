@@ -541,7 +541,7 @@ erDiagram
 | projects.status | text | NO | 'Planning' | CHECK 5 status | - | US-019 |
 | projects.handover_id | uuid | NO | - | UK + FK komposit (handover_id, client_id) → deals(id, client_id), RESTRICT | 1:1 + jamin klien sama; lindungi handover | US-019, FR-15 |
 | projects.archived_at | timestamptz | YES | - | - | Soft archive | US-043 |
-| task_templates.(name) | text | NO | - | UK | Seed menunggu Q-005 | US-021 |
+| task_templates.(name) | text | NO | - | UK | Urutan resmi RAD → PUS → SAD, masing-masing 3 hari kerja (Q-005) | US-021 |
 | tasks.status | text | NO | 'To Do' | CHECK 5 status | - | US-022 |
 | tasks.start_date / target_date | date | YES | - | CHECK mulai ≤ selesai (DB) | - | US-022 |
 | tasks.percent | integer | NO | 0 | CHECK 0–100 | Induk = rata-rata anak (service) | US-022, FR-17 |
@@ -894,7 +894,7 @@ erDiagram
 - **US-038:** RPC `convert_inquiry_to_lead` (DEFINER, role Sales/Marketing + Super Admin): kontak (nama/WA/email) wajib via parameter (kolom NOT NULL di `leads`), lalu `INSERT leads(source='Sosmed/<platform>', industry='Lainnya', contact_date=tanggal terima WIB)` + `UPDATE inquiries SET (lead_id, status='Handover Selesai')` atomik; anti-ganda via `lead_id IS NULL`.
 - **US-039:** 6 agregat dari tabel di atas + target dari `settings`.
 - **US-040:** CRUD `strategy_evaluations`; Test wajib `hypothesis` (CHECK via trigger/service).
-- **US-041:** baca/tulis `settings` (SLA, jam layanan, WA, target KPI, ambang kritis) + CRUD `holidays`; audit otomatis dari trigger. `developer_capacity` belum dipindah ke backend (masih mock di `services/scheduling.ts`).
+- **US-041:** baca/tulis `settings` (SLA, jam layanan, WA, target KPI, ambang kritis) + CRUD `holidays`; audit otomatis dari trigger. Kapasitas developer (`developer_capacity`) dibaca/ditulis `services/scheduling.ts` bersama `holidays`.
 - **US-042:** CRUD `guides`; `UPDATE raci_matrix`.
 - **US-043:** `UPDATE ... SET archived_at` via RPC `archive_entity`/`restore_entity` (Super Admin) + verifikasi hasil di service; `SELECT` seluruh baris untuk daftar arsip dan ekspor CSV (paging 1.000, termasuk data terarsip); backup = prosedur `docs/DEPLOYMENT.md`. Tidak ada migrasi/tabel baru; retensi purge menunggu Q-018.
 - **US-044:** pencarian: `UNION` atas `leads/clients/projects/tasks/materials` (RLS memfilter); Tugas saya = query per role via `team_members`.
@@ -907,7 +907,7 @@ erDiagram
 
 - `roles`: 7 label PRD Bagian 3.
 - `master_options`: `lead_status` (7), `industry` (10), `interest_stage` (7), `brand` (3), `platform` (5), `pillar` awal, `feature_category`, `priority` (High/Medium/Low).
-- `task_templates`: placeholder — isi resmi menunggu Q-005.
+- `task_templates`: Pembuatan dokumen RAD → Pembuatan dokumen PUS → Pembuatan dokumen SAD; masing-masing 3 hari kerja (Q-005, 2026-11-03).
 - `holidays`: `2026-12-25`; selanjutnya dikelola Super Admin di `/pengaturan/kpi-sla`.
 - `settings`: `sla.response_minutes=30`, `sla.routing_minutes=15`, `release.critical_hours=24`, `attachment.max_bytes`, `service_hours` (jam layanan US-041), `brief.min_score=5` (Q-003), `wa.numbers`, target KPI per brand.
 - `guides`: 2 panduan seed; `raci_matrix`: 3 baris seed.

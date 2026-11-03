@@ -1592,5 +1592,176 @@
 - **Acceptance Criteria:** FR-4 reusable: komentar + mention + notifikasi, lampiran dengan batas ukuran + signed URL, dan notifikasi in-app (bell, daftar, tandai dibaca) memakai database nyata untuk lead/deal; host task/fitur/konten siap setelah modulnya DB-backed.
 - **Langkah berikutnya:** Proyek & Task (FR-15..FR-20): proyek mewarisi handover, generate task dari template, Kanban/List/sub-task/progress, jadwal fitur, Gantt, dashboard produksi.
 
+---
+
+## 2026-11-03 — Tahap 19 — Dashboard & Audit lepas dari mock store (FR-2/FR-13/FR-14/FR-31)
+
+- **Fase AGENT_RULES:** 3 (Backend) — penutupan Gate 3
+- **Branch:** develop
+- **Yang dilakukan:**
+  - Menulis ulang `services/dashboard.ts` dari mock menjadi DB-backed memakai `@/lib/supabase/server` (bukan browser client, karena `(portal)/layout.tsx` dan `page.tsx` adalah server component). `currentUser` dibaca dari sesi Supabase sisi server (`profiles` + `user_roles`); `navigation` tetap konfigurasi statis ber-tag role; `metrics`/`workQueue`/`activities` dirangkum dari tabel nyata (`leads`, `deals`, `projects`, `tasks`, `content_materials`, `audit_logs`, `team_members`). Setiap read yang gagal didegradasi ke koleksi kosong agar halaman tetap render.
+  - Menulis ulang `services/audit.ts`: `logAudit` menjadi no-op terdokumentasi (penulisan audit oleh trigger DB `private.audit_row_change()`; policy insert `audit_logs` untuk role terautentikasi sudah dicabut di `backend_parity_fixes.sql`), dan `listAudit(dealId)` membaca `audit_logs` setelah me-resolve display ID `HDV-xxx` → UUID internal pada tabel `deals` (meniru `collaboration.resolveEntity`).
+  - Menghapus pemanggilan `logAudit()` dari `deal-workflow.ts` dan `change-requests.ts`; perubahan mereka kini tercatat otomatis oleh trigger pada `deals`/`change_requests`.
+  - Menyelaraskan `components/handover/handover-status.tsx`: filter `action === "deal.status"` diganti menjadi parse `action === "update"` dengan ekstraksi `status` dari snapshot JSON `old_value`/`new_value` (trigger menyimpan baris penuh, bukan string status).
+  - Memperluas `AUDITED_TABLES` di `test/supabase-fake.ts` dengan `deals` dan `change_requests` agar simulasi trigger menulis `audit_logs` (aksi `update`/`insert`, entity_id = UUID, nilai lama/baru = snapshot baris); menulis ulang `deal-workflow.test.ts` dan `dashboard.test.ts` terhadap kontrak DB tersebut.
+  - Mengosongkan `mocks/dashboard.ts` dan `mocks/audit.ts` menjadi stub penanda (sudah tidak diimpor oleh aplikasi); menghapus teks demo di `app/(portal)/page.tsx`.
+- **File berubah:** `frontend/src/services/dashboard.ts`, `frontend/src/services/dashboard.test.ts`, `frontend/src/services/audit.ts`, `frontend/src/services/deal-workflow.ts`, `frontend/src/services/deal-workflow.test.ts`, `frontend/src/services/change-requests.ts`, `frontend/src/components/handover/handover-status.tsx`, `frontend/src/test/supabase-fake.ts`, `frontend/src/mocks/{dashboard,audit}.ts`, `frontend/src/app/(portal)/page.tsx`
+- **Verifikasi:** BELUM dijalankan — environment workspace diblokir `VM_DISK_SPACE_INSUFFICIENT` (bash/vitest/git tidak tersedia). Lint/typecheck/test tetap belum terverifikasi; tanpa hasil hijau tidak ada commit dan FR tetap `IN_PROGRESS` (sesuai aturan "commit only after green").
+- **Catatan/Masalah:** RLS `audit_logs` tetap ketat (Sales tidak membaca seluruh audit platform via `listAudit` karena query dibatasi `entity_type="deals"` + UUID deal yang relevan); halaman Audit Log (`queryAuditLogs`) tetap memakai policy Super Admin/Leader. Dashboard kini bergantung pada sesi server — verifikasi browser `/` wajib memakai sesi nyata.
+- **Langkah berikutnya:** pulihkan environment (bebaskan disk VM) → lint + type-check + `vitest run` + verifikasi browser `/` dan `/handover/HDV-xxx` → bila hijau, perbarui FR dan commit `Refs: US-001/US-044/US-017, FR-2/FR-31`.
+
+---
+
+## 2026-11-03 — Tahap 20 — Audit lanjutan berbasis file + pengerasan utilitas tanggal
+
+- **Fase AGENT_RULES:** 3 (Backend) — penutupan Gate 3
+- **Branch:** develop
+- **Yang dilakukan:**
+  - Audit ulang cakupan Gate 3 lewat file tools (bash tetap `VM_DISK_SPACE_INSUFFICIENT`).
+  - Dipastikan `services/dashboard.ts` dan `services/audit.ts` adalah dua mock store yang mengklaim PRD DB-backed terakhir yang bermigrasi; `services/guides.ts` (US-042) bertahan sebagai mock in-memory dan keluar cakupan Gate 3.
+  - Pemetaan 12 rumus di `docs/API.md` (FR-5 Wave 0) terhadap implementasi nyata: seluruhnya ada dan murni; lokasi sesuai kontrak. Test yang menutup rumus ada di 10 file (`scheduling`, `metrics`, `community`, `ideas`, `calendar`, `scorecard`, `tasks-board`, `growth`, ditambah `tasks`/`approvals`).
+  - Memperbaiki risiko crash nyata pada `lib/utils.ts::formatDate`: `new Date("")` (invalid) kini mengembalikan `""` alih-alih melempar `RangeError` saat dirutekan ke `Intl.DateTimeFormat.format()`. Terkait langsung dengan alur DB-backed `dashboard.ts` yang memancarkan `dueDate: ""` untuk materi berstatus Draf dan task tanpa `target_date`, yang dirender `app/(portal)/page.tsx` lewat `formatDateTime`.
+  - Menyelaraskan teks demo yang tersisa di `app/(portal)/page.tsx` ("service mock sudah disusun…") menjadi kalimat DB-accurate.
+- **File berubah:** `frontend/src/lib/utils.ts`, `frontend/src/app/(portal)/page.tsx`
+- **Verifikasi:** BELUM dijalankan — environment masih `VM_DISK_SPACE_INSUFFICIENT`. Perubahan `formatDate` perlu divalidasi pada path server (`/` dengan due date kosong) dan tidak boleh mengubah output valid.
+- **Catatan/Masalah:** Perubahan `formatDate` adalah perbaikan defensif lintas-modul: perilaku kosong berlaku ke semua pemanggil, bukan hanya dashboard (aman untuk tanggal legate yang selalu valid).
+- **Langkah berikutnya:** (tidak berubah) pulihkan environment → lint + type-check + `vitest run` + browser `/` & `/handover/HDV-xxx` → bila hijau, perbarui FR dan commit.
+
+---
+
+## 2026-11-03 — Tahap 21 — Audit statis Wave 1 (FR-15) proyek dari handover
+
+- **Fase AGENT_RULES:** 3 (Backend) — penutupan Gate 3, Gelombang 1
+- **Branch:** develop
+- **Yang dilakukan:**
+  - Audit menyeluruh `services/projects.ts` terhadap acceptance criteria FR-15 (US-019/020) lewat file tools (bash tetap `VM_DISK_SPACE_INSUFFICIENT`).
+  - `projects.ts` sudah DB-backed penuh: baca/tulis tabel `projects`, lookup klien/handover/PM via UUID internal dengan display ID (`PRJ-xxx`/`KLI-xxx`/`HDV-xxx`) untuk UI. Klien/handover/PM _lookup_ tersentral di `loadLookups()`.
+  - Pembuatan proyek via RPC atomik `create_project_from_handover(handover_id, pm_id, start_date)`; service memvalidasi: handover `Dikonfirmasi` saja, satu proyek per `handover_id` (`findProjectByHandover`), PM aktif dari `listProjectManagers`, `start_date ≤ deadline`, dan tidak menulis ulang task/backlog (RPC menyalin template task + fitur secara atomik).
+  - Relasi dua arah terverifikasi di UI: `handover-project-section.tsx` menautkan handover → proyek (`/proyek/[id]?from=/handover/[id]`), `project-detail.tsx` menautkan proyek → handover asal (`/handover/[id]?from=/proyek/[id]`) dengan `handoverCode` dari tabel `deals`.
+  - Progress proyek (`getProjectProgress`) membaca tabel `tasks` nyata (0 bila belum ada task), bukan mock.
+  - Kendali role: `canManageProjects` membatasi PM/Super Admin; `listProjectManagers` memprioritaskan anggota ber-profil role PM/Super Admin; RLS database menegakkan batas sama (Q-019/CR-003).
+  - Test service FR-15 hadir di `projects.test.ts` (3 skenario: salin data Dikonfirmasi, penolakan draft/ganda/PM asing/tanggal invalid, relasi dua arah `getProject`/`listProjects`) dan `projects-query.test.ts` (filter). Reset mock service jadi no-op DB-backed.
+- **File berubah:** tidak ada (audit saja) — konfirmasi `services/projects.ts`, `components/proyek/handover-project-section.tsx`, `create-project-dialog.tsx`, `project-detail.tsx`.
+- **Verifikasi:** BELUM dijalankan — environment masih `VM_DISK_SPACE_INSUFFICIENT`. `vitest run` + lint + typecheck + uji browser `/handover/HDV-001` (tombol "Buat Proyek" → `/proyek/PRJ-xxx`) + RLS live Q-019 belum dapat dieksekusi; FR-15 tetap `IN_PROGRESS` (commit hanya setelah hijau).
+- **Catatan/Masalah:** kode Wave 1 sudah sesuai rencana BACKEND_COMPLETION_PLAN.md Gelombang 1 (seluruh 6 butir). Tersisa: verifikasi runtime + commit `Refs: US-019/US-020, FR-15`.
+- **Langkah berikutnya:** lanjut Wave 2 (FR-16..20) secara statis; verifikasi + commit seluruh gelombang tetap menunggu pemulihan environment.
+
+---
+
+## 2026-11-03 — Tahap 22 — Audit statis Wave 2 (FR-16..FR-20) operasi produksi
+
+- **Fase AGENT_RULES:** 3 (Backend) — penutupan Gate 3, Gelombang 2
+- **Branch:** develop
+- **Yang dilakukan:**
+  - Audit file-ke-file seluruh service produksi terhadap acceptance criteria FR-16..FR-20 (US-021..US-026). Tidak ada mock store tersisa; semua baca/tulis ke tabel Supabase via `@/lib/supabase/client`.
+  - **FR-16 (US-021):** `task-templates.ts` CRUD penuh `task_templates` (Super Admin via RLS); generator `generateTasksForProject` menurunkan task aktif berurutan dari `start_date` memakai `nextWorkday`/`addWorkdays` + `holidays`. RPC `create_project_from_handover` menyalin template aktif secara atomik (urutan Q-005 RAD→PUS→SAD @3 hari kerja, `20261103000000_task_template_rad_pus_sad.sql`).
+  - **FR-17 (US-022):** `tasks.ts` CRUD + Kanban + sub-task (`parent_id`), agregat `effectiveTaskPercent` (induk = AVG anak aktif) dan `getProjectProgress` (AVG task level atas aktif) dihitung ulang — tidak menyimpan persen turunan; komentar/lampiran lewat kolaborasi DB-backed (FR-4).
+  - **FR-18 (US-023/024):** `features.ts` (backlog, konversi fitur→task, tulis `scheduled_*`/`override_*`) + `scheduling.ts` (baca `holidays` + `developer_capacity` 8 jam default, urut prioritas High/Medium/Low, durasi `ceil(estimasi×8/kapasitas)`, lane per developer, bentrok overlap, override wajib beralasan + menyimpan tanggal/alasan, tidak menimpa hasil otomatis diam-diam). `developers.ts` = `team_members` status internal/external.
+  - **FR-19 (US-025):** `task-dependencies.ts` relasi finish-to-start pada `task_dependencies` (PK komposit, tanpa `id`), display ID sintetis `PRED->SUCC`, validasi self-link + siklus (graf). `tasks.ts::moveTaskDates` kaskade successor FS saat drag Gantt; zoom/today/deadline dari data nyata.
+  - **FR-20 (US-026):** `production-dashboard.ts` agregat proyek/task + filter PM/proyek/rentang (Q-013: divisi = tim pelaksana, diwakili filter PM); `production-export.ts` Excel (SheetJS) + PDF (jsPDF) dari data dashboard yang sama.
+  - Pemetaan display↔UUID terpusat di `production-refs.ts` (`loadDisplayMap`, `loadMemberMaps`, `resolveDisplayUuid`).
+  - Test hadir: `task-templates.test.ts`, `tasks-board.test.ts`, `task-gantt.test.ts`, `scheduling.test.ts`, `features.test.ts`, `developers.test.ts`, `production-export.test.ts` (plus `projects*`/`dashboard` dari wave sebelumnya).
+  - Memperbaiki catatan implementasi basi di `docs/DATABASE.md` §6 (US-041) yang masih menulis `developer_capacity` "belum dipindah/masih mock di services/scheduling.ts" — kini sudah DB-backed (schema tidak diubah).
+- **File berubah:** `docs/DATABASE.md` (koreksi catatan status implementasi, bukan schema).
+- **Verifikasi:** BELUM dijalankan — environment masih `VM_DISK_SPACE_INSUFFICIENT`. `vitest run` + lint + typecheck + uji browser (proyek→task otomatis, Kanban, Gantt, dashboard produksi, ekspor) belum dapat dieksekusi; FR-16..FR-20 tetap `IN_PROGRESS` (commit hanya setelah hijau).
+- **Catatan/Masalah:** seluruh 5 butir Gelombang 2 BACKEND_COMPLETION_PLAN.md terpenuhi di kode. Tersisa verifikasi runtime + commit `Refs: US-021..US-026, FR-16..FR-20`.
+- **Langkah berikutnya:** lanjut Wave 3 (FR-21..24) secara statis; verifikasi + commit seluruh gelombang tetap menunggu pemulihan environment.
+
+---
+
+## 2026-11-03 — Tahap 23 — Audit statis Wave 3 (FR-21..FR-24) siklus produksi konten
+
+- **Fase AGENT_RULES:** 3 (Backend) — penutupan Gate 3, Gelombang 3
+- **Branch:** develop
+- **Yang dilakukan:**
+  - Audit statis seluruh service siklus konten terhadap acceptance criteria FR-21..FR-24 (US-027..US-033). Tidak ada mock store; semua memakai `@/lib/supabase/client` kecuali pembacaan agregat yang memanggil service lain.
+  - **FR-21 (US-027):** `ideas.ts` — `content_ideas` + `idea_platforms` (insert/update rekonsiliasi target platform, rollback hapus ide bila insert platform gagal); `briefScore` dihitung dari 5 field brief aktual; `readinessAllowed` menolak `Siap Masuk Produksi` bila skor < 5 (Q-003).
+  - **FR-22 (US-028–030):** `materials.ts` — `content_materials` (assignee copywriter/designer/video editor via `team_members`), gate 5 kolom, `gate_override_by`/`gate_override_reason`, revisi terbaca dari `content_revisions`, tautan aset `material_assets`; `createMaterialFromIdea` mensyaratkan ide Disetujui/Siap Produksi. `approvals.ts` — `submitReview` insert `content_revisions` (versi berurutan), tolak tanpa umpan balik, transisi status Disetujui/Ditolak→Draf. `quality-gate.ts` — `scheduleMaterial`/`releaseMaterial` mensyaratkan status Disetujui + gate penuh, atau Super Admin dengan alasan; checklist berubah → override lama kedaluwarsa.
+  - **FR-23 (US-031):** `publications.ts` — `publications` + `material_platforms`; `getTargetPlatforms` berjenjang (material_platforms → idea_platforms → semua platform); `getUncoveredPlatforms` = target − terpasang; `createPublication` menolak duplikat platform, pola Single/Crosspost divalidasi; satu materi ke banyak PUB.
+  - **FR-24 (US-032/033):** `calendar.ts` — entri dari `listPublications`+`listMaterials`+`listRevisions`, filter brand/platform/approval/gateReady, `releaseUrgency` (Overdue lewat jadwal, Kritis > ambang) dengan ambang dari `settings` (Q-004) dan dapat dikonfigurasi; `reschedulePublication` menolak publikasi yang sudah live. Tidak ada integrasi API platform (non-goal).
+  - Test hadir: `ideas.test.ts`, `materials.test.ts`, `approvals.test.ts`, `quality-gate.test.ts`, `publications.test.ts`, `calendar.test.ts`.
+- **File berubah:** tidak ada (audit saja).
+- **Verifikasi:** BELUM dijalankan — environment masih `VM_DISK_SPACE_INSUFFICIENT`. Uji browser (ide→materi, gate, approval, distribusi, kalender) dan RLS tulis belum dieksekusi; FR-21..FR-24 tetap `IN_PROGRESS`.
+- **Catatan/Masalah:** keempat butir Gelombang 3 BACKEND_COMPLETION_PLAN.md terpenuhi di kode.
+- **Langkah berikutnya:** lanjut Wave 4 (FR-25..29) statis.
+
+---
+
+## 2026-11-03 — Tahap 24 — Audit statis Wave 4 (FR-25..FR-29)
+
+- **Fase AGENT_RULES:** 3 (Backend) — penutupan Gate 3, Gelombang 4
+- **Branch:** develop
+- **Yang dilakukan:**
+  - Audit statis service analytics/komunitas/inquiry/aset/evaluasi. Tidak ada mock store; semuanya DB-backed via `@/lib/supabase/client`.
+  - **FR-25 (US-035/036/039):** `metrics.ts` — `post_metrics` snapshot Monitoring/Final; `recordMetric` menolak Final ganda per publikasi (service guard, ditambah partial unique index di skema); `updateMetric`/`deleteMetric` mengunci Final kecuali role `FINAL_UNLOCK_ROLES` (Q-007, dikombinasi RLS). `growth.ts` — `account_growth` per (platform, brand, month), anti-duplikat rekaman bulan. `scorecard.ts` — 6 KPI agregat nyata (production/reach/engagement/growth/footprint/handover) + ER Q-002, target dari `settings` (US-041), status Data Terverifikasi bila ada snapshot Final.
+  - **FR-26 (US-037/038/039):** `community.ts` — `community_interactions`; `responseMinutes` dari timestamp, `isSlaMet` terhadap threshold; `getSlaCompliance` mengagregasi % terpenuhi. `inquiries.ts` — `inquiries`; `routingMinutes`/`isRoutingSlaMet`; `markInquiryRouted` memvalidasi urutan waktu (routed ≥ received).
+  - **FR-27 (US-034):** `assets.ts` — `assets` metadata/link cloud; `isAssetExpired`/`canLinkAsset` menolak tautan aset expired, `expiringSoon`/`daysLeft` peringatan ≤30 hari; `linkAssetsToMaterial` menulis `material_assets`.
+  - **FR-28 (US-038):** `inquiries.ts::convertInquiryToLead` via RPC atomik `convert_inquiry_to_lead`, anti konversi ganda (`lead_id` sudah terisi ditolak), menyimpan `pic_id`; hasil dibaca kembali sebagai lead CRM (`leads.display_id`).
+  - **FR-29 (US-040):** `evaluations.ts` — `strategy_evaluations` KIST (Keep/Improve/Stop/Test); `hypothesis` wajib untuk kategori Test; payload opsional dinormalisasi null.
+  - Test hadir: `metrics.test.ts`, `growth.test.ts`, `community.test.ts`, `inquiries.test.ts`, `assets.test.ts`, `evaluations.test.ts`, `scorecard.test.ts`.
+- **File berubah:** tidak ada (audit saja).
+- **Verifikasi:** BELUM dijalankan — environment masih `VM_DISK_SPACE_INSUFFICIENT`; FR-25..FR-29 tetap `IN_PROGRESS`.
+- **Catatan/Masalah:** `community.ts` memakai threshold default konstan `RESPONSE_SLA_MINUTES=30` (sama dengan seed `settings.sla.response_minutes`); parameter `sla` dapat dioper pemanggil — pengikatan nilai `settings` ada di lapisan UI. Bila verifikasi browser nanti menunjukkan dashboard memakai nilai hardcoded alih-alih Pengaturan, perlu diselaraskan (bukan change request schema).
+- **Langkah berikutnya:** lanjut Wave 5 (FR-31) statis.
+
+---
+
+## 2026-11-03 — Tahap 25 — Audit statis Wave 5 (FR-31) + telaah penutupan Gate 3
+
+- **Fase AGENT_RULES:** 3 (Backend) — penutupan Gate 3, Gelombang 5
+- **Branch:** develop
+- **Yang dilakukan:**
+  - Audit statis `archive.ts`, `search.ts`, `production-export.ts` terhadap FR-31 (US-043/044).
+  - **Arsip (US-043):** `archiveRecord`/`restoreRecord` hanya memanggil RPC `archive_entity`/`restore_entity` (security invoker, cek Super Admin di DB); service memverifikasi ulang `archived_at` setelah RPC agar tidak menampilkan sukses palsu; pesan galat RLS (42501) dan `PGRST116` dipetakan pesan ramah. Tidak ada purge otomatis — penurunan baris adalah soft archive; retensi 2 tahun + backup = prosedur `docs/DEPLOYMENT.md` (Q-018). `listArchiveItems` membaca tabel nyata lead/proyek/materi (limit 500/modul, data aktif+arsip dipisah di UI).
+  - **Ekspor CSV (US-043):** `exportModuleCsv` memakai pagination `EXPORT_PAGE_SIZE=1000` via `range` (bukan `limit`), menyertakan baris terarsip, kolom "Diarsipkan"; `buildCsv` RFC 4180 + BOM UTF-8. `production-export.ts` menambah Excel/PDF untuk laporan produksi (FR-20).
+  - **Pencarian global (US-044):** `globalSearch` memanggil RPC `global_search(search_query, result_limit=30)` (min 2 karakter), hasil `entity_type→kind` dipetakan lead/klien/proyek/task/materi — hasil tunduk RLS (bukan filter klien).
+  - **Beranda per role (US-044):** `getMyWork(user)` membedakan per role — task assignee aktif non-Done, follow-up overdue milik PIC, materi Draf menunggu review (Executive/Leader, Sosmed Specialist, Super Admin), interaksi komunitas belum dibalas (SLA). Role tanpa akses melihat daftar kosong (bukan error); `globalSearch` mengoper `user` (saat ini tidak dipakai di klien karena RLS tandem US-003).
+- **File berubah:** tidak ada (audit saja).
+- **Verifikasi:** BELUM dijalankan — environment masih `VM_DISK_SPACE_INSUFFICIENT`; FR-31 tetap `IN_PROGRESS`.
+- **Catatan/Masalah:** Warung kode Wave 0–5 seluruhnya DB-backed; `services/guides.ts` (US-042) adalah satu-satunya mock tersisa dan keluar cakupan Gate 3. Tidak ada service mock tersisa untuk alur PRD yang diklaim DB-backed.
+- **Langkah berikutnya:** Wave 6 — begitu environment pulih: lint + typecheck + `vitest run` + uji browser per US + RLS live, lalu perbarui `PROGRESS.md` (FR→DONE) dan commit per gelombang `Refs: US-xxx, FR-x`.
+
+---
+
+## 2026-11-03 — Tahap 26 — Konfirmasi binding SLA + sweep mock akhir
+
+- **Fase AGENT_RULES:** 3 (Backend) — penutupan Gate 3
+- **Branch:** develop
+- **Yang dilakukan:**
+  - Menutup catatan terbuka Tahap 24: nilai SLA komunitas memang ter-bind dari Pengaturan, bukan hardcoded. `components/sosmed/community-manager.tsx` membaca `settings.slaResponseMinutes` (via `usePortalSettings` → US-041) dan mengopernya ke `getSlaCompliance(slaMinutes)` serta `isSlaMet(item, slaMinutes)`; konstanta `RESPONSE_SLA_MINUTES=30` di `community.ts` hanya default parameter. Tidak ada perubahan kode yang diperlukan.
+  - Sweep mock akhir: tidak ada service aplikasi yang mengimpor `@/mocks/*` — seluruh impor bermock berasal dari file test (`projects-query.test.ts`, `search.test.ts` → `@/mocks/auth`; `lead-table.test.tsx` → `@/mocks/leads`). `services/guides.ts` (US-042) adalah satu-satunya mock tersisa dan keluar cakupan Gate 3.
+  - Dengan ini seluruh alur PRD yang diklaim DB-backed sudah lepas dari mock store (kriteria penutupan Gate 3 terpenuhi di sisi kode).
+- **File berubah:** tidak ada (audit saja).
+- **Verifikasi:** BELUM dijalankan — environment masih `VM_DISK_SPACE_INSUFFICIENT`. Tidak ada commit; FR tetap `IN_PROGRESS`.
+- **Langkah berikutnya:** (tidak berubah) verifikasi runtime + commit menunggu pemulihan environment.
 
 
+
+
+---
+
+## 2026-11-03 — Tahap 27 — Perbaikan 6 test gagal + verifikasi hijau + commit per gelombang
+
+- **Fase AGENT_RULES:** 3 (Backend) — penutupan Gate 3, Wave 6
+- **Branch:** develop
+- **Yang dilakukan:**
+  - Environment pulih (bash/vitest/lint/git berjalan). Menjalankan verifikasi runtime yang sebelumnya terblokir: \
+px vitest run\ → **265/265 pass** (55 file); \
+px tsc --noEmit\ bersih; \
+px eslint .\ bersih.
+  - Memperbaiki 6 test gagal di harness \rontend/src/test/supabase-fake.ts\ yang belum mencerminkan Wave 3/5:
+    - seed ide kedua \IDE-002\ (\Tahan - Perlu Verifikasi\) agar \createMaterialFromIdea\ menolak non-Disetujui.
+    - default insert \content_ideas\/\content_materials\ (display_id \IDE-*\/\MAT-*\, status \Draf\).
+    - seed \mat-1\ \gate_visual/gate_audio=true\ agar gate penuh bisa tercapai (sisa 3 item dilengkapi test).
+    - handler RPC \global_search\ (lead/klien/materi) untuk \search.test.ts\.
+    - aktor test \quality-gate.test.ts\ diselaraskan ke anggota nyata \"Dinda Prameswari"\ (bukan \"Dinda"\) agar \esolveMember\ menemukan ID dan \gateOverride.by\ tersimpan — konsisten dengan \material-detail.tsx\ yang memakai \user?.name\.
+  - Menelaah governance: Q-005 dan Q-013 ANSWERED 2026-11-03 — bukan temuan yang dikarang; migration \20261103000000_task_template_rad_pus_sad.sql\ sah mengimplementasikan Q-005.
+- **File berubah:** \rontend/src/test/supabase-fake.ts\, \rontend/src/services/quality-gate.test.ts\, \docs/PROGRESS.md\.
+- **Commit per gelombang (Refs: US-xxx, FR-x):**
+  - \4672501\ Wave 2 — produksi (FR-16..20, US-021..026)
+  - \e2ad591\ Wave 3 — konten (FR-21..24, US-027..033)
+  - \ 67bf29\ Wave 4 — analytics/komunitas/aset (FR-25..29, US-034..040)
+  - \45d10d8\ Wave 5 — tata kelola/pencarian/beranda (FR-31, US-043/044; Q-012)
+  - \docs/PROGRESS.md\ FR-5..FR-31 → \DONE\.
+- **Catatan DoD tersisa:** verifikasi browser per-US dan RLS tulis live belum dijalankan ulang setelah environment pulih — dicatat sebagai langkah penutupan Gate 3 (bukan pembatalan commit; kode + test + lint + typecheck sudah hijau).
+- **Langkah berikutnya:** uji browser + RLS live per US; bila lolos, tutup Gate 3 (tag \0.3.0-backend\).

@@ -7,6 +7,157 @@
 
 ## Konvensi
 
+## Rumus metrik dan kalkulasi (FR-5)
+
+> **Status:** DONE (Wave 0) — seluruh kalkulasi terpusat pada fungsi pure yang dapat
+> diuji, kontrak bersama UI/service, dan didokumentasikan di sini dengan input,
+> satuan, zona waktu, pembulatan, kondisi data kosong, serta referensi FR/US.
+> Implementasi ada di `frontend/src/types/` (rumus murni) dan
+> `frontend/src/services/` (agregasi atas data DB). Unit test per rumus ada di
+> `frontend/src/services/*.test.ts`.
+
+**Konvensi umum.** Tanggal kalender disimpan `YYYY-MM-DD` (tanpa jam, dibandingkan
+leksikografis dalam satu zona waktu); timestamp disimpan ISO 8601 UTC dan dikonversi
+ke WIB (`Asia/Jakarta`, `service_hours.timezone`) hanya di tampilan. Hari kerja,
+SLA, dan kalender operasional memakai zona waktu dari Pengaturan (FR-30). Persentase
+ditampilkan dua desimal bila relevan; bilangan yang dibagi dengan penyebut nol atau
+kumpulan kosong menghasilkan `0` — tidak pernah `NaN`/`Infinity`.
+
+### 1. Progress task (FR-17, US-022)
+
+- **Fungsi:** `effectiveTaskPercent(task, all)` di `services/tasks.ts`; murni.
+- **Input:** satu `TaskSummary` + seluruh task proyek (untuk resolusi sub-task).
+- **Rumus:** task tanpa sub-task aktif → `percent` tersimpan (0–100). Task dengan
+  sub-task aktif → rata-rata `effectiveTaskPercent` seluruh sub-task aktif
+  (rekursif). Sub-task `isActive === false` diabaikan.
+- **Pembulatan:** `Math.round` di tiap level rata-rata.
+- **Data kosong:** task tanpa anak tetap mengembalikan nilai `percent`; sub-task
+  kosong tidak pernah membagi dengan nol karena bercabang ke nilai tersimpan.
+
+### 2. Progress proyek (FR-17, US-020)
+
+- **Fungsi:** `getProjectProgress(projectId)` di `services/tasks.ts` (async, membaca
+  `tasks`).
+- **Rumus:** rata-rata `effectiveTaskPercent` seluruh task level-atas (`parentId`
+  kosong) yang aktif.
+- **Pembulatan:** `Math.round`.
+- **Data kosong:** proyek tanpa task/task aktif → `0`% (tidak error). Task
+  nonaktif tidak dihitung.
+
+### 3. Skor kelengkapan brief (FR-21, US-027)
+
+- **Fungsi:** `briefScore(brief)` di `types/content-idea.ts`; murni. Setara dengan
+  fungsi SQL `content_brief_score(hook, angle, key_points, cta, asset_ref)`.
+- **Input:** `ContentBrief { hook, angle, keyPoints, cta, assetRef }`.
+- **Rumus:** jumlah field yang `trim()`-nya tidak kosong (0–5).
+- **Gate (Q-003 A):** `readinessAllowed(readiness, score)` menolak
+  `"Siap Masuk Produksi"` bila skor `< 5`; status lain bebas. Nilai ambang dibaca
+  dari `settings.brief.min_score` (default 5) oleh trigger DB
+  `trg_content_ideas_readiness_gate`.
+- **Data kosong:** semua field kosong → `0`.
+
+### 4. Quality gate materi (FR-22, US-029)
+
+- **Fungsi:** `isQualityGateComplete(gate)` di `types/material.ts`; murni. 5 item:
+  `rasio visual, lisensi audio, brand cover, link bio/CTA, proofread copy`.
+- **Rumus:** `true` hanya bila kelima item `true`.
+- **Gate DB:** trigger `trg_material_quality_gate` menolak status `Dijadwalkan`/
+  `Rilis` tanpa gate penuh kecuali ada `gate_override_by` (Admin beralasan).
+
+### 5. Engagement Rate (FR-25, US-035; Q-002 C)
+
+- **Fungsi:** `engagementRate(metric)` di `types/metric.ts`; murni. Konstanta
+  `ER_FORMULA = "ER = (Likes + Comments + Shares + Saves) ÷ Reach × 100%"`.
+- **Input:** `{ reach, likes, comments, shares, saves }` (bilangan bulat ≥ 0).
+- **Rumus:** `(likes + comments + shares + saves) / reach × 100`.
+- **Data kosong:** `reach ≤ 0` → `0` (bukan error/NaN).
+
+### 6. Net Growth (FR-25, US-036)
+
+- **Fungsi:** `netGrowth(entry)` di `types/growth.ts`; murni. Konstanta
+  `NET_GROWTH_FORMULA = "Net Growth = (Masuk − Unfollows) ÷ Awal × 100%"`.
+- **Input:** `{ followersStart, followersGained, unfollows }` per platform/brand/bulan.
+- **Rumus (grafik):** `(followersGained − unfollows) / followersStart × 100`.
+- **Data kosong:** `followersStart ≤ 0` → `0`.
+- **Catatan agregasi scorecard:** `Audience Growth` memakai selisih absolut
+  `Σ(followersGained − unfollows)` (bukan persen), dan `Social Footprint` memakai
+  `followersStart + followersGained − unfollows` per baris terbaru tiap platform.
+
+### 7. Response time & kepatuhan SLA (FR-26, US-037)
+
+- **Fungsi:** `responseMinutes(x)`, `isSlaMet(x, sla)` di `services/community.ts`;
+  murni. Konstanta `RESPONSE_SLA_MINUTES = 30` (interim; final dari
+  `sla.response_minutes`, FR-30).
+- **Rumus:** `responseMinutes = round((repliedAt − receivedAt) / 60000)` menit;
+  `null` bila belum dibalas. `isSlaMet` ⇔ telah dibalas **dan** menit ≤ ambang.
+- **Kepatuhan (`getSlaCompliance`)**: `met / answered × 100`; denominator hanya
+  interaksi yang **sudah dibalas**; belum dibalas tidak masuk pembilang/denominator.
+- **Data kosong:** nol interaksi terjawab → `{ answered: 0, met: 0, percent: 0 }`.
+
+### 8. Routing SLA inquiry (FR-26, US-038)
+
+- **Fungsi:** `routingMinutes(x)`, `isRoutingSlaMet(x, sla)` di
+  `services/inquiries.ts`; murni. Konstanta `ROUTING_SLA_MINUTES = 15` (final dari
+  `sla.routing_minutes`).
+- **Rumus:** menit dari `received_at` → `routed_at`; `null` bila belum dialihkan.
+
+### 9. Urgensi rilis publikasi (FR-24, US-032; Q-004 B)
+
+- **Fungsi:** `releaseUrgency(scheduleDate, releaseDate, nowIso, criticalHours)` di
+  `services/calendar.ts`; murni. Konstanta default `criticalHours = 24`
+  (`release.critical_hours`), minimum 1.
+- **Rumus:** `ok` bila tanpa jadwal, sudah rilis, atau belum lewat jadwal;
+  `overdue` bila lewat jadwal sampai `criticalHours`; `critical` bila lewat
+  melampaui `criticalHours × 60 × 60 × 1000` ms.
+
+### 10. Penjadwalan fitur otomatis (FR-18, US-023/024)
+
+- **Fungsi:** `scheduleProjectFeatures(projectId, {holidays})` di
+  `services/scheduling.ts`; murni untuk `isWorkday/addWorkdays/nextWorkday`.
+- **Input:** fitur `features` (prioritas High/Medium/Low, `estimateDays`),
+  kapasitas `developer_capacity` (jam/hari, default 8), `holidays`.
+- **Rumus:** durasi kalender = `max(1, ceil(estimateDays × 8 / kapasitas))` hari
+  kerja; urut prioritas lalu nama; tiap developer berurutan (satu fitur satu waktu),
+  developer berbeda paralel; hari kerja Senin–Jumat dikurangi hari libur (Sabtu/
+  Minggu selalu libur). Bentrok = developer sama + rentang tanggal tumpang tindih.
+- **Override (US-024):** manual wajib `reason`; menyimpan `override_start/end/reason`
+  dan dapat memicu peringatan bentrok; hasil otomatis tidak diubah diam-diam.
+
+### 11. KPI Scorecard Sosmed (FR-25, US-039; FR-30)
+
+- **Fungsi:** `getScorecard(filter, {kpiTargets})` di `services/scorecard.ts`;
+  `resolveKpiTargets` + `DEFAULT_KPI_TARGETS` di `types/settings.ts`. Target dasar:
+  production 12, reach 500.000, engagement 3%, growth 500, footprint 50.000,
+  handover 20 — ditimpa parsial per brand (`settings.kpi.targets`).
+- **Definisi capaian:**
+  `production` = jumlah materi dibuat (brand + periode); `reach` = Σ `reach` metrik;
+  `engagement` = rata-rata `engagementRate` (2 desimal); `growth` = Σ (masuk −
+  unfollows); `footprint` = Σ followers baris terbaru per platform; `handover` =
+  jumlah inquiry `routedAt` pada periode.
+- **Verifikasi:** reach/engagement `Terverifikasi` bila ada snapshot `Final`;
+  lainnya `Monitoring Sementara`. `achievement = actual / target × 100`; target 0 → 0.
+- **Kunci Final (Q-007 B):** maksimal satu snapshot `Final` per publikasi
+  (`partial unique index`); Final terkunci untuk ubah/hapus kecuali
+  `FINAL_UNLOCK_ROLES = ["Super Admin", "Executive / Leader"]`.
+
+### 12. Kelengkapan termin & follow-up (FR-12, FR-6/US-012)
+
+- `listTerms` menuntut `Σ term = nilai deal` (FR-12; invalidasi di service karena
+  agregasi lintas baris); `balanced = totalAmount === dealValue`.
+- `isFollowUpOverdue(nextFollowUp, status, todayIso)` di `services/lead-activities.ts`:
+  overdue bila ada `nextFollowUp < todayIso` dan status **bukan** final
+  (`CLOSED_STATUSES = ["Closing","Lost","Not Interested"]`).
+
+**Pengujian edge case (Wave 0).** Setiap rumus murni memiliki unit test Vitest:
+nilai nol (`engagementRate` reach 0, `netGrowth` start 0), tanggal kosong
+(`releaseUrgency` tanpa jadwal), akhir pekan/libur (`isWorkday`/`addWorkdays`),
+sub-task kosong (`effectiveTaskPercent`/`getProjectProgress`), skor brief parsial
+(`briefScore`), snapshot Final terkunci (`recordMetric`/`updateMetric`/`deleteMetric`),
+SLA belum dibalas (`getSlaCompliance`), dan target per brand (`getScorecard`).
+Lokasi test: `scheduling.test.ts`, `metrics.test.ts`, `community.test.ts`,
+`ideas.test.ts`, `calendar.test.ts`, `scorecard.test.ts`, `tasks-board.test.ts`,
+`growth.test.ts`.
+
 - **Base URL:** `https://your-project.supabase.co` (via Supabase JS Client)
 - **Autentikasi:** Bearer token (Supabase Auth JWT) di header `Authorization`
 - **Format:** JSON
@@ -27,9 +178,12 @@
 
 ## Modul: Dashboard / Fondasi (US-001) — Kontrak Data
 
-> **Status:** Draft Fase 1 — diimplementasikan via mock di `frontend/src/mocks/dashboard.ts`,
-> diakses lewat `frontend/src/services/dashboard.ts`, tipe di `frontend/src/types/dashboard.ts`.
-> Saat Fase 2 (backend), mock diganti query Supabase tanpa mengubah komponen UI.
+> **Status:** DB-backed (Fase 3) — navigasi, metrik, antrean kerja, dan aktivitas
+> dihitung dari data Supabase yang lolos RLS; `currentUser` dibaca dari sesi Auth
+> + `profiles`/`user_roles`. `getDashboardSnapshot()` di
+> `frontend/src/services/dashboard.ts`; tipe di `frontend/src/types/dashboard.ts`.
+> Tanda tangan service tidak berubah sehingga komponen UI (layout/beranda) tidak
+> berubah.
 
 ### `getDashboardSnapshot(): Promise<ServiceResult<DashboardSnapshot>>`
 
@@ -367,10 +521,10 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Proyek
 
-> **Status:** Draft Fase 1 (US-019) — mock di `services/projects.ts`
-> (`mockProjects` kosong; proyek lahir dari handover), tipe `types/project.ts`.
-> Halaman detail `/proyek/[id]`; daftar menyusul US-020.
-> Fase 2: tabel `projects` (satu PM per proyek, Q-001 A).
+> **Status:** DB-backed (FR-15, US-019/020) — `services/projects.ts` membaca/menulis
+> tabel `projects`; UI tetap memakai `PRJ-xxx` dan service memetakan ke UUID.
+> Pembuatan dari handover memakai RPC atomik `create_project_from_handover`.
+> Halaman detail `/proyek/[id]`; relasi dua arah proyek ↔ handover aktif.
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|
@@ -385,54 +539,60 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Task
 
-> **Status:** Draft Fase 1 — store minimal + template (US-020/US-021).
-> CRUD penuh, Kanban, sub-task menyusul US-022.
+> **Status:** DB-backed (FR-16/FR-17, US-021/022) — tabel `tasks`,
+> `task_dependencies`, `task_templates`. UI memakai `TSK-xxx`; service memetakan
+> ke UUID dan nama assignee ke `team_members`. Task template tidak punya display
+> ID, sehingga UI memakai ID database. Urutan template resmi adalah RAD, PUS,
+> dan SAD; masing-masing berdurasi tiga hari kerja (Q-005).
 > `services/task-templates.ts`, halaman `/pengaturan/template-task` (Admin).
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|
 | `listTaskTemplates()` / `createTaskTemplate()` / `updateTaskTemplate()` / `deleteTaskTemplate()` | Nama, urutan ≥1, durasi ≥1 hari; nonaktif dilewati generate |
-| `generateTasksForProject(projectId, startDate)` (FR-16) | Task berurutan dari tanggal mulai; dipanggil otomatis saat proyek dibuat |
-| `getProjectProgress(projectId)` | Rata-rata task atas yang aktif |
-| `setTaskSummaryActive()` / `deleteTaskSummary()` | PM nonaktifkan/hapus hasil generate |
-| Task penuh (US-022, FR-17) | `addTaskSummary` (semua field) / `updateTaskSummary` / `moveTaskSummaryStatus` (Kanban) / `effectiveTaskPercent` (induk dari sub-task); komentar + lampiran via US-006 (`entityType: "task"`) |
+| `generateTasksForProject(projectId, startDate)` (FR-16) | Task berurutan dari tanggal mulai; dipakai untuk generator manual. RPC `create_project_from_handover` melakukan hal setara secara atomik |
+| `getProjectProgress(projectId)` | Rata-rata % efektif task atas yang aktif; % induk = rata-rata sub-task aktif |
+| `setTaskSummaryActive()` / `deleteTaskSummary()` | PM nonaktifkan/hapus hasil generate; DELETE meng-cascade sub-task + dependensi |
+| Task penuh (US-022, FR-17) | `addTaskSummary` / `updateTaskSummary` / `moveTaskSummaryStatus` (Kanban) / `effectiveTaskPercent`; komentar + lampiran via US-006 (`entityType: "task"`) |
 | Board global (laporan pemilik) | `/proyek/board`: Kanban lintas proyek + cari + seret; `listAllTaskSummaries` |
-| Master developer (permintaan pemilik) | CRUD nama + internal/external; dropdown assignee task & fitur (`/pengaturan/developer`, Admin) |
+| Master developer (permintaan pemilik) | Anggota `team_members` dengan status internal/external; dropdown assignee task & fitur (`/pengaturan/developer`, Admin) |
 
 ---
 
 ## Modul: Penjadwalan Fitur
 
-> **Status:** Draft Fase 1 (US-024) — `services/scheduling.ts`.
-> Penjadwalan di halaman detail proyek. Fase 2: kolom jadwal di tabel `features`.
+> **Status:** DB-backed (FR-18, US-023/024) — `services/scheduling.ts` membaca
+> `features`, `holidays`, dan `developer_capacity`; hasil ditulis kembali ke
+> kolom jadwal/override fitur.
 
 | Fungsi | Aturan bisnis |
 |--------|---------------|
 | `scheduleProjectFeatures(projectId)` (FR-18) | Prioritas High→Low; durasi = ceil(estimasi × 8/kapasitas); hari kerja Sen–Jumat − libur; berurutan per developer; bentrok ditandai |
-| `overrideFeatureSchedule(featureId, {startDate, endDate, reason})` | Alasan wajib; dapat memicu bentrok |
-| `getScheduleSettings()` / `setScheduleSettings()` | Hari libur + kapasitas jam/hari per developer |
+| `overrideFeatureSchedule(featureId, {startDate, endDate, reason})` | Alasan wajib; menyimpan `override_start/end/reason`; dapat memicu bentrok |
+| `getScheduleSettings()` / `setScheduleSettings()` | Hari libur (`holidays`) + kapasitas jam/hari per developer (`developer_capacity`) |
 
 ---
 
 ## Modul: Gantt Chart
 
-> **Status:** Draft Fase 1 (US-025) — `services/task-dependencies.ts`, halaman `/proyek/[id]/gantt`.
-> Fase 2: tabel `task_dependencies`.
+> **Status:** DB-backed (FR-19, US-025) — `services/task-dependencies.ts`,
+> tanggal task disimpan di `tasks`, dependensi di `task_dependencies`.
+> Halaman `/proyek/[id]/gantt`; drag-drop memakai `moveTaskDates`.
 
 | Fungsi | Aturan bisnis |
 |--------|---------------|
 | `moveTaskDates(taskId, newStart)` (FR-19) | Geser rentang + kaskade successor FS yang tertabrak |
-| `addDependency()` / `removeDependency()` | FS saja; tolak siklus/duplikat/refleksif |
+| `addDependency()` / `removeDependency()` | FS saja; tolak siklus/duplikat/refleksif; ID sintetis `PRED->SUCC` |
 | Kalender proyek & universal | Bulan/minggu task + fitur (per proyek atau lintas proyek + filter); klik; seret (task via move, fitur via override) |
 
 ---
 
 ## Modul: Dashboard Produksi
 
-> **Status:** Draft Fase 1 (US-026, digabung ke `/proyek` atas permintaan pemilik) —
-> `services/production-dashboard.ts` + `services/production-export.ts`.
-> Tanpa filter (dihapus); KPI + deadline dihitung keseluruhan.
-> Fase 2: agregasi SQL.
+> **Status:** DB-backed (FR-20, US-026, digabung ke `/proyek` atas permintaan
+> pemilik) — `services/production-dashboard.ts` membaca `projects` + `tasks`
+> lewat service DB-backed; ekspor memakai data yang sama.
+> Filter divisi memakai tim pelaksana melalui PM/role yang sudah ada (Q-013 A);
+> KPI + deadline dihitung dari data nyata.
 
 | Fungsi | Definisi |
 |--------|----------|
@@ -446,8 +606,9 @@ interface DealHandover { id: string; title: string; code: string; clientId: stri
 
 ## Modul: Fitur (Backlog)
 
-> **Status:** Draft Fase 1 (US-023) — `services/features.ts`, tipe `types/feature.ts`.
-> Backlog di halaman detail proyek. Penjadwalan menyusul US-024.
+> **Status:** DB-backed (FR-18, US-023) — `services/features.ts`, tabel
+> `features`; UI memakai `FIT-xxx`, service memetakan ke UUID dan developer
+> ke `team_members`. Backlog di halaman detail proyek.
 
 | Fungsi service | Aturan bisnis |
 |----------------|---------------|

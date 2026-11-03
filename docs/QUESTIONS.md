@@ -54,13 +54,13 @@
 
 ---
 
-## Q-005 — [OPEN]
+## Q-005 — [ANSWERED]
 
 - **Terkait:** US-021, FR-16
 - **Pertanyaan:** Apa daftar lengkap template task standar untuk proyek baru? (nama aktivitas, urutan, durasi default)
 - **Konteks:** US-021 menyebut "Admin dapat mengelola template task" — tapi task awal (seed) perlu didefinisikan agar sistem tidak dimulai dari template kosong.
 - **Dampak jika salah:** Jika template salah, setiap proyek baru perlu penyesuaian manual yang menambah waktu PM.
-- **Jawaban:** _(diisi tim Produksi / pemilik proyek)_
+- **Jawaban (2026-11-03):** Urutan task default: (1) Pembuatan dokumen RAD, (2) Pembuatan dokumen PUS, (3) Pembuatan dokumen SAD. Masing-masing berdurasi **3 hari kerja**.
 
 ---
 
@@ -138,7 +138,7 @@
 
 ---
 
-## Q-012 — [OPEN]
+## Q-012 — [ANSWERED]
 
 - **Terkait:** US-015 / FR-11
 - **Pertanyaan:** Apa isi panduan pengisian (SOP dari sheet "Read me") yang harus tampil sebagai panel bantuan di form Deal Handover?
@@ -146,11 +146,11 @@
   - A) Salin isi sheet "Read me" apa adanya ke panel bantuan
   - B) Ringkas menjadi panduan per field
 - **Dampak jika salah:** Panel saat ini memakai panduan interim yang diturunkan dari PRD; perlu diganti setelah jawaban tersedia.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban (2026-11-03):** B — ringkas menjadi panduan per field.
 
 ---
 
-## Q-013 — [OPEN]
+## Q-013 — [ANSWERED]
 
 - **Terkait:** US-026 / FR-20
 - **Pertanyaan:** Apa yang dimaksud "divisi" pada filter dashboard produksi (per divisi, proyek, rentang waktu)? Apakah divisi = tim/role (Sales, Produksi, Sosmed), atau ada struktur divisi tersendiri?
@@ -158,7 +158,7 @@
   - A) Divisi = tim pelaksana (filter per PM/role yang sudah ada)
   - B) Ada master divisi tersendiri (perlu tabel + filter baru)
 - **Dampak jika salah:** Filter dashboard salah sasaran; bila opsi B, perlu master data tambahan.
-- **Jawaban:** _(diisi pemilik proyek)_
+- **Jawaban (2026-11-03):** A — divisi berarti tim pelaksana; gunakan filter PM/role yang sudah ada. Tidak ada master divisi atau tabel baru.
 
 ---
 

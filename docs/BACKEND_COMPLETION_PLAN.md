@@ -87,8 +87,8 @@ Urutan ini menjaga dependensi data: proyek harus nyata sebelum task/fitur; mater
 
 | ID | Dampak | Tindakan sampai terjawab |
 |---|---|---|
-| Q-005 | Tidak ada daftar template task standar untuk proyek baru | Selesaikan CRUD/generasi dari template yang dibuat Admin; jangan membuat seed template resmi sendiri. |
-| Q-013 | Definisi filter “divisi” dashboard produksi belum jelas | Selesaikan filter proyek dan rentang waktu; jangan menambah master divisi atau mengklaim AC filter divisi selesai. |
+| Q-005 | RESOLVED 2026-11-03: template RAD → PUS → SAD | Seed tiga task aktif, masing-masing 3 hari kerja; template lama dinonaktifkan untuk menjaga histori. |
+| Q-013 | RESOLVED 2026-11-03: divisi = tim pelaksana | Gunakan filter PM/role yang sudah ada; jangan tambah master divisi. |
 
 ## Kriteria penutupan Gate 3
 
