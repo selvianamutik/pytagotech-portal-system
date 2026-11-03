@@ -350,7 +350,7 @@
 
 ---
 
-## Q-027 — [OPEN] — Rincian data seed pilot
+## Q-027 — [ANSWERED] — Rincian data seed pilot
 
 - **Terkait:** Gate 4 (W-6); lanjutan Q-025 (B)
 - **Pertanyaan:** Data contoh mana yang perlu di-seed untuk demo/pilot, dan apa sumbernya?
@@ -360,4 +360,4 @@
   - C) Kombinasi: fiktif untuk data operasional + kalender hari libur & master data sungguhan (industri/status/platform/brand) dari PRD.
 - **Dampak jika salah:** Tanpa seed, browser per-US dan smoke test tidak bisa dilengkapi; dengan data lama, melanggar Non-Goals PRD (migrasi) kecuali disetujui terpisah.
 - **Tambahan yang perlu dikonfirmasi:** kumpulan akun pilot per role (Super Admin, Executive, Sales, PM, Developer, Sosmed Specialist, tim produksi) — email login untuk masing-masing.
-
+- **Jawaban (2026-11-03):** A — Fiktif minimal per modul (2–3 lead, 1 klien, 1 deal handover + proyek, 3 task template RAD/PUS/SAD, 2 ide konten + 1 materi, 1 publikasi) — cukup untuk smoke test.

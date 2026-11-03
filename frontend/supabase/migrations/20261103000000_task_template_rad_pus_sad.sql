@@ -29,22 +29,22 @@ stable
 set search_path = ''
 as $$
 declare
-  current_date date := base_date;
+  cur date := base_date;
   added integer := 0;
 begin
-  while extract(isodow from current_date) in (6, 7)
-    or exists (select 1 from public.holidays h where h.day = current_date) loop
-    current_date := current_date + 1;
+  while extract(isodow from cur) in (6, 7)
+    or exists (select 1 from public.holidays h where h.day = cur) loop
+    cur := cur + 1;
   end loop;
 
   while added < greatest(workdays, 0) loop
-    current_date := current_date + 1;
-    if extract(isodow from current_date) not in (6, 7)
-      and not exists (select 1 from public.holidays h where h.day = current_date) then
+    cur := cur + 1;
+    if extract(isodow from cur) not in (6, 7)
+      and not exists (select 1 from public.holidays h where h.day = cur) then
       added := added + 1;
     end if;
   end loop;
-  return current_date;
+  return cur;
 end;
 $$;
 
