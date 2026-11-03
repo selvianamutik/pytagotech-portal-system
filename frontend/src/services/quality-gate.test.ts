@@ -8,7 +8,7 @@ import {
 } from "@/services/quality-gate";
 import { getMaterial } from "@/services/materials";
 
-const admin = { name: "Dinda", roles: ["Super Admin"] };
+const admin = { name: "Dinda Prameswari", roles: ["Super Admin"] };
 const specialist = { name: "Alya", roles: ["Social Media Specialist"] };
 
 async function approveMat0018() {
@@ -68,7 +68,7 @@ describe("scheduleMaterial", () => {
       admin
     );
     expect(ok.error).toBeNull();
-    expect((await getMaterial("MAT-0018")).data?.gateOverride?.by).toBe("Dinda");
+    expect((await getMaterial("MAT-0018")).data?.gateOverride?.by).toBe("Dinda Prameswari");
   });
 });
 

@@ -1,6 +1,7 @@
 import { listMaterials } from "@/services/materials";
 import { listPublications, savePublication } from "@/services/publications";
 import { listRevisions } from "@/services/approvals";
+import { getPortalSettings, saveOperationalSettings } from "@/services/settings";
 import { isQualityGateComplete } from "@/types/material";
 import type { ServiceResult } from "@/services/result";
 
@@ -23,7 +24,8 @@ export function resetMockThresholds(): void {
 }
 
 export async function getReleaseThresholds(): Promise<ServiceResult<ReleaseThresholds>> {
-  return { data: { ...thresholdsStore }, error: null };
+  const { data, error } = await getPortalSettings();
+  return error ? { data: null, error } : { data: { criticalHours: data?.releaseCriticalHours ?? thresholdsStore.criticalHours }, error: null };
 }
 
 export async function setReleaseThresholds(
@@ -32,8 +34,16 @@ export async function setReleaseThresholds(
   if (!Number.isFinite(thresholds.criticalHours) || thresholds.criticalHours < 1) {
     return { data: null, error: "Ambang kritis minimal 1 jam." };
   }
-  thresholdsStore = { criticalHours: Math.round(thresholds.criticalHours) };
-  return { data: { ...thresholdsStore }, error: null };
+  const current = await getPortalSettings();
+  if (!current.data) return { data: null, error: current.error ?? "Gagal memuat pengaturan portal." };
+  const saved = await saveOperationalSettings({
+    slaResponseMinutes: current.data.slaResponseMinutes,
+    slaRoutingMinutes: current.data.slaRoutingMinutes,
+    releaseCriticalHours: Math.round(thresholds.criticalHours),
+    serviceHours: current.data.serviceHours,
+    waNumbers: current.data.waNumbers,
+  });
+  return saved.error ? { data: null, error: saved.error } : { data: { criticalHours: Math.round(thresholds.criticalHours) }, error: null };
 }
 
 export type ReleaseUrgency = "ok" | "overdue" | "critical";
@@ -80,8 +90,9 @@ export interface CalendarFilter {
 export async function getCalendarEntries(
   filter: CalendarFilter,
   nowIso: string = new Date().toISOString(),
-  criticalHours: number = thresholdsStore.criticalHours
+  criticalHours?: number
 ): Promise<ServiceResult<CalendarEntry[]>> {
+  const thresholds = criticalHours ?? (await getReleaseThresholds()).data?.criticalHours ?? thresholdsStore.criticalHours;
   const [{ data: publications }, { data: materials }] = await Promise.all([
     listPublications(),
     listMaterials(),
@@ -124,7 +135,7 @@ export async function getCalendarEntries(
         publication.scheduleDate,
         publication.releaseDate,
         nowIso,
-        criticalHours
+        thresholds
       ),
     });
   }

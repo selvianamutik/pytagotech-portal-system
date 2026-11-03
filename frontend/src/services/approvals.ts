@@ -1,4 +1,5 @@
-import { getMaterial, saveMaterial } from "@/services/materials";
+import { createClient } from "@/lib/supabase/client";
+import { getMaterial } from "@/services/materials";
 import type { ApprovalDecision, MaterialRevision } from "@/types/material";
 import { isApprovalDecision } from "@/types/material";
 import type { ServiceResult } from "@/services/result";
@@ -56,14 +57,32 @@ export async function submitReview(
     evidenceLink: (input.evidenceLink ?? "").trim() || undefined,
     createdAt: new Date().toISOString(),
   };
-  const updated = {
-    ...material,
-    revisions: [...material.revisions, revision],
-    status:
-      input.decision === "Ditolak"
-        ? ("Draf" as const)
-        : ("Disetujui" as const),
-  };
-  await saveMaterial(updated);
+  const db = createClient();
+  const { data: found, error: findError } = await db
+    .from("content_materials")
+    .select("id")
+    .eq("display_id", materialId)
+    .single();
+  if (findError || !found) {
+    return { data: null, error: "Materi tidak ditemukan." };
+  }
+  const { error: revisionError } = await db.from("content_revisions").insert({
+    material_id: (found as { id: string }).id,
+    version: revision.version,
+    reviewer: revision.reviewer,
+    decision: revision.decision,
+    feedback: revision.feedback || null,
+    evidence_link: revision.evidenceLink ?? null,
+  });
+  if (revisionError) {
+    return { data: null, error: revisionError.message };
+  }
+  const { error: statusError } = await db
+    .from("content_materials")
+    .update({ status: input.decision === "Ditolak" ? "Draf" : "Disetujui" })
+    .eq("id", (found as { id: string }).id);
+  if (statusError) {
+    return { data: null, error: statusError.message };
+  }
   return { data: { ...revision }, error: null };
 }

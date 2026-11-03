@@ -1,141 +1,97 @@
-import { mockMaterials } from "@/mocks/materials";
+import { createClient } from "@/lib/supabase/client";
 import { getIdea } from "@/services/ideas";
-import type { ContentMaterial, MaterialInput } from "@/types/material";
-import { isSosmedBrand } from "@/types/sosmed";
 import type { ServiceResult } from "@/services/result";
+import type { ContentMaterial, MaterialInput, MaterialRevision, QualityGateItem } from "@/types/material";
+import { isSosmedBrand } from "@/types/sosmed";
 
-/**
- * Lapisan database produksi konten (US-028).
- * Penjadwalan (US-029) dan approval (US-030) menyusul di file ini.
- */
+type Row = Record<string, unknown> & { id: string; display_id: string; title: string; brand: string; status: string; created_at: string };
+const GATE: QualityGateItem[] = ["rasio visual", "lisensi audio", "brand cover", "link bio/CTA", "proofread copy"];
+export function resetMockMaterials(): void {}
 
-let materialStore: ContentMaterial[] = structuredClone(mockMaterials);
-
-/** Mengembalikan state mock ke awal — dipakai test dan demo. */
-export function resetMockMaterials(): void {
-  materialStore = structuredClone(mockMaterials);
+async function resolveMember(name: string): Promise<string | null> {
+  if (!name.trim()) return null;
+  const { data } = await createClient().from("team_members").select("id").eq("name", name.trim()).limit(1);
+  return ((data ?? []) as { id: string }[])[0]?.id ?? null;
 }
-
-function cloneMaterial(material: ContentMaterial): ContentMaterial {
-  return {
-    ...material,
-    qualityGate: { ...material.qualityGate },
-    revisions: material.revisions.map((revision) => ({ ...revision })),
-  };
+async function resolveIdea(id?: string): Promise<string | null> {
+  if (!id) return null;
+  const { data } = await createClient().from("content_ideas").select("id").eq("display_id", id).limit(1);
+  return ((data ?? []) as { id: string }[])[0]?.id ?? null;
 }
-
-const EMPTY_GATE: ContentMaterial["qualityGate"] = {
-  "rasio visual": false,
-  "lisensi audio": false,
-  "brand cover": false,
-  "link bio/CTA": false,
-  "proofread copy": false,
-};
-
-function validateMaterialInput(input: MaterialInput): string | null {
-  if (input.title.trim().length === 0) {
-    return "Judul materi wajib diisi.";
+async function map(row: Row): Promise<ServiceResult<ContentMaterial>> {
+  const db = createClient();
+  const [rev, assets, people] = await Promise.all([
+    db.from("content_revisions").select("version,reviewer,decision,feedback,evidence_link,created_at").eq("material_id", row.id).order("version"),
+    db.from("material_assets").select("asset_id").eq("material_id", row.id),
+    Promise.all([row["copywriter_id"], row["designer_id"], row["video_editor_id"]].map(async (id) => {
+      if (typeof id !== "string") return "";
+      const { data } = await db.from("team_members").select("name").eq("id", id).limit(1);
+      return ((data ?? []) as { name: string }[])[0]?.name ?? "";
+    })),
+  ]);
+  const err = rev.error ?? assets.error;
+  if (err) return { data: null, error: err.message };
+  const overrideId = row["gate_override_by"] as string | null;
+  let overrideName = "";
+  if (overrideId) {
+    const { data } = await db.from("team_members").select("name").eq("id", overrideId).limit(1);
+    overrideName = ((data ?? []) as { name: string }[])[0]?.name ?? "";
   }
-  if (!isSosmedBrand(input.brand)) {
-    return "Lini bisnis tidak dikenal.";
+  const ideaId = row["idea_id"] as string | null;
+  let ideaDisplay: string | undefined;
+  if (ideaId) {
+    const { data } = await db.from("content_ideas").select("display_id").eq("id", ideaId).limit(1);
+    ideaDisplay = ((data ?? []) as { display_id: string }[])[0]?.display_id;
   }
-  if (input.scheduleDate && Number.isNaN(Date.parse(input.scheduleDate))) {
-    return "Jadwal tayang tidak valid.";
-  }
-  if (input.releaseTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(input.releaseTime)) {
-    return "Jam rilis harus format HH:MM.";
-  }
+  const gate = Object.fromEntries(GATE.map((key, i) => [key, Boolean(row[["gate_visual", "gate_audio", "gate_cover", "gate_cta", "gate_proofread"][i]])])) as ContentMaterial["qualityGate"];
+  const revisions = ((rev.data ?? []) as Record<string, unknown>[]).map((r) => ({ version: Number(r["version"]), reviewer: String(r["reviewer"]), decision: r["decision"] as MaterialRevision["decision"], feedback: String(r["feedback"] ?? ""), evidenceLink: (r["evidence_link"] as string | null) ?? undefined, createdAt: String(r["created_at"]) }));
+  return { data: { id: row.display_id, title: row.title, brand: row.brand as ContentMaterial["brand"], status: row.status as ContentMaterial["status"], scheduleDate: row["schedule_date"] as string | undefined, releaseTime: row["release_time"] as string | undefined, draftLink: String(row["draft_link"] ?? ""), copywriter: people[0], designer: people[1], videoEditor: people[2], ideaId: ideaDisplay, qualityGate: gate, gateOverride: overrideId ? { by: overrideName, reason: String(row["gate_override_reason"] ?? "") } : undefined, revisions, linkedAssetIds: ((assets.data ?? []) as { asset_id: string }[]).map((a) => a.asset_id), createdAt: row.created_at }, error: null };
+}
+export async function listMaterials(): Promise<ServiceResult<ContentMaterial[]>> {
+  const { data, error } = await createClient().from("content_materials").select("*").order("created_at", { ascending: false });
+  if (error) return { data: null, error: error.message };
+  const rows = await Promise.all(((data ?? []) as Row[]).map(map));
+  const failed = rows.find((x) => x.error);
+  return failed?.error ? { data: null, error: failed.error } : { data: rows.flatMap((x) => x.data ? [x.data] : []), error: null };
+}
+export async function getMaterial(id: string): Promise<ServiceResult<ContentMaterial>> {
+  const { data, error } = await createClient().from("content_materials").select("*").eq("display_id", id).limit(1);
+  if (error) return { data: null, error: error.message };
+  const row = ((data ?? []) as Row[])[0];
+  return row ? map(row) : { data: null, error: "Materi tidak ditemukan." };
+}
+function validate(input: MaterialInput): string | null {
+  if (!input.title.trim()) return "Judul materi wajib diisi.";
+  if (!isSosmedBrand(input.brand)) return "Lini bisnis tidak dikenal.";
+  if (input.scheduleDate && Number.isNaN(Date.parse(input.scheduleDate))) return "Jadwal tayang tidak valid.";
+  if (input.releaseTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(input.releaseTime)) return "Jam rilis harus format HH:MM.";
   return null;
 }
-
-export async function listMaterials(): Promise<ServiceResult<ContentMaterial[]>> {
-  return {
-    data: [...materialStore]
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map((material) => cloneMaterial(material)),
-    error: null,
-  };
+export async function createMaterial(input: MaterialInput): Promise<ServiceResult<ContentMaterial>> {
+  const v = validate(input); if (v) return { data: null, error: v };
+  const db = createClient();
+  const [copywriter, designer, editor] = await Promise.all([resolveMember(input.copywriter), resolveMember(input.designer), resolveMember(input.videoEditor)]);
+  const { data, error } = await db.from("content_materials").insert({ title: input.title.trim(), brand: input.brand, schedule_date: input.scheduleDate || null, release_time: input.releaseTime || null, draft_link: input.draftLink.trim() || null, copywriter_id: copywriter, designer_id: designer, video_editor_id: editor }).select("*").single();
+  return error ? { data: null, error: error.message } : map(data as Row);
 }
-
-export async function getMaterial(
-  materialId: string
-): Promise<ServiceResult<ContentMaterial>> {
-  const material = materialStore.find((item) => item.id === materialId);
-  if (!material) {
-    return { data: null, error: "Materi tidak ditemukan." };
-  }
-  return { data: cloneMaterial(material), error: null };
+export async function saveMaterial(material: ContentMaterial): Promise<ServiceResult<ContentMaterial>> {
+  const db = createClient();
+  const [copywriter, designer, editor, idea] = await Promise.all([resolveMember(material.copywriter), resolveMember(material.designer), resolveMember(material.videoEditor), resolveIdea(material.ideaId)]);
+  const gateCols = ["gate_visual", "gate_audio", "gate_cover", "gate_cta", "gate_proofread"];
+  const patch: Record<string, unknown> = { title: material.title, brand: material.brand, status: material.status, schedule_date: material.scheduleDate ?? null, release_time: material.releaseTime ?? null, draft_link: material.draftLink || null, copywriter_id: copywriter, designer_id: designer, video_editor_id: editor, idea_id: idea, gate_override_by: material.gateOverride ? await resolveMember(material.gateOverride.by) : null, gate_override_reason: material.gateOverride?.reason ?? null };
+  GATE.forEach((key, i) => { patch[gateCols[i]!] = material.qualityGate[key]; });
+  const { data: found, error: findError } = await db.from("content_materials").select("id").eq("display_id", material.id).limit(1);
+  if (findError) return { data: null, error: findError.message };
+  const row = ((found ?? []) as { id: string }[])[0]; if (!row) return { data: null, error: "Materi tidak ditemukan." };
+  const { data, error } = await db.from("content_materials").update(patch).eq("id", row.id).select("*").single();
+  return error ? { data: null, error: error.message } : map(data as Row);
 }
-
-export async function createMaterial(
-  input: MaterialInput
-): Promise<ServiceResult<ContentMaterial>> {
-  const validationError = validateMaterialInput(input);
-  if (validationError) {
-    return { data: null, error: validationError };
-  }
-  const now = new Date().toISOString();
-  const material: ContentMaterial = {
-    id: `MAT-${String(materialStore.length + 18).padStart(4, "0")}`,
-    title: input.title.trim(),
-    brand: input.brand as ContentMaterial["brand"],
-    status: "Draf",
-    scheduleDate: input.scheduleDate || undefined,
-    releaseTime: input.releaseTime || undefined,
-    draftLink: input.draftLink.trim(),
-    copywriter: input.copywriter.trim(),
-    designer: input.designer.trim(),
-    videoEditor: input.videoEditor.trim(),
-    qualityGate: { ...EMPTY_GATE },
-    revisions: [],
-    createdAt: now,
-  };
-  materialStore.push(material);
-  return { data: { ...material }, error: null };
-}
-
-/** Tulis ulang materi (dipakai US-029/US-030 untuk status & gate). */
-export async function saveMaterial(
-  material: ContentMaterial
-): Promise<ServiceResult<ContentMaterial>> {
-  const index = materialStore.findIndex((item) => item.id === material.id);
-  if (index === -1) {
-    return { data: null, error: "Materi tidak ditemukan." };
-  }
-  materialStore[index] = structuredClone(material);
-  return { data: structuredClone(material), error: null };
-}
-
-/**
- * Buat materi dari ide planner (US-028): hanya ide Disetujui atau
- * Siap Masuk Produksi. Judul + brand + platform disalin.
- */
-export async function createMaterialFromIdea(
-  ideaId: string
-): Promise<ServiceResult<ContentMaterial>> {
-  const { data: idea } = await getIdea(ideaId);
-  if (!idea) {
-    return { data: null, error: "Ide tidak ditemukan." };
-  }
-  if (idea.readiness !== "Disetujui" && idea.readiness !== "Siap Masuk Produksi") {
-    return {
-      data: null,
-      error: "Hanya ide Disetujui/Siap Produksi yang dapat menjadi materi.",
-    };
-  }
-  return createMaterial({
-    title: idea.title,
-    brand: idea.brand,
-    draftLink: "",
-    copywriter: "",
-    designer: "",
-    videoEditor: "",
-  }).then(async (result) => {
-    if (result.data) {
-      const withIdea = { ...result.data, ideaId: idea.id };
-      await saveMaterial(withIdea);
-      return { data: withIdea, error: null };
-    }
-    return result;
-  });
+export async function createMaterialFromIdea(id: string): Promise<ServiceResult<ContentMaterial>> {
+  const { data: idea, error } = await getIdea(id);
+  if (error || !idea) return { data: null, error: error ?? "Ide tidak ditemukan." };
+  if (idea.readiness !== "Disetujui" && idea.readiness !== "Siap Masuk Produksi") return { data: null, error: "Hanya ide Disetujui/Siap Produksi yang dapat menjadi materi." };
+  const result = await createMaterial({ title: idea.title, brand: idea.brand, draftLink: "", copywriter: "", designer: "", videoEditor: "" });
+  if (!result.data) return result;
+  result.data.ideaId = id;
+  return saveMaterial(result.data);
 }

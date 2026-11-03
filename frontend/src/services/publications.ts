@@ -1,146 +1,18 @@
-import { getIdea } from "@/services/ideas";
+import { createClient } from "@/lib/supabase/client";
+import { resolveDisplayUuid } from "@/services/production-refs";
 import { getMaterial } from "@/services/materials";
 import type { Publication } from "@/types/publication";
 import { isDistributionPattern } from "@/types/publication";
 import { isSosmedPlatform, SOSMED_PLATFORMS } from "@/types/sosmed";
 import type { ServiceResult } from "@/services/result";
-
-/**
- * Lapisan distribusi multiplatform Parent-Child (US-031, FR-23).
- * Rilis aktual (US-033) dan metrik (US-035) menyusul di file ini.
- */
-
-let publicationStore: Publication[] = [];
-
-/** Mengembalikan state mock ke awal — dipakai test dan demo. */
-export function resetMockPublications(): void {
-  publicationStore = [];
-}
-
-export async function listPublications(
-  materialId?: string
-): Promise<ServiceResult<Publication[]>> {
-  const items = materialId
-    ? publicationStore.filter((publication) => publication.materialId === materialId)
-    : publicationStore;
-  return {
-    data: [...items]
-      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-      .map((publication) => ({ ...publication })),
-    error: null,
-  };
-}
-
-/**
- * Platform tujuan materi: dari ide asal bila ada, selain itu
- * seluruh 5 platform. Dasar indikator rekonsiliasi.
- */
-export async function getTargetPlatforms(
-  materialId: string
-): Promise<ServiceResult<string[]>> {
-  const { data: material } = await getMaterial(materialId);
-  if (!material) {
-    return { data: null, error: "Materi tidak ditemukan." };
-  }
-  if (material.ideaId) {
-    const { data: idea } = await getIdea(material.ideaId);
-    if (idea) {
-      return { data: [...idea.targetPlatforms], error: null };
-    }
-  }
-  return { data: [...SOSMED_PLATFORMS], error: null };
-}
-
-/** Platform tujuan yang belum memiliki publikasi (peringatan rekonsiliasi). */
-export async function getUncoveredPlatforms(
-  materialId: string
-): Promise<ServiceResult<string[]>> {
-  const [{ data: targets }, { data: publications }] = await Promise.all([
-    getTargetPlatforms(materialId),
-    listPublications(materialId),
-  ]);
-  const covered: Set<string> = new Set(
-    (publications ?? []).map((publication) => publication.platform)
-  );
-  return { data: (targets ?? []).filter((platform) => !covered.has(platform)), error: null };
-}
-
-export async function createPublication(
-  materialId: string,
-  platform: string,
-  pattern: string
-): Promise<ServiceResult<Publication>> {
-  const { data: material } = await getMaterial(materialId);
-  if (!material) {
-    return { data: null, error: "Materi tidak ditemukan." };
-  }
-  if (!isSosmedPlatform(platform)) {
-    return { data: null, error: "Platform tidak dikenal." };
-  }
-  if (!isDistributionPattern(pattern)) {
-    return { data: null, error: "Pola harus Single atau Crosspost." };
-  }
-  const { data: existing } = await listPublications(materialId);
-  if ((existing ?? []).some((publication) => publication.platform === platform)) {
-    return { data: null, error: `Publikasi ${platform} sudah ada untuk materi ini.` };
-  }
-  const publication: Publication = {
-    id: `PUB-${String(publicationStore.length + 1).padStart(4, "0")}`,
-    materialId,
-    platform,
-    pattern,
-    scheduleDate: material.scheduleDate,
-    createdAt: new Date().toISOString(),
-  };
-  publicationStore.push(publication);
-  return { data: { ...publication }, error: null };
-}
-
-export async function deletePublication(publicationId: string): Promise<ServiceResult<true>> {
-  const index = publicationStore.findIndex((item) => item.id === publicationId);
-  if (index === -1) {
-    return { data: null, error: "Publikasi tidak ditemukan." };
-  }
-  publicationStore.splice(index, 1);
-  return { data: true, error: null };
-}
-
-/** Tulis ulang publikasi (dipakai US-032 jadwal ulang & US-033 rilis). */
-export async function savePublication(
-  publication: Publication
-): Promise<ServiceResult<Publication>> {
-  const index = publicationStore.findIndex((item) => item.id === publication.id);
-  if (index === -1) {
-    return { data: null, error: "Publikasi tidak ditemukan." };
-  }
-  publicationStore[index] = { ...publication };
-  return { data: { ...publication }, error: null };
-}
-
-export interface RecordReleaseInput {
-  releaseDate: string;
-  liveLink: string;
-}
-
-/**
- * Catat rilis aktual + link post live (US-033). Setelah live,
- * publikasi terkunci dari jadwal ulang (US-032).
- */
-export async function recordRelease(
-  publicationId: string,
-  input: RecordReleaseInput
-): Promise<ServiceResult<Publication>> {
-  const publication = publicationStore.find((item) => item.id === publicationId);
-  if (!publication) {
-    return { data: null, error: "Publikasi tidak ditemukan." };
-  }
-  if (!input.releaseDate || Number.isNaN(Date.parse(input.releaseDate))) {
-    return { data: null, error: "Tanggal aktual rilis tidak valid." };
-  }
-  if (!input.liveLink.trim()) {
-    return { data: null, error: "Link post live wajib diisi." };
-  }
-  publication.releaseDate = input.releaseDate;
-  publication.liveLink = input.liveLink.trim();
-  return { data: { ...publication }, error: null };
-}
+type Row = Record<string, unknown> & { id: string; display_id: string; material_id: string; platform: Publication["platform"]; pattern: Publication["pattern"]; created_at: string };
+export function resetMockPublications(): void {}
+async function map(row: Row): Promise<Publication> { const { data } = await createClient().from("content_materials").select("display_id").eq("id", row.material_id).limit(1); return { id: row.display_id, materialId: ((data ?? []) as { display_id: string }[])[0]?.display_id ?? row.material_id, platform: row.platform, pattern: row.pattern, scheduleDate: (row.schedule_date as string | null) ?? undefined, releaseDate: (row.release_date as string | null) ?? undefined, liveLink: (row.live_link as string | null) ?? undefined, createdAt: row.created_at }; }
+export async function listPublications(materialId?: string): Promise<ServiceResult<Publication[]>> { let q = createClient().from("publications").select("*").order("created_at"); if (materialId) { const material = await resolveDisplayUuid("content_materials", materialId, "Materi"); if (!material.data) return { data: null, error: material.error }; q = q.eq("material_id", material.data); } const { data, error } = await q; return error ? { data: null, error: error.message } : { data: await Promise.all(((data ?? []) as Row[]).map(map)), error: null }; }
+export async function getTargetPlatforms(materialId: string): Promise<ServiceResult<string[]>> { const material = await resolveDisplayUuid("content_materials", materialId, "Materi"); if (!material.data) return { data: null, error: material.error }; const db = createClient(); const { data, error } = await db.from("material_platforms").select("platform").eq("material_id", material.data); if (error) return { data: null, error: error.message }; const platforms = (data ?? []) as { platform: string }[]; if (platforms.length) return { data: platforms.map((x) => x.platform), error: null }; const content = await getMaterial(materialId); if (content.data?.ideaId) { const { data: idea } = await db.from("content_ideas").select("id").eq("display_id", content.data.ideaId).limit(1); const ideaId = ((idea ?? []) as { id: string }[])[0]?.id; if (ideaId) { const { data: target } = await db.from("idea_platforms").select("platform").eq("idea_id", ideaId); return { data: ((target ?? []) as { platform: string }[]).map((x) => x.platform), error: null }; } } return { data: [...SOSMED_PLATFORMS], error: null }; }
+export async function getUncoveredPlatforms(materialId: string): Promise<ServiceResult<string[]>> { const [targets, publications] = await Promise.all([getTargetPlatforms(materialId), listPublications(materialId)]); if (!targets.data) return { data: null, error: targets.error }; if (!publications.data) return { data: null, error: publications.error }; const covered = new Set(publications.data.map((x) => x.platform)); return { data: targets.data.filter((x) => !covered.has(x as Publication["platform"])), error: null }; }
+export async function createPublication(materialId: string, platform: string, pattern: string): Promise<ServiceResult<Publication>> { if (!isSosmedPlatform(platform)) return { data: null, error: "Platform tidak dikenal." }; if (!isDistributionPattern(pattern)) return { data: null, error: "Pola harus Single atau Crosspost." }; const material = await resolveDisplayUuid("content_materials", materialId, "Materi"); if (!material.data) return { data: null, error: material.error }; const content = await getMaterial(materialId); if (!content.data) return { data: null, error: content.error }; const db = createClient(); const { data: existing, error: lookupError } = await db.from("publications").select("id").eq("material_id", material.data).eq("platform", platform).limit(1); if (lookupError) return { data: null, error: lookupError.message }; if ((existing ?? []).length) return { data: null, error: `Publikasi ${platform} sudah ada untuk materi ini.` }; const { data, error } = await db.from("publications").insert({ material_id: material.data, platform, pattern, schedule_date: content.data.scheduleDate ?? null }).select("*").single(); return error ? { data: null, error: error.message } : { data: await map(data as Row), error: null }; }
+export async function deletePublication(id: string): Promise<ServiceResult<true>> { const found = await resolveDisplayUuid("publications", id, "Publikasi"); if (!found.data) return { data: null, error: found.error }; const { error } = await createClient().from("publications").delete().eq("id", found.data); return error ? { data: null, error: error.message } : { data: true, error: null }; }
+export async function savePublication(publication: Publication): Promise<ServiceResult<Publication>> { const found = await resolveDisplayUuid("publications", publication.id, "Publikasi"); if (!found.data) return { data: null, error: found.error }; const { data, error } = await createClient().from("publications").update({ schedule_date: publication.scheduleDate ?? null, release_date: publication.releaseDate ?? null, live_link: publication.liveLink ?? null }).eq("id", found.data).select("*").single(); return error ? { data: null, error: error.message } : { data: await map(data as Row), error: null }; }
+export interface RecordReleaseInput { releaseDate: string; liveLink: string; }
+export async function recordRelease(id: string, input: RecordReleaseInput): Promise<ServiceResult<Publication>> { if (!input.releaseDate || Number.isNaN(Date.parse(input.releaseDate))) return { data: null, error: "Tanggal aktual rilis tidak valid." }; if (!input.liveLink.trim()) return { data: null, error: "Link post live wajib diisi." }; const found = await resolveDisplayUuid("publications", id, "Publikasi"); if (!found.data) return { data: null, error: found.error }; const { data, error } = await createClient().from("publications").update({ release_date: input.releaseDate, live_link: input.liveLink.trim() }).eq("id", found.data).select("*").single(); return error ? { data: null, error: error.message } : { data: await map(data as Row), error: null }; }
