@@ -1,18 +1,20 @@
 # DEPLOYMENT.md — Panduan Deploy
 
-> **Status:** Placeholder (Fase 0)  
-> Dokumen ini akan dilengkapi saat **Fase 4 — Deploy Ready** dimulai (Gate 3 terpenuhi).
+> **Status:** Gate 4 — Deploy Ready (2026-11-03)
+> Platform final per `DEC-024`: Vercel + Supabase (project `ycqgtazlcxbedfoykhpl`) + Resend SMTP.
 
 ---
 
 ## Ringkasan Stack Deploy
 
-| Komponen | Platform (rencana) |
+| Komponen | Platform |
 |----------|--------------------|
-| Frontend (Next.js) | Vercel / VPS dengan Docker |
-| Backend/DB | Supabase (managed) |
+| Frontend (Next.js) | Vercel (Q-020 A) |
+| Backend/DB | Supabase (managed) — project sekarang (Q-022) |
 | Storage | Supabase Storage |
-| CI/CD | GitHub Actions |
+| Email Auth | Resend SMTP (Q-024 B) |
+| CI/CD | GitHub Actions + Vercel (Q-026 A) |
+| Environment | Produksi saja, tanpa staging (Q-023 A) |
 
 ---
 
@@ -22,14 +24,14 @@ Lihat [`.env.example`](../.env.example) untuk daftar lengkap.
 
 ---
 
-## Langkah Deploy (akan diisi di Fase 3)
+## Langkah Deploy (Vercel + Supabase)
 
-1. Setup Supabase project (production)
-2. Jalankan semua migration: `supabase db push`
-3. Deploy frontend ke Vercel/server
-4. Set semua env var di platform deploy
-5. Verifikasi health check endpoint
-6. Lakukan smoke test
+1. Setup project Supabase production (sudah: `ycqgtazlcxbedfoykhpl`).
+2. Jalankan semua migration: `supabase db push` (termasuk Q-005 template RAD/PUS/SAD).
+3. Deploy frontend ke Vercel (hubungkan repo, framework Next.js).
+4. Set semua env var di Vercel (lihat `.env.example`; sertakan `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`).
+5. Verifikasi `GET /api/health` → `200` `{ status: "ok" }`.
+6. Lakukan smoke test (lihat Checklist Pre-Deploy di bawah).
 
 ---
 
@@ -186,10 +188,81 @@ konflik primary key dan kehilangan data pasca-backup.
 
 ## Rollback
 
-> _Akan didokumentasikan di Fase 4_
+Rollback tersedia dalam tiga tingkat, sesuai lapisan yang gagal.
+
+### 1. Rollback frontend (Vercel)
+
+- Vercel menyimpan deployment sebelumnya; buka Dashboard → Deployments → pilih
+  build stabil → **Promote to Production** atau **Redeploy** untuk kembali.
+- Jangan hapus deployment aktif sebelum deployment pengganti lolos smoke test.
+- Bila masalah muncul dari env var, perbaiki variabel di Vercel lalu redeploy;
+  perubahan env memicu build ulang otomatis.
+
+### 2. Rollback database (Supabase)
+
+- **Migration yang gagal di tengah:** perbaiki migration, lalu `supabase db push`
+  ulang. Supabase memakai tabel `supabase_migrations`; bandingkan hash bila terjadi
+  drift. Bila migration merusak data, restore backup (lihat prosedur restore di atas)
+  ke project baru, jangan tumpuk migration di atas data produksi.
+- **Perubahan skema/policy yang salah:** karena environment produksi dipakai
+  langsung (Q-023 A, tanpa staging), **backup wajib dilakukan sebelum `db push`**.
+  Simpan `data.sql` + `schema.sql` sebelum menjalankan migration apa pun.
+- **Perubahan data massal:** pulihkan dari backup/PITR. Plan Free (Q-021) tidak
+  menyediakan PITR dan backup platform tak dapat diunduh — andalkan dump manual
+  (`supabase db dump`) yang dijalankan sebelum perubahan.
+
+### 3. Rollback penuh (frontend + DB)
+
+1. Kembalikan frontend ke deployment stabil (Vercel Promote).
+2. Restore database dari backup ke project baru atau database target kosong.
+3. Arahkan env `NEXT_PUBLIC_SUPABASE_URL` ke database hasil restore.
+4. Jalankan checklist verifikasi restore + smoke test.
+5. Crystal-kan penyebab di `docs/WORKLOG.md`; update status Gate bila perlu.
+
+> **Imbang rollback:** rollback online (Vercel) memakan waktu detik–menit;
+> rollback database memakan waktu menit–jam. Utamakan mencegah lewat backup
+> pra-migration dan uji di project terpisah sebelum menyentuh produksi.
 
 ---
 
 ## Checklist Pre-Deploy
 
-> _Akan didokumentasikan di Fase 4 (Gate 4)_
+Jalankan sebelum setiap rilis produksi; seluruh kotak wajib ter-centang.
+
+### Build & kode
+
+- [ ] `pnpm test` hijau (265/265; termasuk `guides.test.ts` DB-backed US-042).
+- [ ] `pnpm type-check` (`tsc --noEmit`) tanpa error.
+- [ ] `pnpm lint` (`eslint .`) tanpa error.
+- [ ] `pnpm build` (`next build`) bersih, tanpa warning fatal.
+
+### Database & migration
+
+- [ ] `supabase db push` terhadap project `ycqgtazlcxbedfoykhpl` sukses.
+- [ ] Migration Q-005 (`task_template_rad_pus_sad`) terpasang.
+- [ ] Backup manual (`schema.sql` + `data.sql`) tersimpan sebelum push.
+- [ ] RLS tulis live terverifikasi: Super Admin penuh; Sales tulis lead; PM tulis
+      proyek; antar-modul tetap terblokir.
+
+### Environment & layanan
+
+- [ ] Semua env var Vercel terisi: `NEXT_PUBLIC_SUPABASE_URL`,
+      `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+      `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_NAME`,
+      `TZ`, `NEXT_PUBLIC_MAX_ATTACHMENT_SIZE_BYTES`.
+- [ ] Resend SMTP terpasang di Auth (email invite/reset terkirim, tak masuk spam).
+- [ ] `GET /api/health` → `200` `{ status: "ok", db: "ok" }`.
+
+### Smoke test (per role)
+
+- [ ] Super Admin login → kelola user, master data, panduan.
+- [ ] Sales login → buat lead, ubah lead, ekspor CSV, lihat pipeline.
+- [ ] PM login → buat proyek, tambah task, tampilkan gantt/kalender.
+- [ ] Sosmed Specialist login → ide konten, materi, publikasi, kalender sosmed.
+- [ ] Halaman `/pengaturan/arsip` dan `/pengaturan/audit-log` terbuka.
+
+### Akun & data pilot (Q-027)
+
+- [ ] Akun pilot per role dibuat (Super Admin, Executive, Sales, PM, Developer,
+      Sosmed Specialist, tim produksi) dengan email aktif.
+- [ ] Data seed contoh terpasang (per jawaban Q-027) untuk demo/pilot.
