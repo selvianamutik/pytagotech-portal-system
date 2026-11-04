@@ -1,25 +1,29 @@
 # DATABASE_PROYEK.md — Skema Tetap Database Proyek (Kontrak Lintas Aplikasi)
 
 > **Status:** ANALISIS — kontrak integrasi untuk domain **Proyek** (US-019…US-026).
-> **Sumber kebenaran:** `docs/DATABASE.md` (APPROVED 2026-10-05) + migrasi
-> `frontend/supabase/migrations/*` + draf DDL `database/schema.sql`.
+> **Sumber kebenaran:** database **Supabase yang sedang berjalan** (sama dengan yang
+> dipakai portal saat ini) — skema terapan ada di `frontend/supabase/migrations/*`.
 > **DBMS:** PostgreSQL 15 (Supabase) · **PK:** UUID v4 (`gen_random_uuid()`) ·
 > **Timezone:** UTC (`timestamptz`; tanggal = `date`) · **Penamaan:** `snake_case`.
 >
-> Dokumen ini KEBALIKAN dari `DATABASE.md` yang mencakup seluruh modul: fokus
-> ke **satu skema tetap** untuk tabel proyek agar aplikasi lain (website produksi
-> yang menerima proyek setelah handover) dapat **membaca/menulis data yang sama**
-> tanpa melanggar integritas referensial portal.
+> ⚠️ **Bukan database baru.** Dokumen ini **tidak** merancang skema baru dan **tidak**
+> meminta dibuatkan database ulang. Tabel-tabel di bawah **sudah ada** di instans
+> Supabase yang sama dengan portal. Fokusnya adalah memetakan **skema yang sudah
+> terdeploy** untuk domain Proyek agar aplikasi lain (website produksi penerima
+> handover) dapat **connect langsung** ke Supabase yang sama dan membaca/menulis
+> **data yang sama** tanpa melanggar integritas referensial portal.
 
 ---
 
 ## 1. Mengapa dokumen ini ada
 
 Alur saat ini: `Lead → Klien → Deal Handover → Proyek → … → serah terima ke website lain`.
+Portal dan website kedua **berbagi satu database Supabase yang sama** (bukan dua DB
+terpisah; bukan DB yang di-clone ulang).
 
 Setelah handover **Dikonfirmasi**, proyek dibuat di portal (`projects`) lalu hasil
-pekerjaan (task, fitur, jadwal) diteruskan ke aplikasi kedua (website portofolio /
-produksi klien). Agar kedua sisi konsisten, dibutuhkan **kontrak skema yang tetap**:
+pekerjaan (task, fitur, jadwal) dibaca aplikasi kedua lewat koneksi langsung ke
+Supabase yang sama. Agar kedua sisi konsisten, dibutuhkan **kontrak skema yang tetap**:
 
 1. **Identitas stabil** yang bisa dikaitkan lintas sistem (`display_id`, `code`).
 2. **Batas tanggung jawab** — kolom mana dibaca (read-only dari portal), mana yang
@@ -307,6 +311,9 @@ erDiagram
 
 ## 8. Kontrak integrasi lintas aplikasi
 
+Website kedua **connect langsung** ke instans Supabase yang sama (pakai Service Role
+key / service account), membaca tabel di atas tanpa membuat database / schema baru.
+
 ### 8.1 Identitas yang dipertukarkan
 
 Saat handover proyek ke website kedua, payload minimal yang dibawa (jangkar relasi):
@@ -398,10 +405,13 @@ Saat handover proyek ke website kedua, payload minimal yang dibawa (jangkar rela
 
 ## 12. Perubahan skema = migrasi terkoordinasi
 
+> Skema yang dikelola adalah **database Supabase yang sudah ada**. Perubahan bukan
+> membuat DB baru, melainkan menambah migrasi idempotent ke instans Supabase berjalan.
+
 Sebelum mengubah tabel domain proyek (kolom, enum, FK), wajib:
 
 1. Catat di `docs/DECISIONS.md` + `CHANGELOG.md`.
 2. Tambah migrasi `frontend/supabase/migrations/<timestamp>_*.sql` (idempotent).
-3. Sinkronkan draf `database/schema.sql` + dokumen ini.
+3. Sinkronkan referensi `database/schema.sql` + dokumen ini.
 4. Beri tahu tim aplikasi kedua (website produksi) tentang field baru/berubah,
    karena `display_id`, `code`, dan enum `status` adalah **kontrak lintas sistem**.
