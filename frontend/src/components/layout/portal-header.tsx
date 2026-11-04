@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { ShieldCheckIcon } from "lucide-react";
 
 import { GlobalSearch } from "@/components/search/global-search";
@@ -13,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuthStore } from "@/store/auth";
 
 export interface PortalUserInfo {
   name: string;
@@ -26,6 +30,14 @@ export interface PortalUserInfo {
  * pencarian, notifikasi, tema, dan menu user.
  */
 export function PortalHeader({ user }: { user: PortalUserInfo }) {
+  const router = useRouter();
+  const signOut = useAuthStore((state) => state.signOut);
+
+  async function handleSignOut() {
+    await signOut();
+    router.replace("/login");
+  }
+
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
@@ -52,10 +64,13 @@ export function PortalHeader({ user }: { user: PortalUserInfo }) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profil</DropdownMenuItem>
-            <DropdownMenuItem>Preferensi</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/profil")}>
+              Profil
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Keluar</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void handleSignOut()}>
+              Keluar
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
