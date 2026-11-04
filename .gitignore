@@ -49,5 +49,6 @@ coverage/
 .cache/
 /backups/
 
+supabase/.temp/*
 
 credentials.txt
